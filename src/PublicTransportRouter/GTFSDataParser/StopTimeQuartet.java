@@ -13,6 +13,10 @@ class StopTimeQuartet {
         this.departureTime = departureTime;
     }
 
+    void setStopId(String stopId) {
+        this.stopId = stopId;
+    }
+
     void setStopSequence(int stopSequence) {
         this.stopSequence = stopSequence;
     }
@@ -23,6 +27,10 @@ class StopTimeQuartet {
 
     void setDepartureTime(int departureTime) {
         this.departureTime = departureTime;
+    }
+
+    String getStopId() {
+        return this.stopId;
     }
 
     int getStopSequence() {

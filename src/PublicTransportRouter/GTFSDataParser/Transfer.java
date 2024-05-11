@@ -1,18 +1,23 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
 import java.util.HashMap;
+
 public class Transfer {
-    private HashMap<Stop, Integer> departureStopTransferDurationMap;
+    private HashMap<Stop, Integer> transferMap;
 
-    Transfer(HashMap<Stop, Integer> departureStopTransferDurationMap) {
-        this.departureStopTransferDurationMap = departureStopTransferDurationMap;
+    Transfer(HashMap<Stop, Integer> transferMap) {
+        this.transferMap = transferMap;
     }
 
-    void setDepartureStopTransferDurationMap(HashMap<Stop, Integer> departureStopTransferDurationMap) {
-        this.departureStopTransferDurationMap = departureStopTransferDurationMap;
+    Transfer() {
+        this(new HashMap<>());    // All values are initialized to nulls and zeroes
     }
 
-    HashMap<Stop, Integer> getDepartureStopTransferDurationMap() {
-        return this.departureStopTransferDurationMap;
+    void setTransferMap(HashMap<Stop, Integer> transferMap) {
+        this.transferMap = transferMap;
+    }
+
+    HashMap<Stop, Integer> getTransferMap() {
+        return this.transferMap;
     }
 }

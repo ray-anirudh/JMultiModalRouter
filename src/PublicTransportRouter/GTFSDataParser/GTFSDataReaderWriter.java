@@ -1,23 +1,32 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.lang.reflect.Array;
+import java.nio.Buffer;
+import java.util.*;
 
 public class GTFSDataReaderWriter {
+    private static final String[] AGENCY_ID_ARRAY = {"21",  // Stadtwerke München
+                                                     "62",  // DB Regio AG Südost
+                                                     "390", // Nahreisezug
+                                                     "54",  // DB Regio AG Bayern
+                                                     "75",  // Go-Ahead Bayern GmbH
+                                                     "302"  // DB RegioNetz Verkehrs GmbH Südostbayernbahn
+                                                    };
 
-    private HashMap<String, Route> routes = new HashMap<>();
-    private HashMap<String, RouteStop> routeStops = new HashMap<>();
-    private HashMap<String, StopTime> stopTimesUnsorted = new HashMap<>();
-    // TODO: HANDLE THIS SORTING BELOW
-    private HashMap<String, StopTime> stopTimesSorted = new HashMap<>();
-    private HashMap<String, Stop> stops = new HashMap<>();
-    private HashMap<String, StopRoutes> stopRoutes = new HashMap<>();
-    private HashMap<String, Transfer> transfers = new HashMap<>();
+    private HashMap<String, Route> routes = new HashMap<>();    // Key for "routes" hashmap refers to "route_id"
+    private HashMap<String, Trip> trips = new HashMap<>();  // Key for "trips" hashmap refers to "route_id" and value
+    // refers to "trip_id", which is the linkage between "routes.txt" and "stop_times.txt"
 
-    public void readGTFSRoutes(String s) {
+//    private HashMap<String, RouteStop> routeStops = new HashMap<>();
+//    private HashMap<String, StopTime> stopTimesUnsorted = new HashMap<>();
+//    // TODO: HANDLE THIS SORTING BELOW
+//    private HashMap<String, StopTime> stopTimesSorted = new HashMap<>();
+//    private HashMap<String, Stop> stops = new HashMap<>();
+//    private HashMap<String, StopRoutes> stopRoutes = new HashMap<>();
+//    private HashMap<String, Transfer> transfers = new HashMap<>();
+
+    public void readAndFilterGTFSRoutes(String s) {
         try {
             // Reader for "routes.txt"
             BufferedReader gtfsRoutesReader = new BufferedReader(new FileReader(s));
@@ -27,18 +36,46 @@ public class GTFSDataReaderWriter {
             String[] routesHeaderArray = gtfsRoutesReader.readLine().split(",");
             int routeIdIndex = findIndexInArray("route_id", routesHeaderArray);
 
-            // Read body
+            // Read body and process data
             while((newline = gtfsRoutesReader.readLine()) != null) {
                 String[] routeDataRecord = newline.split(",");
-                Route route = new Route();
-                String routeId = routeDataRecord[routeIdIndex].substring(1, routeDataRecord[routeIdIndex].length() - 1);
-
-                routes.put(routeId, route);
+                String routeId = routeDataRecord[routeIdIndex];
+                for (String agencyIdFilter : AGENCY_ID_ARRAY) {
+                    if (routeId.equalsIgnoreCase(agencyIdFilter)) {
+                        Route route = new Route();
+                        routes.put(routeId, route);
+                    }
+                }
             }
+
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at the specified path.");
+            System.out.println("File not found at specified path.");
         } catch (IOException iOE) {
-            System.out.println("Input-output exception. Please check the input file: " + s);
+            System.out.println("Input-output exception. Please check input file: " + s);
+        }
+    }
+
+    public void readAndFilterGTFSTrips(String s) {
+        try {
+            // Reader for "trips.txt"
+            BufferedReader gtfsTripsReader = new BufferedReader(new FileReader(s));
+            String newline;
+
+            // Set up header array
+            String[] tripsHeaderArray = gtfsTripsReader.readLine().split(",");
+            int routeIdIndex = findIndexInArray("route_id", tripsHeaderArray);
+            int tripIdIndex = findIndexInArray("trip_id", tripsHeaderArray);
+
+            // Read body and process data
+            while((newline = gtfsTripsReader.readLine()) != null) {
+                String[] tripDataRecord = newline.split(",");
+                String tripRouteId = tripDataRecord[routeIdIndex];
+                for(String routeIdFilter : routes.keySet()) {
+                    if(tripRouteId.equalsIgnoreCase(routeIdFilter)) {
+
+                    }
+                }
+            }
         }
     }
 
@@ -104,6 +141,7 @@ public class GTFSDataReaderWriter {
                     }
                 }
             }
+
         } catch (FileNotFoundException fNFE) {
             System.out.println("File not found at the specified path.");
         } catch (IOException iOE) {
@@ -120,51 +158,106 @@ public class GTFSDataReaderWriter {
         }
     }
 
+    public void padGTFSRouteStops(String s) {
+        for (String routeId : stopTimesUnsorted.keySet()) {
+            RouteStop routeStop = new RouteStop();
+            StopTime tripWiseStopTimeList = stopTimesUnsorted.get(routeId);
+            String firstTripInRouteId = String.valueOf(tripWiseStopTimeList.getTripWiseStopTimeList().keySet().
+                    stream().findFirst());
+            ArrayList<StopTimeQuartet> stopTimeQuartetList = tripWiseStopTimeList.getTripWiseStopTimeList().
+                    get(firstTripInRouteId);
+
+            for(StopTimeQuartet stopTimeQuartet : stopTimeQuartetList) {
+                int stopCount = 1;
+                routeStop.getStopSequenceMap().put(stopCount, stopTimeQuartet.getStopId());
+            }
+        }
+    }
+
     public void readGTFSStops(String s) {
         try {
-            // Reader for "stop_times.txt"
+            // Reader for "stops.txt"
             BufferedReader gtfsStopsReader = new BufferedReader(new FileReader(s));
             String newline;
 
             // Set up header array
             String[] stopsHeaderArray = gtfsStopsReader.readLine().split(",");
+            int stopIdIndex = findIndexInArray("stop_id", stopsHeaderArray);
+            int stopNameIndex = findIndexInArray("stop_name", stopsHeaderArray);
+            int stopLatitudeIndex = findIndexInArray("stop_lat", stopsHeaderArray);
+            int stopLongitudeIndex = findIndexInArray("stop_lon", stopsHeaderArray);
 
             // Read body
-            for (String routeId : stopTimesUnsorted.keySet()) {
-                RouteStop routeStop = new RouteStop();
-                Optional<ArrayList<StopTimeQuartet>> stopTimeQuartetList = stopTimesUnsorted.get(routeId).
-                        getTripWiseStopTimeList().values().stream().findFirst();
+            while((newline = gtfsStopsReader.readLine()) != null) {
+                String[] stopDataRecord = newline.split(",");
 
-                if(stopTimeQuartetList.isPresent()) {
-                    String stopId = stopTimeQuartetList
-                    ArrayList<StopTimeQuartet> validStopTimeQuartetList = stopTimeQuartetList.get();
+                String stopId = stopDataRecord[stopIdIndex].substring(1, stopDataRecord[stopIdIndex].length() - 1);
+                double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex].substring(1,
+                        stopDataRecord[stopLatitudeIndex].length() - 1));
+                double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex].substring(1,
+                        stopDataRecord[stopLongitudeIndex].length() - 1));
+
+                Stop stop = new Stop(stopId, stopLatitude, stopLongitude);
+                stops.put(stopId, stop);
+            }
+
+        } catch (FileNotFoundException nFNE) {
+            System.out.println("File not found at the specified path.");
+        } catch (IOException iOE) {
+            System.out.println("Check the input file: " + s + "; found an IO exception.");
+        }
+    }
+
+    public void readTransfers(String s) {
+        try{
+            // Reader for "transfers.txt"
+            BufferedReader gtfsTransfersReader = new BufferedReader(new FileReader(s));
+            String newline;
+
+            // Set up header array
+            String[] transfersHeaderArray = gtfsTransfersReader.readLine().split(",");
+            int fromStopIdIndex = findIndexInArray("from_stop_id", transfersHeaderArray);
+            int toStopIdIndex = findIndexInArray("to_stop_id", transfersHeaderArray);
+            int transferDurationIndex = findIndexInArray("min_transfer_time", transfersHeaderArray);
+
+            // Read body
+            for(String fromStopId : stops.keySet()) {
+                Transfer transfer = new Transfer();
+                transfers.put(fromStopId, transfer);
+                while ((newline = gtfsTransfersReader.readLine()) != null) {
+                    String[] transferDataRecord = newline.split(",");
+                    String transfersFileFromStopId = transferDataRecord[fromStopIdIndex].substring(1,
+                            transferDataRecord[fromStopIdIndex].length() - 1);
+                    if (transfersFileFromStopId.equalsIgnoreCase(fromStopId)) {
+                        String toStopId = transferDataRecord[toStopIdIndex].substring(1, transferDataRecord
+                                [toStopIdIndex].length() - 1);
+                        int transferDuration = Integer.parseInt(transferDataRecord[transferDurationIndex].substring
+                                (1, transferDataRecord[transferDurationIndex].length() - 1));
+
+                        transfer.getTransferMap().put(stops.get(toStopId), transferDuration);
+                    }
                 }
-                for(StopTimeQuartet stopTimeQuartet : stopTimeQuartetList) {
-
-                }
-                String firstTripIdForRoute = String.valueOf(stopTimesUnsorted.get(routeId).getTripWiseStopTimeList().
-                        keySet().stream().findFirst());
-
-                for(StopTimeQuartet stopTimeQuartet : stopTimesUnsorted.get(routeId).getTripWiseStopTimeList().values().stream().findFirst());
-                stopTimesUnsorted.get(routeId).getTripWiseStopTimeList().
-                        Optional<ArrayList<StopTimeQuartet>> stopTimeQuartets = stopTimesUnsorted.get(routeId).
-                        getTripWiseStopTimeList().values().stream().findFirst();
-                firstTripInRoute
-                routeStops.put(stopTime.getKey(), routeStop);
-                HashMap<String, ArrayList<StopTimeQuartet>> firstTripStopTimeList = stopTime.getValue().
-                        getTripWiseStopTimeList();
-
-                for(int routeSizeCounter = 1; routeSizeCounter <= firstTripStopTimeList.size(); routeSizeCounter += 1) {
-                    routeStop.getStopSequenceMap().put(routeSizeCounter, );
-
-                }
-                routeStops.put(stopTime.getKey(), routeStop);
             }
 
         } catch (FileNotFoundException fNFE) {
             System.out.println("File not found at the specified path.");
         } catch (IOException iOE) {
             System.out.println("Check the input file: " + s + "; found an IO exception.");
+        }
+    }
+
+    public void readStopRoutes(String s) {
+        try {
+            // Reader for "stop_times.txt"
+            BufferedReader gtfsStopRoutesReader = new BufferedReader(new FileReader(s));
+            String newline;
+
+            // Set up header array
+            String[] stopRoutesHeaderArray = gtfsStopRoutesReader.readLine().split(",");
+            int routeIdIndex = findIndexInArray("")
+
+            // Read body
+
         }
     }
 
