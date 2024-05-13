@@ -10,7 +10,7 @@ public class Trip {
     }
 
     Trip() {
-        this(new ArrayList<String>());
+        this(new ArrayList<>());
     }
 
     void setTripList(ArrayList<String> tripList) {

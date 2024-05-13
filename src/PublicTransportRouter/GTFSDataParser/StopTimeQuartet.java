@@ -34,14 +34,14 @@ class StopTimeQuartet {
     }
 
     int getStopSequence() {
-        return stopSequence;
+        return this.stopSequence;
     }
 
     int getArrivalTime() {
-        return arrivalTime;
+        return this.arrivalTime;
     }
 
     int getDepartureTime() {
-        return departureTime;
+        return this.departureTime;
     }
 }

@@ -3,22 +3,28 @@ package src.PublicTransportRouter.GTFSDataParser;
 public class Route {
     private int numberTrips;
     private int numberStops;
+    private int routeType;
 
-    Route(int numberTrips, int numberStops) {
+    Route(int numberTrips, int numberStops, int routeType) {
         this.numberTrips = numberTrips;
         this.numberStops = numberStops;
+        this.routeType = routeType;
     }
 
     Route() {
-        this(0, 0);     // Akin to default constructor
+        this(0, 0, 0);
     }
 
-    void setNumberTrips (int numberTrips) {
+    void setNumberTrips(int numberTrips) {
         this.numberTrips = numberTrips;
     }
 
-    void setNumberStops (int numberStops) {
+    void setNumberStops(int numberStops) {
         this.numberStops = numberStops;
+    }
+
+    void setRouteType(int routeType) {
+        this.routeType = routeType;
     }
 
     int getNumberTrips() {
@@ -27,5 +33,9 @@ public class Route {
 
     int getNumberStops() {
         return this.numberStops;
+    }
+
+    int getRouteType() {
+        return this.routeType;
     }
 }

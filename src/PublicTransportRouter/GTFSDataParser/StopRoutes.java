@@ -9,11 +9,15 @@ public class StopRoutes {
         this.routeList = routeList;
     }
 
+    StopRoutes() {
+        this(new ArrayList<>());
+    }
+
     void setRouteList(ArrayList<Route> routeList) {
         this.routeList = routeList;
     }
 
-    ArrayList<Route> getRouteList () {
+    ArrayList<Route> getRouteList() {
         return this.routeList;
     }
 }
