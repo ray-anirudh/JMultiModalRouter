@@ -22,7 +22,7 @@ public class GTFSDataReaderWriter {
 
     // Initializing GMaps API context with the API key of "Anirudh Ray"
     private GeoApiContext googleGeoApiContext = new GeoApiContext.Builder().
-            apiKey("AIzaSyAmltdo36vRZLXIt_EWA4aIb_wVdnZ0WSs").build();
+            apiKey("Your Google API Key").build();
 
     final int EARTH_RADIUS_M = 6371000;
 
