@@ -1,6 +1,11 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
-// TODO: FIX THE STOP TIMES SORTING AND BUILD A CUTTER BASED ON SERVICE AREA LAT-LONGS OF MUNCHEN
+// TODO BUILD A CUTTER BASED ON SERVICE AREA LAT-LONGS OF MUNCHEN
+
+import com.google.maps.DirectionsApi;
+import com.google.maps.GeoApiContext;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.TravelMode;
 
 import java.io.*;
 import java.util.*;
@@ -15,6 +20,14 @@ public class GTFSDataReaderWriter {
             "302"  // DB RegioNetz Verkehrs GmbH Südostbayernbahn
     };
 
+    // Initializing GMaps API context with the API key of "Anirudh Ray"
+    private GeoApiContext googleGeoApiContext = new GeoApiContext.Builder().
+            apiKey("AIzaSyAmltdo36vRZLXIt_EWA4aIb_wVdnZ0WSs").build();
+
+    final int EARTH_RADIUS_M = 6371000;
+
+    final int MAXIMUM_TRANSFER_DISTANCE_M = 250;
+
     private HashMap<String, Route> routes = new HashMap<>();
     // Key for "routes" hashmap refers to "route_id"
 
@@ -26,11 +39,8 @@ public class GTFSDataReaderWriter {
     private HashMap<String, RouteStop> routeStops = new HashMap<>();
     // Key for "routeStops" hashmap also refers to "route_id"
 
-    private HashMap<String, StopTime> stopTimesUnsorted = new HashMap<>();
+    private HashMap<String, StopTime> stopTimes = new HashMap<>();
     // Key for "stopTimesUnsorted" hashmap also refers to "route_id"
-
-    private HashMap<String, StopTime> stopTimesSorted = new HashMap<>();
-    // Key for "stopTimesSorted" hashmap also refers to "route_id"
 
     private HashMap<String, Stop> stops = new HashMap<>();
     // Key for "stops" hashmap refers to "stop_id"
@@ -70,7 +80,7 @@ public class GTFSDataReaderWriter {
 
                     routes.put(routeId, route);
                     trips.put(routeId, trip);
-                    stopTimesUnsorted.put(routeId, stopTime);
+                    stopTimes.put(routeId, stopTime);
                     routeStops.put(routeId, routeStop);
                 }
             }
@@ -102,7 +112,7 @@ public class GTFSDataReaderWriter {
                     String tripId = tripDataRecord[tripIdIndex];
 
                     trips.get(routeId).getTripList().add(tripId);
-                    stopTimesUnsorted.get(routeId).getTripWiseStopTimeLists().put(tripId, new ArrayList<>());
+                    stopTimes.get(routeId).getTripWiseStopTimeLists().put(tripId, new ArrayList<>());
                 }
             }
 
@@ -152,8 +162,8 @@ public class GTFSDataReaderWriter {
                     StopTimeQuartet stopTimeQuartet = new StopTimeQuartet(stopId, stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
 
-                    for (String routeId : stopTimesUnsorted.keySet()) {
-                        HashMap<String, ArrayList<StopTimeQuartet>> routeSpecificTripHashMap = stopTimesUnsorted.
+                    for (String routeId : stopTimes.keySet()) {
+                        HashMap<String, ArrayList<StopTimeQuartet>> routeSpecificTripHashMap = stopTimes.
                                 get(routeId).getTripWiseStopTimeLists();
 
                         if (routeSpecificTripHashMap.containsKey(tripId)) {
@@ -170,21 +180,57 @@ public class GTFSDataReaderWriter {
         }
     }
 
+    public void sortStopTimes() {
+        for (String routeId : stopTimes.keySet()) {
+            // Get the StopTime instance that needs to be sorted internally
+            StopTime tripWiseStopTimeLists = stopTimes.get(routeId);
+
+            // Get the exact hashmap containing the string-object pairs of trip IDs and stop time quartet lists
+            HashMap<String, ArrayList<StopTimeQuartet>> routeSpecificStopTimeLists = tripWiseStopTimeLists.
+                    getTripWiseStopTimeLists();
+
+            // Get the aforementioned string-object pairs into a list
+            List<Map.Entry<String, ArrayList<StopTimeQuartet>>> routeSpecificStopTimeEntryList = new ArrayList<>
+                    (routeSpecificStopTimeLists.entrySet());
+
+            /* Sort the achieved arraylist of aforementioned string-object pairs using a comparator that gets every
+            entry in the arraylist, then gets the value (ArrayList<StopTimeQuartet>) pertaining to that entry, then gets
+            the earliest StopTimeQuartet instance, and then compares using the departure time found there
+            */
+            Collections.sort(routeSpecificStopTimeEntryList, Comparator.comparing(entry -> entry.getValue().get(0).
+                    getDepartureTime()));
+
+            // Get the sorted entries into a new hashmap
+            HashMap<String, ArrayList<StopTimeQuartet>> sortedRouteSpecificStopTimeEntryLists = new HashMap<>();
+            for (Map.Entry<String, ArrayList<StopTimeQuartet>> routeSpecificStopTimeEntry :
+                    routeSpecificStopTimeEntryList) {
+                sortedRouteSpecificStopTimeEntryLists.put(routeSpecificStopTimeEntry.getKey(),
+                        routeSpecificStopTimeEntry.getValue());
+            }
+
+            // Create a StopTime instance that is sorted internally now
+            StopTime sortedStopTime = new StopTime(sortedRouteSpecificStopTimeEntryLists);
+
+            // Replace the old StopTime instance with the new sorted one
+            stopTimes.replace(routeId, sortedStopTime);
+        }
+    }
+
     public void padGTFSRoutes() {
         // Padding the "routes" hashmap
-        for (String routeId : stopTimesUnsorted.keySet()) {
-            routes.get(routeId).setNumberTrips(stopTimesUnsorted.get(routeId).getTripWiseStopTimeLists().size());
-            String firstTripId = String.valueOf(stopTimesUnsorted.get(routeId).getTripWiseStopTimeLists().keySet().
+        for (String routeId : stopTimes.keySet()) {
+            routes.get(routeId).setNumberTrips(stopTimes.get(routeId).getTripWiseStopTimeLists().size());
+            String firstTripId = String.valueOf(stopTimes.get(routeId).getTripWiseStopTimeLists().keySet().
                     stream().findFirst());
-            routes.get(routeId).setNumberStops(stopTimesUnsorted.get(routeId).getTripWiseStopTimeLists().
+            routes.get(routeId).setNumberStops(stopTimes.get(routeId).getTripWiseStopTimeLists().
                     get(firstTripId).size());
         }
     }
 
     public void padGTFSRouteStops() {
         // Padding the "routeStops" hashmap
-        for (String routeId : stopTimesUnsorted.keySet()) {
-            StopTime tripWiseStopTimeLists = stopTimesUnsorted.get(routeId);
+        for (String routeId : stopTimes.keySet()) {
+            StopTime tripWiseStopTimeLists = stopTimes.get(routeId);
             String firstTripInRouteId = String.valueOf(tripWiseStopTimeLists.getTripWiseStopTimeLists().keySet().
                     stream().findFirst());
             ArrayList<StopTimeQuartet> stopTimeQuartetList = tripWiseStopTimeLists.getTripWiseStopTimeLists().
@@ -255,45 +301,76 @@ public class GTFSDataReaderWriter {
         }
     }
 
-    public void readTransfers(String s) {
-        try {
-            // Reader for "transfers.txt"
-            BufferedReader gtfsTransfersReader = new BufferedReader(new FileReader(s));
-            String newline;
+    public void buildExhaustiveTransfersHashMap() {
+        // Building an exhaustive stop-wise transfers file
+        for (Stop fromStop : stops.values()) {
+            double fromStopLatitudeRadians = Math.toRadians(fromStop.getStopLatitude());
+            double fromStopLongitudeRadians = Math.toRadians(fromStop.getStopLongitude());
+            Transfer stopSpecificTransferMap = new Transfer();
 
-            // Set up header array
-            String[] transfersHeaderArray = gtfsTransfersReader.readLine().split(",");
-            int fromStopIdIndex = findIndexInArray("from_stop_id", transfersHeaderArray);
-            int toStopIdIndex = findIndexInArray("to_stop_id", transfersHeaderArray);
-            int transferDurationIndex = findIndexInArray("min_transfer_time", transfersHeaderArray);
+            for (Stop toStop : stops.values()) {
+                double toStopLatitudeRadians = Math.toRadians(toStop.getStopLatitude());
+                double toStopLongitudeRadians = Math.toRadians(toStop.getStopLongitude());
 
-            // Read body
-            for (String fromStopId : stops.keySet()) {
-                Transfer transfer = new Transfer();
-                transfers.put(fromStopId, transfer);
-                while ((newline = gtfsTransfersReader.readLine()) != null) {
-                    String[] transferDataRecord = newline.split(",");
-                    String transfersFileFromStopId = transferDataRecord[fromStopIdIndex].substring(1,
-                            transferDataRecord[fromStopIdIndex].length() - 1);
-                    if (transfersFileFromStopId.equalsIgnoreCase(fromStopId)) {
-                        String toStopId = transferDataRecord[toStopIdIndex].substring(1, transferDataRecord
-                                [toStopIdIndex].length() - 1);
-                        int transferDuration = Integer.parseInt(transferDataRecord[transferDurationIndex].substring
-                                (1, transferDataRecord[transferDurationIndex].length() - 1));
+                double latitudeDifference = toStopLatitudeRadians - fromStopLatitudeRadians;
+                double longitudeDifference = toStopLongitudeRadians - fromStopLongitudeRadians;
 
-                        transfer.getTransferMap().put(stops.get(toStopId), transferDuration);
-                    }
+                double x = longitudeDifference * Math.cos((fromStopLatitudeRadians + toStopLatitudeRadians) / 2);
+                double y = latitudeDifference;
+                double interStopDistance = Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
+
+                if (interStopDistance <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                    stopSpecificTransferMap.getTransferMap().put(toStop, (int) (Math.round(interStopDistance)));
                 }
             }
 
-        } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at the specified path.");
-        } catch (IOException iOE) {
-            System.out.println("Check the input file: " + s + "; found an IO exception.");
+            transfers.put(fromStop.getStopId(), stopSpecificTransferMap);
+        }
+    }
+
+    public void filteredTransfersHashMap() {
+        // Filtering realistic transfers based on GMaps API calls
+        for (String fromStopId : transfers.keySet()) {
+            HashMap<Stop, Integer> stopSpecificTransferMap = transfers.get(fromStopId).getTransferMap();
+            double fromStopLatitude = stops.get(fromStopId).getStopLatitude();
+            double fromStopLongitude = stops.get(fromStopId).getStopLongitude();
+
+            for (Stop stop : stopSpecificTransferMap.keySet()) {
+                double toStopLatitude = stop.getStopLatitude();
+                double toStopLongitude = stop.getStopLongitude();
+                int walkingDistanceBetweenStops = (int) (Math.round(calculateWalkingDistance(fromStopLatitude,
+                        fromStopLongitude, toStopLatitude, toStopLongitude)));
+
+                if (walkingDistanceBetweenStops <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                    transfers.get(fromStopId).getTransferMap().replace(stop, walkingDistanceBetweenStops);
+                } else {
+                    transfers.get(fromStopId).getTransferMap().remove(stop);
+                }
+            }
+        }
+    }
+
+    private double calculateWalkingDistance(double fromStopLatitude, double fromStopLongitude, double toStopLatitude,
+                                            double toStopLongitude) {
+        // Calculating walking distance between two lat-long points via GMaps Directions API
+        try {
+            // Query GMaps Directions API for walking route
+            DirectionsResult result = DirectionsApi.newRequest(googleGeoApiContext)
+                    .origin(new com.google.maps.model.LatLng(fromStopLatitude, fromStopLongitude))
+                    .destination(new com.google.maps.model.LatLng(toStopLatitude, toStopLongitude))
+                    .mode(TravelMode.WALKING)
+                    .await();
+
+            // Extract and return walking distance from the result
+            return result.routes[0].legs[0].distance.inMeters;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
         }
     }
 
     private int findIndexInArray(String columnHeaderName, String[] headerArray) {
+        // Determining index positions of columns of interest
         int columnPosition = -1;
         for (int i = 0; i <= headerArray.length; i++) {
             if (headerArray[i].equalsIgnoreCase(columnHeaderName)) {
