@@ -1,6 +1,6 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
-// TODO BUILD A CUTTER BASED ON SERVICE AREA LAT-LONGS OF MUNCHEN
+// TODO BUILD A WRITER, AND REVIEW DATASTRUCTURES, AND ALL CODE (THIS AND ASSOCIATED CLASSES)
 
 import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
@@ -24,9 +24,17 @@ public class GTFSDataReaderWriter {
     private GeoApiContext googleGeoApiContext = new GeoApiContext.Builder().
             apiKey("Your Google API Key").build();
 
-    final int EARTH_RADIUS_M = 6371000;
+    private final int EARTH_RADIUS_M = 6371000;
 
-    final int MAXIMUM_TRANSFER_DISTANCE_M = 250;
+    private final int MAXIMUM_TRANSFER_DISTANCE_M = 400;    // (Gritsch, 2024)
+
+    private final double STUDY_AREA_LATITUDE_MIN = 47.829752;
+
+    private final double STUDY_AREA_LATITUDE_MAX = 48.433757;
+
+    private final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
+
+    private final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
 
     private HashMap<String, Route> routes = new HashMap<>();
     // Key for "routes" hashmap refers to "route_id"
@@ -159,7 +167,7 @@ public class GTFSDataReaderWriter {
                     int departureTimeMinutes = Integer.parseInt(departureTimeHourString) * 60 +
                             Integer.parseInt(departureTimeMinuteString);
 
-                    StopTimeQuartet stopTimeQuartet = new StopTimeQuartet(stopId, stopSequence, arrivalTimeMinutes,
+                    StopTimeQuartet stopTimeQuartet = new StopTimeQuartet(stopSequence, stopId, arrivalTimeMinutes,
                             departureTimeMinutes);
 
                     for (String routeId : stopTimes.keySet()) {
@@ -350,6 +358,50 @@ public class GTFSDataReaderWriter {
         }
     }
 
+    public void latLongBasedHashMapFilter() {
+        // Applicable to hashmaps "stops", "stopRoutes", and "transfers"
+        for (Stop stop : stops.values()) {
+            if ((stop.getStopLatitude() > STUDY_AREA_LATITUDE_MAX) || (stop.getStopLatitude() < STUDY_AREA_LATITUDE_MIN)
+                    || (stop.getStopLongitude() > STUDY_AREA_LONGITUDE_MAX) || (stop.getStopLongitude() <
+                    STUDY_AREA_LONGITUDE_MIN)) {
+                stops.remove(stop.getStopId());
+            }
+        }
+
+        for (String stopId : stopRoutes.keySet()) {
+            if (!stops.containsKey(stopId)) {
+                stopRoutes.remove(stopId);
+            }
+        }
+
+        for (String stopId : transfers.keySet()) {
+            if(!stops.containsKey(stopId)) {
+                transfers.remove(stopId);
+            }
+        }
+
+        for (String routeId : stopTimes.keySet()) {
+            for (String tripId : stopTimes.get(routeId).getTripWiseStopTimeLists().keySet()) {
+                for (StopTimeQuartet stopTimeQuartet : stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId)) {
+                    if (!stops.containsKey(stopTimeQuartet.getStopId())) {
+                        stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).remove(stopTimeQuartet);
+                    }
+                }
+
+                if (stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).isEmpty()) {
+                    stopTimes.get(routeId).getTripWiseStopTimeLists().remove(tripId);
+                    trips.get(routeId).getTripList().remove(tripId);
+                }
+            }
+
+            if (stopTimes.get(routeId).getTripWiseStopTimeLists().isEmpty()) {
+                stopTimes.remove(routeId);
+                trips.remove(routeId);
+                routes.remove(routeId);
+            }
+        }
+    }
+
     private double calculateWalkingDistance(double fromStopLatitude, double fromStopLongitude, double toStopLatitude,
                                             double toStopLongitude) {
         // Calculating walking distance between two lat-long points via GMaps Directions API
@@ -378,5 +430,29 @@ public class GTFSDataReaderWriter {
             }
         }
         return columnPosition;
+    }
+
+    public HashMap<String, Route> getRoutes() {
+        return routes;
+    }
+
+    public HashMap<String, RouteStop> getRouteStops() {
+        return routeStops;
+    }
+
+    public HashMap<String, StopTime> getStopTimes() {
+        return stopTimes;
+    }
+
+    public HashMap<String, Stop> getStops() {
+        return stops;
+    }
+
+    public HashMap<String, StopRoutes> getStopRoutes() {
+        return stopRoutes;
+    }
+
+    public HashMap<String, Transfer> getTransfers() {
+        return transfers;
     }
 }

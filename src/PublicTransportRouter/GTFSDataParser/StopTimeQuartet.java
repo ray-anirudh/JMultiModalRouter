@@ -1,24 +1,24 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
 class StopTimeQuartet {
-    private String stopId;
     private int stopSequence;
+    private String stopId;
     private int arrivalTime;
     private int departureTime;
 
-    StopTimeQuartet(String stopId, int stopSequence, int arrivalTime, int departureTime) {
-        this.stopId = stopId;
+    StopTimeQuartet(int stopSequence, String stopId, int arrivalTime, int departureTime) {
         this.stopSequence = stopSequence;
+        this.stopId = stopId;
         this.arrivalTime = arrivalTime;
         this.departureTime = departureTime;
     }
 
-    void setStopId(String stopId) {
-        this.stopId = stopId;
-    }
-
     void setStopSequence(int stopSequence) {
         this.stopSequence = stopSequence;
+    }
+
+    void setStopId(String stopId) {
+        this.stopId = stopId;
     }
 
     void setArrivalTime(int arrivalTime) {
@@ -29,12 +29,12 @@ class StopTimeQuartet {
         this.departureTime = departureTime;
     }
 
-    String getStopId() {
-        return this.stopId;
-    }
-
     int getStopSequence() {
         return this.stopSequence;
+    }
+
+    String getStopId() {
+        return this.stopId;
     }
 
     int getArrivalTime() {
