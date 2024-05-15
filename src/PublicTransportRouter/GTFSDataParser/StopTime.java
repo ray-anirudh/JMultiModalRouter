@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class StopTime {
-    private HashMap<String, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists;    // String refers to a trip ID
+    private HashMap<String, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists;
+    /* String keys refer to a trip IDs within a route; routes are in the pertinent hashmap
+    ArrayList has actual stop times
+    Conversion to sets or linked lists for faster iteration may be considered later
+    */
 
     StopTime(HashMap<String, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists) {
         this.tripWiseStopTimeLists = tripWiseStopTimeLists;

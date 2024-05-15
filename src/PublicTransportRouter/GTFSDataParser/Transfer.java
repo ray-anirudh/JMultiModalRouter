@@ -3,8 +3,10 @@ package src.PublicTransportRouter.GTFSDataParser;
 import java.util.HashMap;
 
 public class Transfer {
-    private HashMap<String, Integer> transferMap;   // Strings refer to destination stops' IDs, and integers refer to
-    // transfer costs
+    private HashMap<String, Integer> transferMap;
+    /* Strings refer to destination stops' IDs, and integers refer to transfer costs; origin stop IDs are keys of the
+    pertinent hashmap
+    */
 
     Transfer(HashMap<String, Integer> transferMap) {
         this.transferMap = transferMap;

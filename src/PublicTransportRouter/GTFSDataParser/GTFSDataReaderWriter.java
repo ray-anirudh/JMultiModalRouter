@@ -1,7 +1,6 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
-// TODO BUILD A WRITER, AND REVIEW DATASTRUCTURES, AND ALL CODE (THIS AND ASSOCIATED CLASSES)
-// TODO: TRANSFERS TRANSITIVITY
+// TODO: BUILD A WRITER
 
 import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
@@ -251,10 +250,9 @@ public class GTFSDataReaderWriter {
             ArrayList<StopTimeQuartet> stopTimeQuartetList = tripWiseStopTimeLists.getTripWiseStopTimeLists().
                     get(firstTripInRouteId);
 
-            int stopCount = 1;
             for (StopTimeQuartet stopTimeQuartet : stopTimeQuartetList) {
-                routeStops.get(routeId).getStopSequenceMap().put(stopCount, stopTimeQuartet.getStopId());
-                stopCount++;
+                routeStops.get(routeId).getStopSequenceMap().put(stopTimeQuartet.getStopSequence(),
+                        stopTimeQuartet.getStopId());
 
                 if (!stops.containsKey(stopTimeQuartet.getStopId())) {
                     Stop stop = new Stop();
@@ -401,6 +399,23 @@ public class GTFSDataReaderWriter {
                 stopTimes.remove(routeId);
                 trips.remove(routeId);
                 routes.remove(routeId);
+            }
+        }
+    }
+
+    // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
+    public void makeTransfersTransitive() {
+        for (String fromStopId : transfers.keySet()) {
+            for (String intermediateStopId : transfers.get(fromStopId).getTransferMap().keySet()) {
+                for (String toStopId : transfers.get(intermediateStopId).getTransferMap().keySet()) {
+                    if (!transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
+                        double walkingDistanceBetweenStops = calculateWalkingDistance(stops.get(fromStopId).
+                                getStopLatitude(), stops.get(fromStopId).getStopLongitude(), stops.get(toStopId).
+                                getStopLatitude(), stops.get(toStopId).getStopLongitude());
+                        transfers.get(fromStopId).getTransferMap().put(toStopId, (int) (Math.round(
+                                walkingDistanceBetweenStops)));
+                    }
+                }
             }
         }
     }

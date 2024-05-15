@@ -1,7 +1,7 @@
 package src.PublicTransportRouter.GTFSDataParser;
 
 public class Stop {
-    private String stopId;
+    private String stopId;  // Possibly redundant attribute, owing to twinning with pertinent hashmap's keys
     private String stopName;
     private int stopType;
     private double stopLatitude;
