@@ -3,21 +3,21 @@ package src.PublicTransportRouter.GTFSDataParser;
 import java.util.ArrayList;
 
 public class StopRoutes {
-    private ArrayList<Route> routeList;
+    private ArrayList<String> routeIdList;    // The strings here refer to route IDs
 
-    StopRoutes(ArrayList<Route> routeList) {
-        this.routeList = routeList;
+    StopRoutes(ArrayList<String> routeIdList) {
+        this.routeIdList = routeIdList;
     }
 
     StopRoutes() {
         this(new ArrayList<>());
     }
 
-    void setRouteList(ArrayList<Route> routeList) {
-        this.routeList = routeList;
+    void setRouteIdList(ArrayList<String> routeList) {
+        this.routeIdList = routeList;
     }
 
-    ArrayList<Route> getRouteList() {
-        return this.routeList;
+    ArrayList<String> getRouteIdList() {
+        return this.routeIdList;
     }
 }

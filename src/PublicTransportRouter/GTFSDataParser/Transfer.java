@@ -3,9 +3,10 @@ package src.PublicTransportRouter.GTFSDataParser;
 import java.util.HashMap;
 
 public class Transfer {
-    private HashMap<Stop, Integer> transferMap;
+    private HashMap<String, Integer> transferMap;   // Strings refer to destination stops' IDs, and integers refer to
+    // transfer costs
 
-    Transfer(HashMap<Stop, Integer> transferMap) {
+    Transfer(HashMap<String, Integer> transferMap) {
         this.transferMap = transferMap;
     }
 
@@ -13,11 +14,11 @@ public class Transfer {
         this(new HashMap<>());    // All values are initialized to nulls and zeroes
     }
 
-    void setTransferMap(HashMap<Stop, Integer> transferMap) {
+    void setTransferMap(HashMap<String, Integer> transferMap) {
         this.transferMap = transferMap;
     }
 
-    HashMap<Stop, Integer> getTransferMap() {
+    HashMap<String, Integer> getTransferMap() {
         return this.transferMap;
     }
 }
