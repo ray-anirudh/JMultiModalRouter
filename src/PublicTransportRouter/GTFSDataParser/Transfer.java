@@ -4,8 +4,8 @@ import java.util.HashMap;
 
 public class Transfer {
     private HashMap<String, Integer> transferMap;
-    /* Strings refer to destination stops' IDs, and integers refer to transfer costs; origin stop IDs are keys of the
-    pertinent hashmap
+    /* Strings refer to destination stops' IDs, and integers refer to minimum transfer times; origin stop IDs are keys
+    of the pertinent hashmap
     */
 
     Transfer(HashMap<String, Integer> transferMap) {
