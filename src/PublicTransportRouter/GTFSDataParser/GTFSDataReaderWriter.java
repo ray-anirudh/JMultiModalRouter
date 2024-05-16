@@ -1,7 +1,6 @@
 package src.PublicTransportRouter.GTFSDataParser;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Routing (Delling et. al., 2015)
-// TODO: REVIEW ALL CODE
 
 import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
