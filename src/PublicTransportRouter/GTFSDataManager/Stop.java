@@ -1,4 +1,4 @@
-package src.PublicTransportRouter.GTFSDataParser;
+package src.PublicTransportRouter.GTFSDataManager;
 
 public class Stop {
     private String stopId;  // Possibly redundant attribute, owing to twinning with pertinent hashmap's keys

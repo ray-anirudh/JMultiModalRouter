@@ -1,4 +1,4 @@
-package src.PublicTransportRouter.GTFSDataParser;
+package src.PublicTransportRouter.GTFSDataManager;
 
 public class Route {    // Route IDs are captured in the pertinent hashmap
     private int numberTrips;

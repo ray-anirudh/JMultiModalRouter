@@ -1,4 +1,4 @@
-package src.PublicTransportRouter.GTFSDataParser;
+package src.PublicTransportRouter.GTFSDataManager;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Routing (Delling et. al., 2015)
 
@@ -681,6 +681,10 @@ public class GTFSDataReaderWriter {
     // Getters of transit timetable data for RAPTOR queries
     public HashMap<String, Route> getRoutes() {
         return this.routes;
+    }
+
+    public HashMap<String, Trip> getTrips() {
+        return this.trips;
     }
 
     public HashMap<String, RouteStop> getRouteStops() {

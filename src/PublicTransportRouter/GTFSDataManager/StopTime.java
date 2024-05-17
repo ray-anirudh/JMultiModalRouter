@@ -1,4 +1,4 @@
-package src.PublicTransportRouter.GTFSDataParser;
+package src.PublicTransportRouter.GTFSDataManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;

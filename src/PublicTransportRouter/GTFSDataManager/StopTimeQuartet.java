@@ -1,4 +1,4 @@
-package src.PublicTransportRouter.GTFSDataParser;
+package src.PublicTransportRouter.GTFSDataManager;
 
 class StopTimeQuartet {
     private int stopSequence;
