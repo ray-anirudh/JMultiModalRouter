@@ -2,7 +2,9 @@ package src.PublicTransportRouter.RAPTOR;
 
 // TODO: CUT OUT ALL IRRELEVANT CODE FROM MANAGER, MAKE THE CODE WATERTIGHT AND ENCAPSULATED
 // TODO: REVISE ALL LOOP CODE TO SPEED IT UP, REVISE MANAGER's DATA STRUCTURES IF NEEDED
+// TODO: RAPTOR TO BE STUFFED INSIDE LOOP OF QUERIES
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import src.PublicTransportRouter.GTFSDataManager.*;
@@ -66,10 +68,12 @@ public class RoutingAlgorithm {
         HashMap<String, StopRoutes> stopRoutes = gtfsDataReaderWriterForRaptor.getStopRoutes();
         HashMap<String, Transfer> transfers = gtfsDataReaderWriterForRaptor.getTransfers();
 
-        // Specify attributes' for routing query
-        String originStopId = "";
-        String destinationStopId = "";
-        int departureTime = 0;
+        // Sourcing all queries for the RAPTOR algorithm
+        QueryReader queryReader = new QueryReader();
+        String queriesFilePath = "";
+        queryReader.readQueryList(queriesFilePath);
+
+        ArrayList<Query> queries = queryReader.getQueries();
 
         // Initialize RAPTOR
         int tripLegNumber = 1;
