@@ -3,12 +3,12 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.HashMap;
 
 public class RouteStop {
-    private HashMap<Integer, String> stopSequenceMap;
+    private HashMap<String, Integer> stopSequenceMap;
     /* The strings here refer to stop IDs, and the integers refer to stop sequences, route IDs are in the relevant
     hashmap
     */
 
-    RouteStop(HashMap<Integer, String> stopSequenceMap) {
+    RouteStop(HashMap<String, Integer> stopSequenceMap) {
         this.stopSequenceMap = stopSequenceMap;
     }
 
@@ -16,11 +16,11 @@ public class RouteStop {
         this(new HashMap<>());  // All values are initialized to nulls and zeroes
     }
 
-    void setStopSequenceMap(HashMap<Integer, String> stopSequenceMap) {
+    void setStopSequenceMap(HashMap<String, Integer> stopSequenceMap) {
         this.stopSequenceMap = stopSequenceMap;
     }
 
-    public HashMap<Integer, String> getStopSequenceMap() {
+    public HashMap<String, Integer> getStopSequenceMap() {
         return this.stopSequenceMap;
     }
 }

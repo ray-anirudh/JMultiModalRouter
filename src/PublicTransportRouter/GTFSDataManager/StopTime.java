@@ -22,7 +22,7 @@ public class StopTime {
         this.tripWiseStopTimeLists = tripWiseStopTimeLists;
     }
 
-    HashMap<String, ArrayList<StopTimeQuartet>> getTripWiseStopTimeLists() {
+    public HashMap<String, ArrayList<StopTimeQuartet>> getTripWiseStopTimeLists() {
         return this.tripWiseStopTimeLists;
     }
 }

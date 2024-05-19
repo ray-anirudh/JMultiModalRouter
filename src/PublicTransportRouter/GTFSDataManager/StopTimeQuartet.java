@@ -1,6 +1,6 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-class StopTimeQuartet {
+public class StopTimeQuartet {
     private int stopSequence;
     private String stopId;
     private int arrivalTime;
@@ -41,7 +41,7 @@ class StopTimeQuartet {
         return this.arrivalTime;
     }
 
-    int getDepartureTime() {
+    public int getDepartureTime() {
         return this.departureTime;
     }
 }

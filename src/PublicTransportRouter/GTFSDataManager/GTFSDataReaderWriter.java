@@ -270,8 +270,8 @@ public class GTFSDataReaderWriter {
                     get(firstTripInRouteId);
 
             for (StopTimeQuartet stopTimeQuartet : stopTimeQuartetList) {
-                this.routeStops.get(routeId).getStopSequenceMap().put(stopTimeQuartet.getStopSequence(),
-                        stopTimeQuartet.getStopId());
+                this.routeStops.get(routeId).getStopSequenceMap().put(stopTimeQuartet.getStopId(),
+                        stopTimeQuartet.getStopSequence());
 
                 if (!this.stops.containsKey(stopTimeQuartet.getStopId())) {
                     Stop stop = new Stop();
@@ -492,11 +492,11 @@ public class GTFSDataReaderWriter {
 
             // Write body based on "routeStops" hashmap
             for (Map.Entry<String, RouteStop> routeStopsMap : this.routeStops.entrySet()) {
-                for (Map.Entry<Integer, String> routeStopEntry : routeStopsMap.getValue().getStopSequenceMap().
+                for (Map.Entry<String, Integer> routeStopEntry : routeStopsMap.getValue().getStopSequenceMap().
                         entrySet()) {
                     String routeId = routeStopsMap.getKey();
-                    int stopSequenceInRoute = routeStopEntry.getKey();
-                    String stopId = routeStopEntry.getValue();
+                    int stopSequenceInRoute = routeStopEntry.getValue();
+                    String stopId = routeStopEntry.getKey();
 
                     raptorRouteStopsWriter.write(routeId + "," + stopSequenceInRoute + "," + stopId + "\n");
                 }
