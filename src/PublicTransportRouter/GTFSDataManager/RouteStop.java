@@ -20,7 +20,7 @@ public class RouteStop {
         this.stopSequenceMap = stopSequenceMap;
     }
 
-    HashMap<Integer, String> getStopSequenceMap() {
+    public HashMap<Integer, String> getStopSequenceMap() {
         return this.stopSequenceMap;
     }
 }

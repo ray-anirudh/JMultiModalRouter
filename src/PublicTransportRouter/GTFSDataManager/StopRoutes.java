@@ -17,7 +17,7 @@ public class StopRoutes {
         this.routeIdList = routeList;
     }
 
-    ArrayList<String> getRouteIdList() {
+    public ArrayList<String> getRouteIdList() {
         return this.routeIdList;
     }
 }
