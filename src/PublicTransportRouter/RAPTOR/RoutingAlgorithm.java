@@ -4,6 +4,7 @@ import src.PublicTransportRouter.GTFSDataManager.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class RoutingAlgorithm {
 
@@ -135,22 +136,40 @@ public class RoutingAlgorithm {
         /* In the method arguments, the arraylist's strings are stop IDs to be iterated over, and the hashmap's keys are
         all stop IDs in the study area, which are mapped to lists of routes for every stop; what is returned is a
         hashmap of routes (string keys), and the stops that led to those routes being selected (string values)
+
+        The second hashmap is for finding the earliest possible stop to hop-on when changing from one route to another
         */
 
         HashMap<String, String> accumulatedRoutesStopsMap = new HashMap<>();
 
-        for(String markedStopId : markedStopsIdsList) {
-            for(String markedStopSpecificRouteId : stopRoutesMap.get(markedStopId).getRouteIdList()) {
+        for(String currentMarkedStopId : markedStopsIdsList) {
+            for (String markedStopSpecificRouteId : stopRoutesMap.get(currentMarkedStopId).getRouteIdList()) {
                 if (accumulatedRoutesStopsMap.containsKey(markedStopSpecificRouteId)) {
-                    HashMap<Integer, String> routeStopMapToCheckStopSequencing = routeStopsMap.
-                            get(markedStopSpecificRouteId).getStopSequenceMap();
-                    String existingStopIdForGivenRouteId = accumulatedRoutesStopsMap.get(markedStopSpecificRouteId);
-                    if(routeStopMapToCheckStopSequencing.values().stream().findAny(existingStopIdForGivenRouteId)) {
+                    String existingStopId = accumulatedRoutesStopsMap.get(markedStopSpecificRouteId);
+                    for (Map.Entry<Integer, String> sequenceExistingStopIdEntry : routeStopsMap.
+                            get(markedStopSpecificRouteId).getStopSequenceMap().entrySet()) {
+                        if (sequenceExistingStopIdEntry.getValue() == existingStopId) {
+                            int existingStopSequence = sequenceExistingStopIdEntry.getKey();
+                            for (Map.Entry<Integer, String> sequenceCurrentStopIdEntry : routeStopsMap.
+                                    get(markedStopSpecificRouteId).getStopSequenceMap().entrySet()) {
+                                if (sequenceCurrentStopIdEntry.getValue() == currentMarkedStopId) {
+                                    int currentStopSequence = sequenceCurrentStopIdEntry.getKey();
 
+                                    if (currentStopSequence < existingStopSequence) {
+                                        accumulatedRoutesStopsMap.replace(markedStopSpecificRouteId,
+                                                currentMarkedStopId);
+                                    }
+                                }
+                            }
+                        }
                     }
+                } else {
+                    accumulatedRoutesStopsMap.put(markedStopSpecificRouteId, currentMarkedStopId);
                 }
             }
         }
+
+        return accumulatedRoutesStopsMap;
     }
 
 }
