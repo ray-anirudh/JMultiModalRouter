@@ -33,11 +33,11 @@ public class StopTimeQuartet {
         return this.stopSequence;
     }
 
-    String getStopId() {
+    public String getStopId() {
         return this.stopId;
     }
 
-    int getArrivalTime() {
+    public int getArrivalTime() {
         return this.arrivalTime;
     }
 

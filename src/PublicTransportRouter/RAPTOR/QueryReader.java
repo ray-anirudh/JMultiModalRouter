@@ -21,7 +21,7 @@ public class QueryReader {
             int destinationStopIdIndex = findIndexInArray("destination_stop_id", queriesHeaderArray);
             int departureTimeIndex = findIndexInArray("departure_time", queriesHeaderArray);
 
-            // Read body and prepare the list of queries
+            // Read body and prepare list of queries
             while((newline = queryReader.readLine()) != null) {
                 String[] queryDataRecord = newline.split(",");
                 String originStopId = queryDataRecord[originStopIdIndex];
