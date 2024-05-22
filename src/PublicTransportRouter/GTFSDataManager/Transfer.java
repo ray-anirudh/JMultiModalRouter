@@ -20,7 +20,7 @@ public class Transfer {
         this.transferMap = transferMap;
     }
 
-    HashMap<String, Integer> getTransferMap() {
+    public HashMap<String, Integer> getTransferMap() {
         return this.transferMap;
     }
 }
