@@ -11,10 +11,6 @@ public class Query {
         this.departureTime = departureTime;
     }
 
-    Query() {
-        this(null, null, 0);
-    }
-
     public String getOriginStopId() {
         return originStopId;
     }

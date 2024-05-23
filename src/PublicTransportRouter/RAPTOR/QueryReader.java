@@ -35,7 +35,7 @@ public class QueryReader {
             System.out.println("Queries read from " + queriesFilePath);
 
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at specified path.");
+            System.out.println("File not found at specified path: " + queriesFilePath);
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check input file: " + queriesFilePath);
         }
@@ -57,5 +57,4 @@ public class QueryReader {
     public ArrayList<Query> getQueries() {
         return this.queries;
     }
-
 }
