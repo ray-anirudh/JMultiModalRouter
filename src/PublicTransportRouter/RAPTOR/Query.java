@@ -15,18 +15,6 @@ public class Query {
         this(null, null, 0);
     }
 
-    public void setOriginStopId(String originStopId) {
-        this.originStopId = originStopId;
-    }
-
-    public void setDestinationStopId(String destinationStopId) {
-        this.destinationStopId = destinationStopId;
-    }
-
-    public void setDepartureTime(int departureTime) {
-        this.departureTime = departureTime;
-    }
-
     public String getOriginStopId() {
         return originStopId;
     }

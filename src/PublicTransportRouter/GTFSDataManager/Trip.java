@@ -13,10 +13,6 @@ public class Trip {
         this(new ArrayList<>());    // All values are initialized to nulls and zeroes
     }
 
-    void setTripList(ArrayList<String> tripList) {
-        this.tripList = tripList;
-    }
-
     ArrayList<String> getTripList() {
         return this.tripList;
     }

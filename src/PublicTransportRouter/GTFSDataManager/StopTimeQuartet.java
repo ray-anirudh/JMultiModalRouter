@@ -13,22 +13,6 @@ public class StopTimeQuartet {
         this.departureTime = departureTime;
     }
 
-    void setStopSequence(int stopSequence) {
-        this.stopSequence = stopSequence;
-    }
-
-    void setStopId(String stopId) {
-        this.stopId = stopId;
-    }
-
-    void setArrivalTime(int arrivalTime) {
-        this.arrivalTime = arrivalTime;
-    }
-
-    void setDepartureTime(int departureTime) {
-        this.departureTime = departureTime;
-    }
-
     int getStopSequence() {
         return this.stopSequence;
     }

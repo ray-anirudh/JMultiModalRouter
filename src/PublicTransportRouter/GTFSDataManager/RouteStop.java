@@ -16,10 +16,6 @@ public class RouteStop {
         this(new HashMap<>());  // All values are initialized to nulls and zeroes
     }
 
-    void setStopSequenceMap(HashMap<String, Integer> stopSequenceMap) {
-        this.stopSequenceMap = stopSequenceMap;
-    }
-
     public HashMap<String, Integer> getStopSequenceMap() {
         return this.stopSequenceMap;
     }

@@ -26,7 +26,7 @@ public class GTFSDataReaderWriter {
     };
 
     // Initialize GMaps API context with the API key of "Anirudh Ray"
-    private GeoApiContext googleGeoApiContext = new GeoApiContext.Builder().
+    private final GeoApiContext googleGeoApiContext = new GeoApiContext.Builder().
             apiKey("Your Google API Key").build();
 
     // Set the constants
@@ -63,10 +63,12 @@ public class GTFSDataReaderWriter {
     needed to reach them
     */
 
-    /** BEHAVIOUR DEFINITIONS */
+    /**
+     * BEHAVIOUR DEFINITIONS
+     */
 
     /**
-     * All readers and dataset manipulators below are for RAPTOR-relevant data, sourced from GTFS files
+     * All readers and dataset manipulators below are for RAPTOR-relevant data, and sourced from GTFS files
      */
 
     // Build the "routes" hashmap
@@ -107,7 +109,7 @@ public class GTFSDataReaderWriter {
             System.out.println("Routes' data read from " + gtfsRoutesFilePath);
 
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at specified path.");
+            System.out.println("File not found at specified path: " + gtfsRoutesFilePath);
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check input file: " + gtfsRoutesFilePath);
         }
@@ -141,7 +143,7 @@ public class GTFSDataReaderWriter {
             System.out.println("Trips' data read from " + gtfsTripsFilePath);
 
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at specified path.");
+            System.out.println("File not found at specified path: " + gtfsTripsFilePath);
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check input file: " + gtfsTripsFilePath);
         }
@@ -192,11 +194,11 @@ public class GTFSDataReaderWriter {
                             departureTimeMinutes);
 
                     for (String routeId : this.stopTimes.keySet()) {
-                        HashMap<String, ArrayList<StopTimeQuartet>> routeSpecificTripWiseStopTimeLists = this.stopTimes.
-                                get(routeId).getTripWiseStopTimeLists();
+                        HashMap<String, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists = this.stopTimes.get(routeId).
+                                getTripWiseStopTimeLists();
 
-                        if (routeSpecificTripWiseStopTimeLists.containsKey(tripId)) {
-                            routeSpecificTripWiseStopTimeLists.get(tripId).add(stopTimeQuartet);
+                        if (tripWiseStopTimeLists.containsKey(tripId)) {
+                            tripWiseStopTimeLists.get(tripId).add(stopTimeQuartet);
                         }
                     }
                 }
@@ -204,9 +206,9 @@ public class GTFSDataReaderWriter {
             System.out.println("Stop times' data read from " + gtfsStopTimesFilePath);
 
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at the specified path.");
+            System.out.println("File not found at the specified path: " + gtfsStopTimesFilePath);
         } catch (IOException iOE) {
-            System.out.println("Check the input file: " + gtfsStopTimesFilePath + "; found an IO exception.");
+            System.out.println("Input-output exception. Please check input file: " + gtfsStopTimesFilePath);
         }
     }
 
@@ -228,7 +230,7 @@ public class GTFSDataReaderWriter {
             entry in the arraylist, then gets the value (ArrayList<StopTimeQuartet>) pertaining to that entry, then gets
             the earliest StopTimeQuartet instance, and then compares using the departure time found there
             */
-            Collections.sort(routeSpecificStopTimeEntryList, Comparator.comparing(entry -> entry.getValue().get(0).
+            routeSpecificStopTimeEntryList.sort(Comparator.comparing(entry -> entry.getValue().get(0).
                     getDepartureTime()));
 
             // Get the sorted entries into a new hashmap
@@ -252,8 +254,8 @@ public class GTFSDataReaderWriter {
     public void padGTFSRoutes() {
         for (String routeId : this.routes.keySet()) {
             this.routes.get(routeId).setNumberTrips(this.stopTimes.get(routeId).getTripWiseStopTimeLists().size());
-            String firstTripInRouteId = new ArrayList<>(this.stopTimes.get(routeId).getTripWiseStopTimeLists().keySet()).
-                    get(0);
+            String firstTripInRouteId = new ArrayList<>(this.stopTimes.get(routeId).getTripWiseStopTimeLists().
+                    keySet()).get(0);
             this.routes.get(routeId).setNumberStops(this.stopTimes.get(routeId).getTripWiseStopTimeLists().
                     get(firstTripInRouteId).size());
         }
@@ -313,12 +315,12 @@ public class GTFSDataReaderWriter {
                     this.stops.replace(stopId, stop);
                 }
             }
-            System.out.println("Stops' hashmap built");
+            System.out.println("Stops' data read from " + gtfsStopsFilePath);
 
         } catch (FileNotFoundException nFNE) {
             System.out.println("File not found at the specified path.");
         } catch (IOException iOE) {
-            System.out.println("Check the input file: " + gtfsStopsFilePath + "; found an IO exception.");
+            System.out.println("Input-output exception. Please check input file: " + gtfsStopsFilePath);
         }
     }
 
@@ -326,14 +328,14 @@ public class GTFSDataReaderWriter {
     public void padStopRoutes() {
         for (String stopId : this.stops.keySet()) {
             StopRoutes stopSpecificRouteIds = new StopRoutes();
-            this.stopRoutes.put(stopId, stopSpecificRouteIds);
 
             for (String routeId : this.routeStops.keySet()) {
-                if (this.routeStops.get(routeId).getStopSequenceMap().containsValue(stopId)) {
+                if (this.routeStops.get(routeId).getStopSequenceMap().containsKey(stopId)) {
                     stopSpecificRouteIds.getRouteIdList().add(routeId);
                 }
             }
-            this.stopRoutes.replace(stopId, stopSpecificRouteIds);
+
+            this.stopRoutes.put(stopId, stopSpecificRouteIds);
         }
         System.out.println("Stop-wise routes' hashmap padded with route IDs");
     }
@@ -365,7 +367,7 @@ public class GTFSDataReaderWriter {
             // Transfer cost between stops with identical latitude-longitude pairs is zero, which is realistic
             this.transfers.put(fromStopId, stopSpecificTransferMap);
 
-            System.out.println("Transfers hashmap built (distance limitation based on equi-rectangular distances)");
+            System.out.println("Transfers hashmap built (time limitation based on equi-rectangular distances)");
         }
     }
 
@@ -382,7 +384,8 @@ public class GTFSDataReaderWriter {
                 int walkingTimeBetweenStops = ((int) (Math.round(calculateWalkingDistance(fromStopLatitude,
                         fromStopLongitude, toStopLatitude, toStopLongitude)) / AVERAGE_WALKING_SPEED_MPS));
 
-                if (walkingTimeBetweenStops <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                if (walkingTimeBetweenStops <= (int) ((Math.round(MAXIMUM_TRANSFER_DISTANCE_M /
+                        AVERAGE_WALKING_SPEED_MPS)))) {
                     this.transfers.get(fromStopId).getTransferMap().replace(toStopId, walkingTimeBetweenStops);
                 } else {
                     this.transfers.get(fromStopId).getTransferMap().remove(toStopId);
@@ -442,7 +445,7 @@ public class GTFSDataReaderWriter {
                                 getStopLatitude(), this.stops.get(fromStopId).getStopLongitude(), this.stops.
                                 get(toStopId).getStopLatitude(), this.stops.get(toStopId).getStopLongitude());
                         this.transfers.get(fromStopId).getTransferMap().put(toStopId, (int) (Math.round(
-                                walkingDistanceBetweenStops)));
+                                walkingDistanceBetweenStops / AVERAGE_WALKING_SPEED_MPS)));
                     }
                 }
             }
@@ -542,11 +545,11 @@ public class GTFSDataReaderWriter {
             raptorStopTimesWriter.write("route_id,trip_id,stop_sequence,stop_id,arrival_time,departure_time\n");
 
             // Write body based on "stopTimes" hashmap
-            for (Map.Entry<String, StopTime> routeSpecificTripWiseStopTimeLists : this.stopTimes.entrySet()) {
-                for (Map.Entry<String, ArrayList<StopTimeQuartet>> tripSpecificStopTimeList :
-                        routeSpecificTripWiseStopTimeLists.getValue().getTripWiseStopTimeLists().entrySet()) {
+            for (Map.Entry<String, StopTime> tripWiseStopTimeLists : this.stopTimes.entrySet()) {
+                for (Map.Entry<String, ArrayList<StopTimeQuartet>> tripSpecificStopTimeList : tripWiseStopTimeLists.
+                        getValue().getTripWiseStopTimeLists().entrySet()) {
                     for (StopTimeQuartet stopTimeQuartet : tripSpecificStopTimeList.getValue()) {
-                        String routeId = routeSpecificTripWiseStopTimeLists.getKey();
+                        String routeId = tripWiseStopTimeLists.getKey();
                         String tripId = tripSpecificStopTimeList.getKey();
                         int stopSequence = stopTimeQuartet.getStopSequence();
                         String stopId = stopTimeQuartet.getStopId();
@@ -605,9 +608,7 @@ public class GTFSDataReaderWriter {
             for (Map.Entry<String, StopRoutes> stopSpecificRoutesList : this.stopRoutes.entrySet()) {
                 for (String routeIdOperatingAtStop : stopSpecificRoutesList.getValue().getRouteIdList()) {
                     String stopId = stopSpecificRoutesList.getKey();
-                    String routeId = routeIdOperatingAtStop;
-
-                    raptorStopRoutesWriter.write(stopId + "," + routeId + "\n");
+                    raptorStopRoutesWriter.write(stopId + "," + routeIdOperatingAtStop + "\n");
                 }
             }
             System.out.println("Stop-wise routes' data written to " + raptorStopRoutesFilePath);

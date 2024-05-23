@@ -13,10 +13,6 @@ public class StopRoutes {
         this(new ArrayList<>());    // All values are initialized to nulls and zeroes
     }
 
-    void setRouteIdList(ArrayList<String> routeList) {
-        this.routeIdList = routeList;
-    }
-
     public ArrayList<String> getRouteIdList() {
         return this.routeIdList;
     }

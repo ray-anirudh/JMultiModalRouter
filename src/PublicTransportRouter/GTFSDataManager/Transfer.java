@@ -16,10 +16,6 @@ public class Transfer {
         this(new HashMap<>());    // All values are initialized to nulls and zeroes
     }
 
-    void setTransferMap(HashMap<String, Integer> transferMap) {
-        this.transferMap = transferMap;
-    }
-
     public HashMap<String, Integer> getTransferMap() {
         return this.transferMap;
     }

@@ -30,7 +30,7 @@ public class QueryReader {
 
                 Query query = new Query(originStopId, destinationStopId, departureTime);
 
-                queries.add(query);
+                this.queries.add(query);
             }
             System.out.println("Queries read from " + queriesFilePath);
 

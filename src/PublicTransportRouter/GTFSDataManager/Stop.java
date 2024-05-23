@@ -19,26 +19,6 @@ public class Stop {
         this(null, null, 0, 0d, 0d);
     }
 
-    void setStopId(String stopId) {
-        this.stopId = stopId;
-    }
-
-    void setStopName(String stopName) {
-        this.stopName = stopName;
-    }
-
-    void setStopType(int stopType) {
-        this.stopType = stopType;
-    }
-
-    void setStopLatitude(double stopLatitude) {
-        this.stopLatitude = stopLatitude;
-    }
-
-    void setStopLongitude(double stopLongitude) {
-        this.stopLongitude = stopLongitude;
-    }
-
     String getStopId() {
         return this.stopId;
     }
