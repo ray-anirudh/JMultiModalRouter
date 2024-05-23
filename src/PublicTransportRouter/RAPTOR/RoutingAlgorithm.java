@@ -77,20 +77,20 @@ public class RoutingAlgorithm {
         queryReader.readQueryList(queriesFilePath);
 
         ArrayList<Query> queries = queryReader.getQueries();
-        HashMap<Query, Integer> shortestTravelTimes = new HashMap<>();
+        HashMap<Query, Double> shortestTravelTimes = new HashMap<>();
 
         // Loop through queries
         for (Query query : queries) {
             String originStopId = query.getOriginStopId();
             String destinationStopId = query.getDestinationStopId();
-            int departureTime = query.getDepartureTime();
+            double departureTime = query.getDepartureTime();
 
             // Initialize RAPTOR for each query
             int tripLegNumber = 1;
-            HashMap<Integer, HashMap<String, Integer>> initialEarliestArrivalTimeMap = new HashMap<>();
-            HashMap<Integer, HashMap<String, Integer>> tripLegWiseEarliestArrivalTimeMap =
+            HashMap<Integer, HashMap<String, Double>> initialEarliestArrivalTimeMap = new HashMap<>();
+            HashMap<Integer, HashMap<String, Double>> tripLegWiseEarliestArrivalTimeMap =
                     initializeTripLegSpecificArrivalTimeMap(tripLegNumber, initialEarliestArrivalTimeMap, stops);
-            HashMap<String, Integer> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
+            HashMap<String, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
 
             // Set origin stop's "earliest arrival time" to "departure time specified for departing from the same stop"
             tripLegWiseEarliestArrivalTimeMap.get(1).replace(originStopId, departureTime);
@@ -125,7 +125,7 @@ public class RoutingAlgorithm {
         }
 
         // Display results
-        for (HashMap.Entry<Query, Integer> queryTravelTimeEntry : shortestTravelTimes.entrySet()) {
+        for (HashMap.Entry<Query, Double> queryTravelTimeEntry : shortestTravelTimes.entrySet()) {
             System.out.println("Origin stop: " + queryTravelTimeEntry.getKey().getOriginStopId() + "\n" +
                     "Destination stop: " + queryTravelTimeEntry.getKey().getDestinationStopId() + "\n" +
                     "Departure time: " + queryTravelTimeEntry.getKey().getDepartureTime() + "\n" +
@@ -136,8 +136,8 @@ public class RoutingAlgorithm {
     /* Initialize algorithm by setting arrival timestamps at all stops for all trip leg numbers to infinity, except the
     one for the origin stop; also initialize a map, and an arraylist for earliest known arrival times
     */
-    private static HashMap<Integer, HashMap<String, Integer>> initializeTripLegSpecificArrivalTimeMap
-    (int tripLegNumber, HashMap<Integer, HashMap<String, Integer>> initialEarliestArrivalTimeMap,
+    private static HashMap<Integer, HashMap<String, Double>> initializeTripLegSpecificArrivalTimeMap
+    (int tripLegNumber, HashMap<Integer, HashMap<String, Double>> initialEarliestArrivalTimeMap,
      HashMap<String, Stop> stops) {
         /* In the above hashmap, external integer keys refer to trip leg numbers, internal string keys to stop IDs, and
         internal integer values to the earliest known arrival times at the pertinent stops; the stop-arrival time pair
@@ -145,10 +145,10 @@ public class RoutingAlgorithm {
         */
 
         if (tripLegNumber == 1) {
-            HashMap<String, Integer> tripLegSpecificEarliestArrivalTimeMap = new HashMap<>();
+            HashMap<String, Double> tripLegSpecificEarliestArrivalTimeMap = new HashMap<>();
             // Strings refer to stop IDs, and integers refer to the pertinent earliest arrival time
             for (String stopId : stops.keySet()) {
-                tripLegSpecificEarliestArrivalTimeMap.put(stopId, Integer.MAX_VALUE);
+                tripLegSpecificEarliestArrivalTimeMap.put(stopId, Double.MAX_VALUE);
             }
             initialEarliestArrivalTimeMap.put(tripLegNumber, tripLegSpecificEarliestArrivalTimeMap);
 
@@ -160,15 +160,15 @@ public class RoutingAlgorithm {
         return initialEarliestArrivalTimeMap;
     }
 
-    private static HashMap<String, Integer> initializeSummaryEarliestArrivalTimeMap(
+    private static HashMap<String, Double> initializeSummaryEarliestArrivalTimeMap(
             HashMap<String, Stop> stops) {
-        HashMap<String, Integer> summaryEarliestArrivalTimeMap = new HashMap<>();
+        HashMap<String, Double> summaryEarliestArrivalTimeMap = new HashMap<>();
         /* String keys refer to stop IDs, and integer values refer to the earliest arrival time at each stop,
         irrespective of the trip leg
         */
 
         for (String stopId : stops.keySet()) {
-            summaryEarliestArrivalTimeMap.put(stopId, Integer.MAX_VALUE);
+            summaryEarliestArrivalTimeMap.put(stopId, (double) Double.MAX_VALUE);
         }
 
         return summaryEarliestArrivalTimeMap;
@@ -215,8 +215,8 @@ public class RoutingAlgorithm {
                                          ArrayList<String> markedStopsIdsList,
                                          HashMap<String, String> accumulatedRoutesFromStopsMap,
                                          HashMap<String, StopTime> stopTimes,
-                                         HashMap<String, Integer> summaryEarliestArrivalTimeMap,
-                                         HashMap<Integer, HashMap<String, Integer>> tripLegWiseEarliestArrivalTimeMap) {
+                                         HashMap<String, Double> summaryEarliestArrivalTimeMap,
+                                         HashMap<Integer, HashMap<String, Double>> tripLegWiseEarliestArrivalTimeMap) {
 
         for (HashMap.Entry<String, String> routeStopPair : accumulatedRoutesFromStopsMap.entrySet()) {
             for (HashMap.Entry<String, ArrayList<StopTimeQuartet>> tripForTraversal : stopTimes.get(routeStopPair.
@@ -245,8 +245,8 @@ public class RoutingAlgorithm {
                                 get(stopTimeQuartet.getStopId()), summaryEarliestArrivalTimeMap.
                                 get(destinationStopId))) {
                             tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopTimeQuartet.
-                                    getStopId(), stopTimeQuartet.getArrivalTime());
-                            summaryEarliestArrivalTimeMap.replace(stopTimeQuartet.getStopId(), stopTimeQuartet.
+                                    getStopId(), (double) stopTimeQuartet.getArrivalTime());
+                            summaryEarliestArrivalTimeMap.replace(stopTimeQuartet.getStopId(), (double) stopTimeQuartet.
                                     getArrivalTime());
                             markedStopsIdsList.add(stopTimeQuartet.getStopId());
                         }
@@ -279,11 +279,11 @@ public class RoutingAlgorithm {
     public static void lookAtFootpaths(int tripLegNumber,
                                        ArrayList<String> markedStopsIdsList,
                                        HashMap<String, Transfer> transfers,
-                                       HashMap<String, Integer> summaryEarliestArrivalTimeMap,
-                                       HashMap<Integer, HashMap<String, Integer>> tripLegWiseEarliestArrivalTimeMap) {
+                                       HashMap<String, Double> summaryEarliestArrivalTimeMap,
+                                       HashMap<Integer, HashMap<String, Double>> tripLegWiseEarliestArrivalTimeMap) {
 
         for (String markedStopId : markedStopsIdsList) {
-            for (HashMap.Entry<String, Integer> transferEntry : transfers.get(markedStopId).getTransferMap().
+            for (HashMap.Entry<String, Double> transferEntry : transfers.get(markedStopId).getTransferMap().
                     entrySet()) {
                 tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(transferEntry.getKey(), Math.min
                         (tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).get(transferEntry.getKey()),

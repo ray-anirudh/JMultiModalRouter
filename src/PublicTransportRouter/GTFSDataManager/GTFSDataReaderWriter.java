@@ -359,8 +359,8 @@ public class GTFSDataReaderWriter {
                 double interStopDistance = Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
 
                 if (interStopDistance <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    stopSpecificTransferMap.getTransferMap().put(toStopId, (int) (Math.round(interStopDistance /
-                            AVERAGE_WALKING_SPEED_MPS)));
+                    stopSpecificTransferMap.getTransferMap().put(toStopId, interStopDistance /
+                            AVERAGE_WALKING_SPEED_MPS);
                 }
             }
 
@@ -374,18 +374,18 @@ public class GTFSDataReaderWriter {
     // Filter out unrealistic "transfers" based on GMaps API calls
     public void filterTransfersHashMap() {
         for (String fromStopId : this.transfers.keySet()) {
-            HashMap<String, Integer> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
+            HashMap<String, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
 
             for (String toStopId : stopSpecificTransferMap.keySet()) {
                 double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
                 double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
-                int walkingTimeBetweenStops = ((int) (Math.round(calculateWalkingDistance(fromStopLatitude,
-                        fromStopLongitude, toStopLatitude, toStopLongitude)) / AVERAGE_WALKING_SPEED_MPS));
+                double walkingTimeBetweenStops = calculateWalkingDistance(fromStopLatitude,
+                        fromStopLongitude, toStopLatitude, toStopLongitude) / AVERAGE_WALKING_SPEED_MPS;
 
-                if (walkingTimeBetweenStops <= (int) ((Math.round(MAXIMUM_TRANSFER_DISTANCE_M /
-                        AVERAGE_WALKING_SPEED_MPS)))) {
+                if (walkingTimeBetweenStops <= Math.round(MAXIMUM_TRANSFER_DISTANCE_M /
+                        AVERAGE_WALKING_SPEED_MPS)) {
                     this.transfers.get(fromStopId).getTransferMap().replace(toStopId, walkingTimeBetweenStops);
                 } else {
                     this.transfers.get(fromStopId).getTransferMap().remove(toStopId);
@@ -444,8 +444,8 @@ public class GTFSDataReaderWriter {
                         double walkingDistanceBetweenStops = calculateWalkingDistance(this.stops.get(fromStopId).
                                 getStopLatitude(), this.stops.get(fromStopId).getStopLongitude(), this.stops.
                                 get(toStopId).getStopLatitude(), this.stops.get(toStopId).getStopLongitude());
-                        this.transfers.get(fromStopId).getTransferMap().put(toStopId, (int) (Math.round(
-                                walkingDistanceBetweenStops / AVERAGE_WALKING_SPEED_MPS)));
+                        this.transfers.get(fromStopId).getTransferMap().put(toStopId, walkingDistanceBetweenStops /
+                                AVERAGE_WALKING_SPEED_MPS);
                     }
                 }
             }
@@ -629,10 +629,10 @@ public class GTFSDataReaderWriter {
 
             // Write body based on "transfers" hashmap
             for (Map.Entry<String, Transfer> transferMap : this.transfers.entrySet()) {
-                for (Map.Entry<String, Integer> transferInstance : transferMap.getValue().getTransferMap().entrySet()) {
+                for (Map.Entry<String, Double> transferInstance : transferMap.getValue().getTransferMap().entrySet()) {
                     String fromStopId = transferMap.getKey();
                     String toStopId = transferInstance.getKey();
-                    int minTransferTime = transferInstance.getValue();
+                    double minTransferTime = transferInstance.getValue();
 
                     raptorTransfersWriter.write(fromStopId + "," + toStopId + "," + minTransferTime + "\n");
                 }
