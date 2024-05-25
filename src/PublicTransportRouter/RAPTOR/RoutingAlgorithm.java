@@ -5,6 +5,9 @@ package src.PublicTransportRouter.RAPTOR;
 // TODO: PRINT RESULT USING STOP NAMES AND ARRIVAL DURATIONS (IN MIN)
 // TODO: IF TRIP IS NOT FOUND THEN VALUE STAYS INFINITY, then nothing needs to be done (handle this at compile time)
 // TODO: Marked stops' arraylist development (only for addition, removal is taken care of already) comes later
+// TODO: NO LOOKUP TABLE, ONLY DYNAMIC ROUTING
+// TODO: HEURISTIC FILTER BUILD
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
