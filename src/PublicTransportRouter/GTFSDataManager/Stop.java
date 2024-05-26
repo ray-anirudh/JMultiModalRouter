@@ -1,14 +1,12 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
 public class Stop {
-    private String stopId;  // Possibly redundant attribute, owing to twinning with pertinent hashmap's keys
-    private String stopName;
+    private String stopName;    // Stop IDs are contained in the pertinent hashmap
     private int stopType;
     private double stopLatitude;
     private double stopLongitude;
 
-    Stop(String stopId, String stopName, int stopType, double stopLatitude, double stopLongitude) {
-        this.stopId = stopId;
+    Stop(String stopName, int stopType, double stopLatitude, double stopLongitude) {
         this.stopName = stopName;
         this.stopType = stopType;
         this.stopLatitude = stopLatitude;
@@ -16,11 +14,7 @@ public class Stop {
     }
 
     Stop() {
-        this(null, null, 0, 0d, 0d);
-    }
-
-    String getStopId() {
-        return this.stopId;
+        this(null, 0, 0d, 0d);
     }
 
     String getStopName() {

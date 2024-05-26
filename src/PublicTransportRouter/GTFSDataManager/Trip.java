@@ -3,17 +3,17 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.ArrayList;
 
 public class Trip {
-    private ArrayList<String> tripList; // Route-specific trip-list; route IDs are in the relevant hashmap
+    private ArrayList<Integer> tripList; // Route-specific trip ID list; route IDs are in the relevant hashmap
 
-    Trip(ArrayList<String> tripList) {
+    Trip(ArrayList<Integer> tripList) {
         this.tripList = tripList;
     }
 
     Trip() {
-        this(new ArrayList<>());    // All values are initialized to nulls and zeroes
+        this(new ArrayList<>());    // All values are initialized to zeroes
     }
 
-    ArrayList<String> getTripList() {
+    ArrayList<Integer> getTripList() {
         return this.tripList;
     }
 }
