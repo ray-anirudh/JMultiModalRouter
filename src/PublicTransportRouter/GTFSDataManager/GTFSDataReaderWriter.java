@@ -51,7 +51,7 @@ public class GTFSDataReaderWriter {
     // Key for "routeStops" hashmap also refers to "route_id" and value pertains to a sequencing of stops on the route
 
     private HashMap<Integer, StopTime> stopTimes = new HashMap<>();
-    // Key for "stopTimes" hashmap also refers to "route_id" and value refers to a hashmap of trip-wise stop-time lists
+    // Key for "stopTimes" hashmap also refers to "route_id" and value refers to a hashmap of trip-wise stop time lists
 
     private HashMap<Integer, Stop> stops = new HashMap<>();
     // Key for "stops" hashmap refers to "stop_id"
