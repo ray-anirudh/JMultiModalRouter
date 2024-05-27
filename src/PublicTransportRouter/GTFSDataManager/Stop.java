@@ -17,7 +17,7 @@ public class Stop {
         this(null, 0, 0d, 0d);
     }
 
-    String getStopName() {
+    public String getStopName() {
         return this.stopName;
     }
 

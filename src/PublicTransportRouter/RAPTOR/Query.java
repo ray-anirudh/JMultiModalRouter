@@ -1,25 +1,28 @@
 package src.PublicTransportRouter.RAPTOR;
 
-public class Query {
-    private String originStopId;
-    private String destinationStopId;
-    private int departureTime;
 
-    Query(String originStopId, String destinationStopId, int departureTime) {
+
+// TODO: REVIEW USEFULNESS
+public class Query {
+    private int originStopId;
+    private int destinationStopId;
+    private int desiredDepartureTime;
+
+    Query(int originStopId, int destinationStopId, int desiredDepartureTime) {
         this.originStopId = originStopId;
         this.destinationStopId = destinationStopId;
-        this.departureTime = departureTime;
+        this.desiredDepartureTime = desiredDepartureTime;
     }
 
-    public String getOriginStopId() {
+    public int getOriginStopId() {
         return originStopId;
     }
 
-    public String getDestinationStopId() {
+    public int getDestinationStopId() {
         return destinationStopId;
     }
 
-    public int getDepartureTime() {
-        return departureTime;
+    public int getDesiredDepartureTime() {
+        return desiredDepartureTime;
     }
 }

@@ -1,5 +1,7 @@
 package src.PublicTransportRouter.RAPTOR;
 
+
+// TODO: REVIEW USEFULNESS
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -24,12 +26,14 @@ public class QueryReader {
             // Read body and prepare list of queries
             while((newline = queryReader.readLine()) != null) {
                 String[] queryDataRecord = newline.split(",");
-                String originStopId = queryDataRecord[originStopIdIndex];
-                String destinationStopId = queryDataRecord[destinationStopIdIndex];
-                int departureTime = Integer.parseInt(queryDataRecord[departureTimeIndex]);
+                int originStopId = Integer.parseInt(queryDataRecord[originStopIdIndex]);
+                int destinationStopId = Integer.parseInt(queryDataRecord[destinationStopIdIndex]);
+                String departureTimeHourString = queryDataRecord[departureTimeIndex].substring(0,2);
+                String departureTimeMinuteString = queryDataRecord[departureTimeIndex].substring(3,5);
+                int departureTime = Integer.parseInt(departureTimeHourString) * 60 + Integer.
+                        parseInt(departureTimeMinuteString);
 
                 Query query = new Query(originStopId, destinationStopId, departureTime);
-
                 this.queries.add(query);
             }
             System.out.println("Queries read from " + queriesFilePath);
@@ -49,7 +53,6 @@ public class QueryReader {
                 columnPosition = i;
             }
         }
-
         return columnPosition;
     }
 
