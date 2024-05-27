@@ -2,14 +2,14 @@ package src.PublicTransportRouter.GTFSDataManager;
 
 import java.util.ArrayList;
 
-public class StopRoutes {
+public class StopRoute {
     private ArrayList<Integer> routeIdList;    // Integer elements are route IDs; stop IDs are in the relevant hashmap
 
-    StopRoutes(ArrayList<Integer> routeIdList) {
+    StopRoute(ArrayList<Integer> routeIdList) {
         this.routeIdList = routeIdList;
     }
 
-    StopRoutes() {
+    StopRoute() {
         this(new ArrayList<>());    // All values are initialized to zeroes
     }
 

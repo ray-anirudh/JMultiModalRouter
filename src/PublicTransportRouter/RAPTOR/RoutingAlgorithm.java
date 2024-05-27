@@ -12,7 +12,7 @@ public class RoutingAlgorithm {
                                                int destinationStopId,
                                                int desiredDepartureTime,
                                                HashMap<Integer, Stop> stops,
-                                               HashMap<Integer, StopRoutes> stopRoutes,
+                                               HashMap<Integer, StopRoute> stopRoutes,
                                                HashMap<Integer, RouteStop> routeStops,
                                                HashMap<Integer, StopTime> stopTimes,
                                                HashMap<Integer, Transfer> transfers) {
@@ -105,7 +105,7 @@ public class RoutingAlgorithm {
 
     // Accumulate routes (and hop-on stops) based on stop IDs and "stopRoutes" hashmap
     private static void accumulateRoutesFromStops(ArrayList<Integer> markedStopsIdsList,
-                                                  HashMap<Integer, StopRoutes> stopRoutes,
+                                                  HashMap<Integer, StopRoute> stopRoutes,
                                                   HashMap<Integer, RouteStop> routeStops,
                                                   HashMap<Integer, Integer> accumulatedRoutesFromStopsMap) {
         /* In the method arguments, the arraylist's integers are stop IDs to be iterated over, and the first hashmap's

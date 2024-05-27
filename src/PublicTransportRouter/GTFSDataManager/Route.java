@@ -1,6 +1,6 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-public class Route {    // Route IDs are captured in the pertinent hashmap
+public class Route {    // Route IDs are present in the pertinent hashmap
     private int numberTrips;
     private int numberStops;
     private int routeType;

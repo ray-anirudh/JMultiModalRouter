@@ -25,7 +25,7 @@ public class Caller {
 //        HashMap<Integer, Trip> trips = gtfsDataReaderWriterForRaptor.getTrips();
 //        HashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRaptor.getStopTimes();
 //        HashMap<Integer, Stop> stops = gtfsDataReaderWriterForRaptor.getStops();
-//        HashMap<Integer, StopRoutes> stopRoutes = gtfsDataReaderWriterForRaptor.getStopRoutes();
+//        HashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRaptor.getStopRoutes();
 //        HashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRaptor.getTransfers();
 
 
