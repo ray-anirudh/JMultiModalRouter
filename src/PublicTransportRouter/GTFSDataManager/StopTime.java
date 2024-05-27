@@ -14,7 +14,7 @@ public class StopTime {
     }
 
     StopTime() {
-        this(new HashMap<>());    // All values are initialized to nulls and zeroes
+        this(new HashMap<>());    // All values are initialized to zeroes
     }
 
     public HashMap<Integer, ArrayList<StopTimeQuartet>> getTripWiseStopTimeLists() {
