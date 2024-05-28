@@ -138,7 +138,7 @@ public class GTFSDataReaderWriter {
                     int tripId = Integer.parseInt(tripDataRecord[tripIdIndex]);
                     this.trips.get(routeId).getTripList().add(tripId);
 
-                    ArrayList<StopTimeQuartet> tripSpecificStopTimeList = new ArrayList<>();
+                    HashMap<Integer, StopTimeTriplet> tripSpecificStopTimeList = new HashMap<>();
                     this.stopTimes.get(routeId).getTripWiseStopTimeLists().put(tripId, tripSpecificStopTimeList);
                 }
             }
@@ -176,6 +176,7 @@ public class GTFSDataReaderWriter {
             while ((newline = gtfsStopTimesReader.readLine()) != null) {
                 String[] stopTimeDataRecord = newline.split(",");
                 int tripId = Integer.parseInt(stopTimeDataRecord[tripIdIndex]);
+
                 if (tripIdHashSet.contains(tripId)) {
                     int stopId = Integer.parseInt(stopTimeDataRecord[stopIdIndex]);
 
@@ -192,15 +193,15 @@ public class GTFSDataReaderWriter {
                     int departureTimeMinutes = Integer.parseInt(departureTimeHourString) * 60 +
                             Integer.parseInt(departureTimeMinuteString);
 
-                    StopTimeQuartet stopTimeQuartet = new StopTimeQuartet(stopSequence, stopId, arrivalTimeMinutes,
+                    StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
 
                     for (int routeId : this.stopTimes.keySet()) {
-                        HashMap<Integer, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists = this.stopTimes.
+                        HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeLists = this.stopTimes.
                                 get(routeId).getTripWiseStopTimeLists();
 
                         if (tripWiseStopTimeLists.containsKey(tripId)) {
-                            tripWiseStopTimeLists.get(tripId).add(stopTimeQuartet);
+                            tripWiseStopTimeLists.get(tripId).put(stopId, stopTimeTriplet);
                         }
                     }
                 }
@@ -220,25 +221,26 @@ public class GTFSDataReaderWriter {
             // Get the StopTime instance that needs to be sorted internally
             StopTime stopTime = this.stopTimes.get(routeId);
 
-            // Get the exact hashmap containing the integer-object pairs of trip IDs and stop time quartet lists
-            HashMap<Integer, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists = stopTime.getTripWiseStopTimeLists();
+            // Get the exact hashmap containing the integer-hashmap pairs of trip IDs and stop time quartet lists
+            HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeLists = stopTime.
+                    getTripWiseStopTimeLists();
 
-            // Get the aforementioned integer-object pairs into a list
-            ArrayList<HashMap.Entry<Integer, ArrayList<StopTimeQuartet>>> tripWiseStopTimeEntryList =
+            // Get the aforementioned integer-hashmap pairs into a list
+            ArrayList<HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>>> tripWiseStopTimeEntryList =
                     new ArrayList<>(tripWiseStopTimeLists.entrySet());
 
-            /* Sort the achieved arraylist of aforementioned integer-object pairs using a comparator that gets every
-            entry in the arraylist, then gets the value (ArrayList<StopTimeQuartet>) pertaining to that entry, then gets
-            the earliest StopTimeQuartet instance, and then compares using the departure time found there
+            /* Sort the achieved arraylist of aforementioned integer-hashmap pairs using a comparator that gets every
+            entry in the arraylist, then gets the value (HashMap<Integer, StopTimeTriplet>) pertaining to that entry,
+            then gets the earliest StopTimeTriplet instance, and then compares using the departure time found there
             */
-            tripWiseStopTimeEntryList.sort(Comparator.comparing(entry -> entry.getValue().get(0).getDepartureTime()));
+            tripWiseStopTimeEntryList.sort(Comparator.comparing(entry -> entry.getValue().values().iterator().next().
+                    getDepartureTime()));
 
             // Get the sorted entries into a new hashmap
-            HashMap<Integer, ArrayList<StopTimeQuartet>> sortedTripWiseStopTimeLists = new HashMap<>();
-            for (HashMap.Entry<Integer, ArrayList<StopTimeQuartet>> tripSpecificStopTimeList :
+            HashMap<Integer, HashMap<Integer, StopTimeTriplet>> sortedTripWiseStopTimeLists = new HashMap<>();
+            for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeList :
                     tripWiseStopTimeEntryList) {
-                sortedTripWiseStopTimeLists.put(tripSpecificStopTimeList.getKey(),
-                        tripSpecificStopTimeList.getValue());
+                sortedTripWiseStopTimeLists.put(tripSpecificStopTimeList.getKey(), tripSpecificStopTimeList.getValue());
             }
 
             // Create a StopTime instance that is sorted internally now
@@ -254,34 +256,39 @@ public class GTFSDataReaderWriter {
     public void padGTFSRoutes() {
         for (int routeId : this.routes.keySet()) {
             this.routes.get(routeId).setNumberTrips(this.stopTimes.get(routeId).getTripWiseStopTimeLists().size());
-            int firstTripInRouteId = new ArrayList<>(this.stopTimes.get(routeId).getTripWiseStopTimeLists().
-                    keySet()).get(0);
-            this.routes.get(routeId).setNumberStops(this.stopTimes.get(routeId).getTripWiseStopTimeLists().
-                    get(firstTripInRouteId).size());
+            int sizeOfTripWithMaxStops = -1;
+
+            for (int tripIdForComparison : this.stopTimes.get(routeId).getTripWiseStopTimeLists().keySet()) {
+                if (this.stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripIdForComparison).size() >
+                        sizeOfTripWithMaxStops) {
+                    sizeOfTripWithMaxStops = this.stopTimes.get(routeId).getTripWiseStopTimeLists().
+                            get(tripIdForComparison).size();
+                }
+            }
+            this.routes.get(routeId).setNumberStops(sizeOfTripWithMaxStops);
         }
         System.out.println("Routes' hashmap padded with data on numbers of trips and stops");
     }
 
-    // Build the "routeStops" hashmap and structure the "stops" hashmap
+    // Build the "routeStops" hashmap and structure the "stops", "stopRoutes", and "transfers" hashmaps
     public void padGTFSRouteStops() {
-        for (int routeId : this.stopTimes.keySet()) {
-            StopTime tripWiseStopTimeLists = this.stopTimes.get(routeId);
-            int firstTripInRouteId = new ArrayList<>(this.stopTimes.get(routeId).getTripWiseStopTimeLists().keySet()).
-                    get(0);
-            ArrayList<StopTimeQuartet> stopTimeQuartetList = tripWiseStopTimeLists.getTripWiseStopTimeLists().
-                    get(firstTripInRouteId);
+        for (HashMap.Entry<Integer, StopTime> stopTime : this.stopTimes.entrySet()) {
+            for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeEntryList : stopTime.
+                    getValue().getTripWiseStopTimeLists().entrySet()) {
 
-            for (StopTimeQuartet stopTimeQuartet : stopTimeQuartetList) {
-                this.routeStops.get(routeId).getStopSequenceMap().put(stopTimeQuartet.getStopId(),
-                        stopTimeQuartet.getStopSequence());
-
-                if (!this.stops.containsKey(stopTimeQuartet.getStopId())) {
-                    Stop stop = new Stop();
-                    StopRoute stopRoute = new StopRoute();
-                    Transfer transfer = new Transfer();
-                    this.stops.put(stopTimeQuartet.getStopId(), stop);
-                    this.stopRoutes.put(stopTimeQuartet.getStopId(), stopRoute);
-                    this.transfers.put(stopTimeQuartet.getStopId(), transfer);
+                for (int stopId : tripSpecificStopTimeEntryList.getValue().keySet()) {
+                    if (!this.routeStops.get(stopTime.getKey()).getStopSequenceMap().containsKey(stopId)) {
+                        this.routeStops.get(stopTime.getKey()).getStopSequenceMap().put(stopId,
+                                tripSpecificStopTimeEntryList.getValue().get(stopId).getStopSequence());
+                    }
+                    if (!this.stops.containsKey(stopId)) {
+                        Stop stop = new Stop();
+                        StopRoute stopRoute = new StopRoute();
+                        Transfer transfer = new Transfer();
+                        this.stops.put(stopId, stop);
+                        this.stopRoutes.put(stopId, stopRoute);
+                        this.transfers.put(stopId, transfer);
+                    }
                 }
             }
         }
@@ -417,8 +424,11 @@ public class GTFSDataReaderWriter {
         // For hashmaps "routes", "trips", "routeStops", and "stopTimes"
         for (int routeId : this.stopTimes.keySet()) {
             for (int tripId : this.stopTimes.get(routeId).getTripWiseStopTimeLists().keySet()) {
-                this.stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).removeIf(stopTimeQuartet ->
-                        !this.stops.containsKey(stopTimeQuartet.getStopId()));
+                for (int stopId : this.stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).keySet()) {
+                    if (!this.stops.containsKey(stopId)) {
+                        this.stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).remove(stopId);
+                    }
+                }
 
                 if (this.stopTimes.get(routeId).getTripWiseStopTimeLists().get(tripId).isEmpty()) {
                     this.stopTimes.get(routeId).getTripWiseStopTimeLists().remove(tripId);
@@ -550,17 +560,18 @@ public class GTFSDataReaderWriter {
             for (HashMap.Entry<Integer, StopTime> tripWiseStopTimeLists : this.stopTimes.entrySet()) {
                 int routeId = tripWiseStopTimeLists.getKey();
 
-                for (HashMap.Entry<Integer, ArrayList<StopTimeQuartet>> tripSpecificStopTimeList : tripWiseStopTimeLists
-                        .getValue().getTripWiseStopTimeLists().entrySet()) {
+                for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeList :
+                        tripWiseStopTimeLists.getValue().getTripWiseStopTimeLists().entrySet()) {
                     int tripId = tripSpecificStopTimeList.getKey();
 
-                    for (StopTimeQuartet stopTimeQuartet : tripSpecificStopTimeList.getValue()) {
-                        int stopSequence = stopTimeQuartet.getStopSequence();
-                        int stopId = stopTimeQuartet.getStopId();
-                        String arrivalTime = stopTimeQuartet.getArrivalTime() / 60 + ":" +
-                                stopTimeQuartet.getArrivalTime() % 60;
-                        String departureTime = stopTimeQuartet.getDepartureTime() / 60 + ":" +
-                                stopTimeQuartet.getDepartureTime() % 60;
+                    for (HashMap.Entry<Integer, StopTimeTriplet> stopTimeTriplet : tripSpecificStopTimeList.getValue().
+                            entrySet()) {
+                        int stopSequence = stopTimeTriplet.getValue().getStopSequence();
+                        int stopId = stopTimeTriplet.getKey();
+                        String arrivalTime = stopTimeTriplet.getValue().getArrivalTime() / 60 + ":" +
+                                stopTimeTriplet.getValue().getArrivalTime() % 60;
+                        String departureTime = stopTimeTriplet.getValue().getDepartureTime() / 60 + ":" +
+                                stopTimeTriplet.getValue().getDepartureTime() % 60;
 
                         raptorStopTimesWriter.write(routeId + "," + tripId + "," + stopSequence + "," + stopId +
                                 "," + arrivalTime + "," + departureTime + "\n");
@@ -608,14 +619,15 @@ public class GTFSDataReaderWriter {
             BufferedWriter raptorStopRoutesWriter = new BufferedWriter(new FileWriter(raptorStopRoutesFilePath));
 
             // Set up header array
-            raptorStopRoutesWriter.write("stop_id,route_id\n");
+            raptorStopRoutesWriter.write("stop_id,stop_name,route_id\n");
 
             // Write body based on "stopRoutes" hashmap
             for (HashMap.Entry<Integer, StopRoute> stopSpecificRoutesList : this.stopRoutes.entrySet()) {
                 int stopId = stopSpecificRoutesList.getKey();
+                String stopName = this.stops.get(stopId).getStopName();
 
                 for (int routeIdOperatingAtStop : stopSpecificRoutesList.getValue().getRouteIdList()) {
-                    raptorStopRoutesWriter.write(stopId + "," + routeIdOperatingAtStop + "\n");
+                    raptorStopRoutesWriter.write(stopId + "," + stopName + "," + routeIdOperatingAtStop + "\n");
                 }
             }
             System.out.println("Stop-wise routes' data written to " + raptorStopRoutesFilePath);

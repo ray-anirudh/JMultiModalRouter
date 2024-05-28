@@ -1,15 +1,14 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class StopTime {
-    private HashMap<Integer, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists;
+    private HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeLists;
     /* Integer keys refer to trip IDs within a route; overarching route IDs are in the pertinent hashmap
-    ArrayList has actual stop times
+    Internal hashmap has actual stop IDs mapped to arrival and departure times, as well as stop sequences
     */
 
-    StopTime(HashMap<Integer, ArrayList<StopTimeQuartet>> tripWiseStopTimeLists) {
+    StopTime(HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeLists) {
         this.tripWiseStopTimeLists = tripWiseStopTimeLists;
     }
 
@@ -17,7 +16,7 @@ public class StopTime {
         this(new HashMap<>());    // All values are initialized to zeroes
     }
 
-    public HashMap<Integer, ArrayList<StopTimeQuartet>> getTripWiseStopTimeLists() {
+    public HashMap<Integer, HashMap<Integer, StopTimeTriplet>> getTripWiseStopTimeLists() {
         return this.tripWiseStopTimeLists;
     }
 }

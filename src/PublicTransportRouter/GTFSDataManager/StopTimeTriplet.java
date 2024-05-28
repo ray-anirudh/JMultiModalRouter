@@ -1,24 +1,18 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-public class StopTimeQuartet {
+public class StopTimeTriplet {
     private int stopSequence;
-    private int stopId;
     private int arrivalTime;
     private int departureTime;
 
-    StopTimeQuartet(int stopSequence, int stopId, int arrivalTime, int departureTime) {
+    StopTimeTriplet(int stopSequence, int arrivalTime, int departureTime) {
         this.stopSequence = stopSequence;
-        this.stopId = stopId;
         this.arrivalTime = arrivalTime;
         this.departureTime = departureTime;
     }
 
-    int getStopSequence() {
+    public int getStopSequence() {
         return this.stopSequence;
-    }
-
-    public int getStopId() {
-        return this.stopId;
     }
 
     public int getArrivalTime() {

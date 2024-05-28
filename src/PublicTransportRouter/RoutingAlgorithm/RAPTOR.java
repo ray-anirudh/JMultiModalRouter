@@ -1,6 +1,10 @@
 package src.PublicTransportRouter.RoutingAlgorithm;
 
 // TODO: VELOCIRAPTORRRRR
+// TODO: AVOID USAGE OF ROUTESTOPS and STOPROUTES AT ALL COSTS, USE STOPTIMES FOR ERROR AVOIDANCE (MISSING STOPS AND EXTRA STOPS ISSUE)
+// TODO: HOW TO FIX A DEPARTURE AT 23:59 USING THIS VERY CLASS
+// TODO: CHECK STOPPING CONDITION AND BEYOND FIRST-LEG ITERATIONS FO SHO AND ALSO OVERALL LOOPING STRUCTURE
+// TODO: DONT TRAVERSE ROUTES, TRAVERSE STOPTIME AND TRIPS TO AVOID THE UNIDIRECTIONAL PROBLEM
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,28 +22,24 @@ public class RAPTOR {
                                           HashMap<Integer, Transfer> transfers) {
         // Initialize RAPTOR
         int tripLegNumber = 1;
-        HashMap<Integer, HashMap<Integer, Double>> initialEarliestArrivalTimeMap = new HashMap<>();
-        HashMap<Integer, HashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
-                initializeTripLegSpecificArrivalTimeMap(tripLegNumber, initialEarliestArrivalTimeMap, stops);
+        HashMap<Integer, HashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap = new HashMap<>();
         HashMap<Integer, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
-
-        // Set origin stop's "earliest arrival time" to "desired departure time"
-        tripLegWiseEarliestArrivalTimeMap.get(1).replace(originStopId, (double) desiredDepartureTime);
         summaryEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
 
-        // Add the origin stop to the list of marked stops, for the first round of route scans
+        // Add the origin stop to the list of marked stops, only for the first round of route scans
         ArrayList<Integer> markedStops = new ArrayList<>();
         markedStops.add(originStopId);
         HashMap<Integer, Integer> routesServingMarkedStops = new HashMap<>();
 
         // Core RAPTOR loops
-        while (!markedStops.isEmpty()) {     // TODO: CHECK STOPPING CONDITION
-            /* Accumulate routes (route IDs) serving marked stops (stop IDs), and add another earliest arrival time map
-            (accumulation of routes empties the marked stops list)
-            */
+        while (!markedStops.isEmpty()) {
+            // Initialize trip-leg specific earliest arrival time map
+            initializeTripLegSpecificArrivalTimeMap(tripLegNumber, originStopId, desiredDepartureTime,
+                    tripLegWiseEarliestArrivalTimeMap, stops);
+
             routesServingMarkedStops.clear();
+            // Accumulate routes serving the marked stops (empties the list of marked stops)
             accumulateRoutesFromStops(markedStops, stopRoutes, routeStops, routesServingMarkedStops);
-            initializeTripLegSpecificArrivalTimeMap(tripLegNumber, tripLegWiseEarliestArrivalTimeMap, stops);
 
             // Traverse each route
             traverseEachRoute(destinationStopId, tripLegNumber, markedStops, routesServingMarkedStops,
@@ -66,30 +66,31 @@ public class RAPTOR {
                 earliestArrivalMinuteAtDestination + "\n");
     }
 
-    /* Initialize algorithm by setting arrival timestamps at all stops for all trip leg numbers to infinity, except the
-    one for the origin stop
+    /* Initialize algorithm by setting arrival timestamps at all stops (except the origin stop) for all trip leg numbers
+    to infinity
     */
-    private HashMap<Integer, HashMap<Integer, Double>> initializeTripLegSpecificArrivalTimeMap
-    (int tripLegNumber,
-     HashMap<Integer, HashMap<Integer, Double>> initialEarliestArrivalTimeMap,
-     HashMap<Integer, Stop> stops) {
-        /* In the above hashmap, external integer keys refer to trip leg numbers, internal integer keys to stop IDs, and
-        internal decimal values to the earliest known arrival times at the corresponding stops; the stop-arrival time
-        pair is repeatedly built for every trip leg number iteration, in the external code
+    private void initializeTripLegSpecificArrivalTimeMap (int tripLegNumber,
+                                                          int originStopId,
+                                                          int desiredDepartureTime,
+                                                          HashMap<Integer, HashMap<Integer, Double>>
+                                                                  previousEarliestArrivalTimeMap,
+                                                          HashMap<Integer, Stop> stops) {
+        /* In the method argument's hashmap, external integer keys refer to trip leg numbers, internal integer keys to
+        stop IDs, and internal decimal values to the earliest known arrival times at the corresponding stops; the
+        stop-arrival time pair is repeatedly built for every trip leg number iteration, in the external code
         */
-
         if (tripLegNumber == 1) {
-            HashMap<Integer, Double> tripLegSpecificEarliestArrivalTimeMap = new HashMap<>();
-            // Keys refer to stop IDs, and values refer to the corresponding earliest arrival times
+            HashMap<Integer, Double> firstEarliestArrivalTimeMap = new HashMap<>();
+            // Keys refer to stop IDs, and values refer to corresponding earliest arrival times
             for (int stopId : stops.keySet()) {
-                tripLegSpecificEarliestArrivalTimeMap.put(stopId, Double.MAX_VALUE);
+                firstEarliestArrivalTimeMap.put(stopId, Double.MAX_VALUE);
             }
-            initialEarliestArrivalTimeMap.put(tripLegNumber, tripLegSpecificEarliestArrivalTimeMap);
+            firstEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
+            previousEarliestArrivalTimeMap.put(tripLegNumber, firstEarliestArrivalTimeMap);
         } else {
             // Replicate earliest arrival times reported in previous iterations
-            initialEarliestArrivalTimeMap.put(tripLegNumber, initialEarliestArrivalTimeMap.get(tripLegNumber - 1));
+            previousEarliestArrivalTimeMap.put(tripLegNumber, previousEarliestArrivalTimeMap.get(tripLegNumber - 1));
         }
-        return initialEarliestArrivalTimeMap;
     }
 
     // Initialize a summary map for the earliest known arrival time at each stop
@@ -103,16 +104,16 @@ public class RAPTOR {
         return summaryEarliestArrivalTimeMap;
     }
 
-    // Accumulate routes (and hop-on stops) based on marked stops' IDs and "stopRoutes" hashmap
-    private static void accumulateRoutesFromStops(ArrayList<Integer> markedStops,
-                                                  HashMap<Integer, StopRoute> stopRoutes,
-                                                  HashMap<Integer, RouteStop> routeStops,
-                                                  HashMap<Integer, Integer> routesServingMarkedStops) {
+    // Accumulate routes and hop-on stops based on marked stops' IDs and "stopRoutes" hashmap
+    private void accumulateRoutesFromStops(ArrayList<Integer> markedStops,
+                                           HashMap<Integer, StopRoute> stopRoutes,
+                                           HashMap<Integer, RouteStop> routeStops,
+                                           HashMap<Integer, Integer> routesServingMarkedStops) {
         /* In the method arguments, the arraylist's integers are stop IDs to be iterated over, and the first hashmap's
         keys are all stop IDs in the study area, which are mapped to lists of routes (one for every stop); the second
         hashmap is for finding the earliest possible stop to hop-on when changing from one route to another
 
-        The last hashmap is modified in this method, which then outputs routes to be traversed in RAPTOR
+        The last hashmap is modified in this method, which then contains routes to be traversed in RAPTOR
         */
 
         for (int currentMarkedStopId : markedStops) {
@@ -145,11 +146,13 @@ public class RAPTOR {
                                          HashMap<Integer, HashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap) {
 
         for (HashMap.Entry<Integer, Integer> routeStopPair : accumulatedRoutesFromStopsMap.entrySet()) {
+            StopTime stopTimeForTripFinding = stopTimes.get(routeStopPair.getKey());
+
             int indexToStartTraversal = routeStops.get(routeStopPair.getKey()).getStopSequenceMap().get(routeStopPair.
                     getValue()) - 1;
 
             int tripIdForTraversal = -1;
-            for (HashMap.Entry<Integer, ArrayList<StopTimeQuartet>> tripConsideredForTraversal : stopTimes.
+            for (HashMap.Entry<Integer, ArrayList<StopTimeTriplet>> tripConsideredForTraversal : stopTimes.
                     get(routeStopPair.getKey()).getTripWiseStopTimeLists().entrySet()) {
 
                 if (tripConsideredForTraversal.getValue().get(indexToStartTraversal).getDepartureTime() >
@@ -162,29 +165,29 @@ public class RAPTOR {
 
             for (int traversalIndex = indexToStartTraversal; traversalIndex <= stopTimes.get(routeStopPair.getKey()).
                     getTripWiseStopTimeLists().get(tripIdForTraversal).size() - 1; traversalIndex++) {
-                StopTimeQuartet stopTimeQuartet = stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeLists().
+                StopTimeTriplet stopTimeTriplet = stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeLists().
                         get(tripIdForTraversal).get(traversalIndex);
 
-                if (stopTimeQuartet.getArrivalTime() < Math.min(summaryEarliestArrivalTimeMap.get(routeStopPair.
+                if (stopTimeTriplet.getArrivalTime() < Math.min(summaryEarliestArrivalTimeMap.get(routeStopPair.
                         getValue()), summaryEarliestArrivalTimeMap.get(destinationStopId))) {
-                    tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopTimeQuartet.getStopId(),
-                            (double) stopTimeQuartet.getArrivalTime());
-                    summaryEarliestArrivalTimeMap.replace(stopTimeQuartet.getStopId(),
-                            (double) stopTimeQuartet.getArrivalTime());
-                    markedStopsIdsList.add(stopTimeQuartet.getStopId());
+                    tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopTimeTriplet.getStopId(),
+                            (double) stopTimeTriplet.getArrivalTime());
+                    summaryEarliestArrivalTimeMap.replace(stopTimeTriplet.getStopId(),
+                            (double) stopTimeTriplet.getArrivalTime());
+                    markedStopsIdsList.add(stopTimeTriplet.getStopId());
                 }
 
                 /* Check to see if an earlier trip can be found at the concerned stop (check does not apply to first
                 trip leg, as it is certain that no earlier trips could be caught at any of the iterated over stops)
                 */
                 if (tripLegNumber > 1) {
-                    if (tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber - 1).get(stopTimeQuartet.getStopId()) <
-                            stopTimeQuartet.getArrivalTime()) {
+                    if (tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber - 1).get(stopTimeTriplet.getStopId()) <
+                            stopTimeTriplet.getArrivalTime()) {
 
-                        for (HashMap.Entry<Integer, ArrayList<StopTimeQuartet>> newTripConsideredForTraversal :
+                        for (HashMap.Entry<Integer, ArrayList<StopTimeTriplet>> newTripConsideredForTraversal :
                                 stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeLists().entrySet()) {
                             if (newTripConsideredForTraversal.getValue().get(traversalIndex).getDepartureTime() >
-                                    summaryEarliestArrivalTimeMap.get(stopTimeQuartet.getStopId())) {
+                                    summaryEarliestArrivalTimeMap.get(stopTimeTriplet.getStopId())) {
                                 tripIdForTraversal = newTripConsideredForTraversal.getKey();
                                 break;
                             }
