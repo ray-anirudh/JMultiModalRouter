@@ -117,7 +117,7 @@ public class RAPTOR {
         */
 
         for (int currentMarkedStopId : markedStops) {
-            for (int markedStopSpecificRouteId : stopRoutes.get(currentMarkedStopId).getRouteIdList()) {
+            for (int markedStopSpecificRouteId : stopRoutes.get(currentMarkedStopId).getRouteList()) {
 
                 if (routesServingMarkedStops.containsKey(markedStopSpecificRouteId)) {
                     int existingMarkedStopId = routesServingMarkedStops.get(markedStopSpecificRouteId);
@@ -153,7 +153,7 @@ public class RAPTOR {
 
             int tripIdForTraversal = -1;
             for (HashMap.Entry<Integer, ArrayList<StopTimeTriplet>> tripConsideredForTraversal : stopTimes.
-                    get(routeStopPair.getKey()).getTripWiseStopTimeLists().entrySet()) {
+                    get(routeStopPair.getKey()).getTripWiseStopTimeMaps().entrySet()) {
 
                 if (tripConsideredForTraversal.getValue().get(indexToStartTraversal).getDepartureTime() >
                         summaryEarliestArrivalTimeMap.get(tripConsideredForTraversal.getValue().
@@ -164,8 +164,8 @@ public class RAPTOR {
             }
 
             for (int traversalIndex = indexToStartTraversal; traversalIndex <= stopTimes.get(routeStopPair.getKey()).
-                    getTripWiseStopTimeLists().get(tripIdForTraversal).size() - 1; traversalIndex++) {
-                StopTimeTriplet stopTimeTriplet = stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeLists().
+                    getTripWiseStopTimeMaps().get(tripIdForTraversal).size() - 1; traversalIndex++) {
+                StopTimeTriplet stopTimeTriplet = stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeMaps().
                         get(tripIdForTraversal).get(traversalIndex);
 
                 if (stopTimeTriplet.getArrivalTime() < Math.min(summaryEarliestArrivalTimeMap.get(routeStopPair.
@@ -185,7 +185,7 @@ public class RAPTOR {
                             stopTimeTriplet.getArrivalTime()) {
 
                         for (HashMap.Entry<Integer, ArrayList<StopTimeTriplet>> newTripConsideredForTraversal :
-                                stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeLists().entrySet()) {
+                                stopTimes.get(routeStopPair.getKey()).getTripWiseStopTimeMaps().entrySet()) {
                             if (newTripConsideredForTraversal.getValue().get(traversalIndex).getDepartureTime() >
                                     summaryEarliestArrivalTimeMap.get(stopTimeTriplet.getStopId())) {
                                 tripIdForTraversal = newTripConsideredForTraversal.getKey();

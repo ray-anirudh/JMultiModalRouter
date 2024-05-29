@@ -3,7 +3,9 @@ package src.PublicTransportRouter.GTFSDataManager;
 public class Route {    // Route IDs are present in the pertinent hashmap
     private int numberTrips;
     private int numberStops;
+    // Maximum number of stops on the route, from amongst all trips operating on the route
     private int routeType;
+    // Refer to: https://gtfs.org/de/schedule/reference/#routestxt
 
     Route(int numberTrips, int numberStops, int routeType) {
         this.numberTrips = numberTrips;
