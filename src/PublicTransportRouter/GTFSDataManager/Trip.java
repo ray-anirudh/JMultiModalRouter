@@ -3,7 +3,7 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.ArrayList;
 
 public class Trip {
-    private ArrayList<Integer> tripList; // Route-specific trip ID list; route IDs are present in the relevant hashmap
+    private final ArrayList<Integer> tripList; // Route-specific trip ID list; route IDs are present in the relevant hashmap
 
     Trip(ArrayList<Integer> tripList) {
         this.tripList = tripList;

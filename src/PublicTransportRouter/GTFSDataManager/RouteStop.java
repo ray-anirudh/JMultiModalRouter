@@ -3,10 +3,9 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.HashMap;
 
 public class RouteStop {
-    private HashMap<Integer, HashMap<Integer, Integer>> directionWiseStopSequenceMap;
-    /* External keys refer to route directions, internal keys refer to stop IDs, and internal values refer to stop
-    sequences
-    */
+    private final HashMap<Integer, HashMap<Integer, Integer>> directionWiseStopSequenceMap;
+    // External keys refer to route directions, internal keys refer to stop IDs, and internal values to stop sequences
+
     RouteStop(HashMap<Integer, HashMap<Integer, Integer>> directionWiseStopSequenceMap) {
         this.directionWiseStopSequenceMap = directionWiseStopSequenceMap;
     }

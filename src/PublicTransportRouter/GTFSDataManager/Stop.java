@@ -2,7 +2,8 @@ package src.PublicTransportRouter.GTFSDataManager;
 
 public class Stop {
     private String stopName;    // Stop IDs are contained in the pertinent hashmap
-    private int stopType;   // Ascribed via route type information
+    private int stopType;
+    // Ascribed via route type information (Refer to: https://gtfs.org/de/schedule/reference/#routestxt)
     private double stopLatitude;
     private double stopLongitude;
 

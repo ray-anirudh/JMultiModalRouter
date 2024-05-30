@@ -3,7 +3,7 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.HashMap;
 
 public class Transfer {
-    private HashMap<Integer, Double> transferMap;
+    private final HashMap<Integer, Double> transferMap;
     /* Keys refer to destination stops' IDs, and values refer to minimum transfer times; origin stop IDs are keys of
     the pertinent hashmap
     */

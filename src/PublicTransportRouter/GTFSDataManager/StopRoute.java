@@ -3,7 +3,7 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.util.ArrayList;
 
 public class StopRoute {
-    private ArrayList<Integer> routeList;    // Integer elements are route IDs; stop IDs are in the relevant hashmap
+    private final ArrayList<Integer> routeList;    // Integer elements are route IDs; stop IDs are in the relevant hashmap
 
     StopRoute(ArrayList<Integer> routeList) {
         this.routeList = routeList;
