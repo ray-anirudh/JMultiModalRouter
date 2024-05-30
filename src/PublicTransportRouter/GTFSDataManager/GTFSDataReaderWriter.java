@@ -253,7 +253,7 @@ public class GTFSDataReaderWriter {
                     next().getDepartureTime()));
 
             // Get the sorted entries into a new hashmap
-            HashMap<Integer, HashMap<Integer, StopTimeTriplet>> sortedTripWiseStopTimeMaps = new HashMap<>();
+            LinkedHashMap<Integer, HashMap<Integer, StopTimeTriplet>> sortedTripWiseStopTimeMaps = new LinkedHashMap<>();
             for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                     tripWiseStopTimeEntryList) {
                 sortedTripWiseStopTimeMaps.put(tripSpecificStopTimeMap.getKey(), tripSpecificStopTimeMap.getValue());
