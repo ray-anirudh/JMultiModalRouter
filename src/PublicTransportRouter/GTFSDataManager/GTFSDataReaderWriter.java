@@ -209,9 +209,9 @@ public class GTFSDataReaderWriter {
                     StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
 
-                    for (int routeId : this.stopTimes.keySet()) {
-                        HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = this.stopTimes.
-                                get(routeId).getTripWiseStopTimeMaps();
+                    for (StopTime stopTime : this.stopTimes.values()) {
+                        HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTime.
+                                getTripWiseStopTimeMaps();
 
                         if (tripWiseStopTimeMaps.containsKey(tripId)) {
                             tripWiseStopTimeMaps.get(tripId).put(stopId, stopTimeTriplet);
@@ -259,7 +259,8 @@ public class GTFSDataReaderWriter {
                     next().getDepartureTime()));
 
             // Get the sorted entries into a new hashmap
-            LinkedHashMap<Integer, HashMap<Integer, StopTimeTriplet>> sortedTripWiseStopTimeMaps = new LinkedHashMap<>();
+            LinkedHashMap<Integer, HashMap<Integer, StopTimeTriplet>> sortedTripWiseStopTimeMaps = new
+                    LinkedHashMap<>();
             for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                     tripWiseStopTimeEntryList) {
                 sortedTripWiseStopTimeMaps.put(tripSpecificStopTimeMap.getKey(), tripSpecificStopTimeMap.getValue());
@@ -276,16 +277,15 @@ public class GTFSDataReaderWriter {
 
     // Complete the "routes" hashmap
     public void padGTFSRoutes() {
-        for (int routeId : this.routes.keySet()) {
+        for (HashMap.Entry<Integer, StopTime> stopTimeEntry : this.stopTimes.entrySet()) {
             int sizeOfTripWithMaxStops = -1;
-            for (int tripIdConsidered : this.stopTimes.get(routeId).getTripWiseStopTimeMaps().keySet()) {
-                if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripIdConsidered).size() >
-                        sizeOfTripWithMaxStops) {
-                    sizeOfTripWithMaxStops = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().
-                            get(tripIdConsidered).size();
+            for (HashMap.Entry<Integer, HashMap<Integer, StopTimeTriplet>> tripConsidered : stopTimeEntry.getValue().
+                    getTripWiseStopTimeMaps().entrySet()) {
+                if (tripConsidered.getValue().size() > sizeOfTripWithMaxStops) {
+                    sizeOfTripWithMaxStops = tripConsidered.getValue().size();
                 }
             }
-            this.routes.get(routeId).setNumberStops(sizeOfTripWithMaxStops);
+            this.routes.get(stopTimeEntry.getKey()).setNumberStops(sizeOfTripWithMaxStops);
         }
         System.out.println("Routes' hashmap padded with data on numbers of trips and stops");
     }
@@ -301,6 +301,7 @@ public class GTFSDataReaderWriter {
                 if (tripConsideredForDirectionOne.getValue().size() == this.routes.get(stopTime.getKey()).
                         getNumberStops()) {
                     tripIdDirectionOne = tripConsideredForDirectionOne.getKey();
+                    break;
                 }
             }
 
@@ -311,6 +312,7 @@ public class GTFSDataReaderWriter {
                         iterator().next(), stopTime.getValue().getTripWiseStopTimeMaps().get(tripIdDirectionOne).
                         keySet().iterator().next()))) {
                     tripIdDirectionTwo = tripConsideredForDirectionTwo.getKey();
+                    break;
                 }
             }
 
@@ -355,7 +357,9 @@ public class GTFSDataReaderWriter {
                 int stopId = Integer.parseInt(stopDataRecord[stopIdIndex]);
 
                 if (this.stops.containsKey(stopId)) {
-                    String stopName = stopDataRecord[stopNameIndex];
+                    String stopName = stopDataRecord[stopNameIndex].substring(0, 1).equalsIgnoreCase("\"") ?
+                            stopDataRecord[stopNameIndex].substring(1, stopDataRecord[stopNameIndex].length() - 1) :
+                            stopDataRecord[stopNameIndex];
                     int stopType = -1;
                     double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex]);
                     double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex]);
@@ -378,11 +382,11 @@ public class GTFSDataReaderWriter {
         for (int stopId : this.stopRoutes.keySet()) {
             StopRoute stopSpecificRouteList = new StopRoute();
 
-            for (int routeId : this.routeStops.keySet()) {
-                if ((this.routeStops.get(routeId).getDirectionWiseStopSequenceMap().get(1).containsKey(stopId)) ||
-                this.routeStops.get(routeId).getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
-                    stopSpecificRouteList.getRouteList().add(routeId);
-                    int stopType = this.routes.get(routeId).getRouteType();
+            for (HashMap.Entry<Integer, RouteStop> routeStopEntry : this.routeStops.entrySet()) {
+                if ((routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(1).containsKey(stopId)) ||
+                routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
+                    stopSpecificRouteList.getRouteList().add(routeStopEntry.getKey());
+                    int stopType = this.routes.get(routeStopEntry.getKey()).getRouteType();
                     this.stops.get(stopId).setStopType(stopType);
                 }
             }

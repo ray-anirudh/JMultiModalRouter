@@ -1,10 +1,15 @@
 package src.PublicTransportRouter.RoutingAlgorithm;
+// todo: Remember Waldperlach and Putzbrunn null pointer exception possibilities
 
-// TODO: VELOCIRAPTORRRRR DESPITE THE SEQUENCING BS
-// TODO: AVOID USAGE OF ROUTESTOPS and STOPROUTES AT ALL COSTS, USE STOPTIMES FOR ERROR AVOIDANCE (MISSING STOPS AND EXTRA STOPS ISSUE)
-// TODO: HOW TO FIX A DEPARTURE AT 23:59 USING THIS VERY CLASS
+// TODO: VELOCIRAPTORRRRR DESPITE THE SEQUENCING BS (VELOCIRAPTOR IS RAZOR SHARP AND SUPERFAST FOR BIPOINT QUERIES)
+// TODO: AVOID USAGE OF ROUTESTOPS and STOPROUTES, USE STOPTIMES FOR ERROR AVOIDANCE (MISSING STOPS AND EXTRA STOPS ISSUE)
+// TODO: HOW TO FIX A DEPARTURE AT 23:59 USING THIS VERY CLASS (NOT JUST DEPARTURES, BUT ALSO ITERATED OVER ARRIVAL TIMES)
+
 // TODO: CHECK STOPPING CONDITION AND BEYOND FIRST-LEG ITERATIONS FO SHO AND ALSO OVERALL LOOPING STRUCTURE
-// TODO: DONT TRAVERSE ROUTES, TRAVERSE STOPTIME AND TRIPS TO AVOID THE UNIDIRECTIONAL PROBLEM
+// TODO: DONT TRAVERSE ROUTES, TRAVERSE STOPTIME AND TRIPS TO AVOID THE BIDIRECTIONAL PROBLEM AND ROUTEID SHARING ISSUES AND SHORT TRIP IDS
+// TODO: FOR FASTER LOOKUPS, BUILD TRAVERSAL, BUT WITH SAFETY NETS FOR ROUTESTOPS AND STOPROUTES
+
+// TODO: QUERY PARSING TO PEERFECT INPUT TYPES MUST HAPPEN IN THE CALLER, AND NOT HERE, OR IN THE QUERY CODE (SUCH AS LOCATING STOP AND THEN HOMING IN ON THE STOPIDS)
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +25,9 @@ public class RAPTOR {
                                           HashMap<Integer, Stop> stops,
                                           HashMap<Integer, StopRoute> stopRoutes,
                                           HashMap<Integer, Transfer> transfers) {
+        String output = "A valid public transport path does not exist between " + stops.get(originStopId).getStopName()
+                + " and " + stops.get(destinationStopId).getStopName() + " at the specified departure time.";
+
         // Initialize RAPTOR
         int tripLegNumber = 1;
         HashMap<Integer, HashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap = new HashMap<>();
@@ -59,11 +67,15 @@ public class RAPTOR {
         double earliestArrivalHourAtDestination = earliestArrivalTimeAtDestination / 60;
         double earliestArrivalMinuteAtDestination = earliestArrivalTimeAtDestination % 60;
 
-        return ("Origin stop: " + stops.get(originStopId).getStopName() + "\n" +
-                "Destination stop: " + stops.get(destinationStopId).getStopName() + "\n" +
-                "Departure time from origin stop: " + desiredDepartureHour + ":" + desiredDepartureMinute + "\n" +
-                "Earliest possible arrival time at destination: " + earliestArrivalHourAtDestination + ":" +
-                earliestArrivalMinuteAtDestination + "\n");
+        if(summaryEarliestArrivalTimeMap.get(destinationStopId) != Double.MAX_VALUE) {
+            output = "Origin stop: " + stops.get(originStopId).getStopName() + "\n" +
+                    "Destination stop: " + stops.get(destinationStopId).getStopName() + "\n" +
+                    "Departure time from origin stop: " + desiredDepartureHour + ":" + desiredDepartureMinute + "\n" +
+                    "Earliest possible arrival time at destination: " + earliestArrivalHourAtDestination + ":" +
+                    earliestArrivalMinuteAtDestination + "\n";
+        }
+
+        return output;
     }
 
     /* Initialize algorithm by setting arrival timestamps at all stops (except the origin stop) for all trip leg numbers
@@ -75,9 +87,9 @@ public class RAPTOR {
                                                           HashMap<Integer, HashMap<Integer, Double>>
                                                                   previousEarliestArrivalTimeMap,
                                                           HashMap<Integer, Stop> stops) {
-        /* In the method argument's hashmap, external integer keys refer to trip leg numbers, internal integer keys to
-        stop IDs, and internal decimal values to the earliest known arrival times at the corresponding stops; the
-        stop-arrival time pair is repeatedly built for every trip leg number iteration, in the external code
+        /* In the method argument's first hashmap, external integer keys refer to trip leg numbers, internal integer
+        keys to stop IDs, and internal decimal values to the known earliest arrival times at the corresponding stops;
+        the stop-arrival time pair is repeatedly built for every trip leg number iteration, in the external code
         */
         if (tripLegNumber == 1) {
             HashMap<Integer, Double> firstEarliestArrivalTimeMap = new HashMap<>();
@@ -88,12 +100,12 @@ public class RAPTOR {
             firstEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
             previousEarliestArrivalTimeMap.put(tripLegNumber, firstEarliestArrivalTimeMap);
         } else {
-            // Replicate earliest arrival times reported in previous iterations
+            // Replicate earliest arrival times reported in previous trip-legs
             previousEarliestArrivalTimeMap.put(tripLegNumber, previousEarliestArrivalTimeMap.get(tripLegNumber - 1));
         }
     }
 
-    // Initialize a summary map for the earliest known arrival time at each stop
+    // Initialize a summary map for the known earliest arrival time at each stop
     private HashMap<Integer, Double> initializeSummaryEarliestArrivalTimeMap(HashMap<Integer, Stop> stops) {
         HashMap<Integer, Double> summaryEarliestArrivalTimeMap = new HashMap<>();
         // Keys refer to stop IDs, and values refer to the earliest arrival time at each stop, irrespective of trip leg
@@ -109,9 +121,9 @@ public class RAPTOR {
                                            HashMap<Integer, StopRoute> stopRoutes,
                                            HashMap<Integer, RouteStop> routeStops,
                                            HashMap<Integer, Integer> routesServingMarkedStops) {
-        /* In the method arguments, the arraylist's integers are stop IDs to be iterated over, and the first hashmap's
-        keys are all stop IDs in the study area, which are mapped to lists of routes (one for every stop); the second
-        hashmap is for finding the earliest possible stop to hop-on when changing from one route to another
+        /* In the method arguments, the arraylist's integers are the stop IDs to be iterated over, and the first
+        hashmap's keys are all stop IDs in the study area, which are mapped to lists of routes (one for every stop); the
+        second hashmap is for finding the earliest possible stop to hop-on when changing from one route to another
 
         The last hashmap is modified in this method, which then contains routes to be traversed in RAPTOR
         */
