@@ -18,11 +18,17 @@ public class GTFSDataReaderWriter {
 
     private static final String[] AGENCY_ID_ARRAY = {
             "21",  // Stadtwerke München
-            "62",  // DB Regio AG Südost
-            "390", // Nahreisezug
+            "40",  // Bayerische Regiobahn
             "54",  // DB Regio AG Bayern
+            "62",  // DB Regio AG Südost
+            "71",  // Bayerische Oberlandbahn
             "75",  // Go-Ahead Bayern GmbH
-            "302"  // DB RegioNetz Verkehrs GmbH Südostbayernbahn
+            "153", // DB RegioBus Bayern
+            "173", // Regionalbus Ostbayern
+            "215", // Münchner Verkehrs- und Tarifverbund
+            "248", // Regionalverkehr Oberbayern
+            "302", // DB RegioNetz Verkehrs GmbH Südostbayernbahn
+            "390"  // Nahreisezug
     };
 
     // Initialize GMaps API context with the API key of "Anirudh Ray"
@@ -381,6 +387,12 @@ public class GTFSDataReaderWriter {
                 }
             }
             this.stopRoutes.replace(stopId, stopSpecificRouteList);
+
+            if (this.stopRoutes.get(stopId).getRouteList().isEmpty()) {
+                this.stops.remove(stopId);
+                this.stopRoutes.remove(stopId);
+                this.transfers.remove(stopId);
+            }
         }
         System.out.println("Stop-wise routes' hashmap padded with route IDs, and stop types ascribed from route types");
     }
