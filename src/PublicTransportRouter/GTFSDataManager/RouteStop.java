@@ -1,20 +1,20 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class RouteStop {
-    private final HashMap<Integer, HashMap<Integer, Integer>> directionWiseStopSequenceMap;
+    private final LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> directionWiseStopSequenceMap;
     // External keys refer to route directions, internal keys refer to stop IDs, and internal values to stop sequences
 
-    RouteStop(HashMap<Integer, HashMap<Integer, Integer>> directionWiseStopSequenceMap) {
+    RouteStop(LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> directionWiseStopSequenceMap) {
         this.directionWiseStopSequenceMap = directionWiseStopSequenceMap;
     }
 
     RouteStop() {
-        this(new HashMap<>());  // All values are initialized to zeroes
+        this(new LinkedHashMap<>());  // All values are initialized to zeroes
     }
 
-    public HashMap<Integer, HashMap<Integer, Integer>> getDirectionWiseStopSequenceMap() {
+    public LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> getDirectionWiseStopSequenceMap() {
         return this.directionWiseStopSequenceMap;
     }
 }

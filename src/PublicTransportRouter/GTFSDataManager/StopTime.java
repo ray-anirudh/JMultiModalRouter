@@ -1,22 +1,22 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class StopTime {
-    private final HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps;
+    private final LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps;
     /* Integer keys refer to trip IDs within a route; overarching route IDs are in the pertinent hashmap
     Internal hashmap has actual stop IDs mapped to arrival and departure times, as well as stop sequences
     */
 
-    StopTime(HashMap<Integer, HashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps) {
+    StopTime(LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps) {
         this.tripWiseStopTimeMaps = tripWiseStopTimeMaps;
     }
 
     StopTime() {
-        this(new HashMap<>());    // All values are initialized to zeroes
+        this(new LinkedHashMap<>());    // All values are initialized to zeroes
     }
 
-    public HashMap<Integer, HashMap<Integer, StopTimeTriplet>> getTripWiseStopTimeMaps() {
+    public LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> getTripWiseStopTimeMaps() {
         return this.tripWiseStopTimeMaps;
     }
 }
