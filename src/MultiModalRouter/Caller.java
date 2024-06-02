@@ -7,7 +7,7 @@ public class Caller {
 
 
 //// Display results
-//        for (HashMap.Entry<Query, Double> queryTravelTimeEntry : shortestTravelTimes.entrySet()) {
+//        for (HashMap.Entry<TransitQuery, Double> queryTravelTimeEntry : shortestTravelTimes.entrySet()) {
 //        System.out.println("Origin stop: " + queryTravelTimeEntry.getKey().getOriginStopId() + "\n" +
 //        "Destination stop: " + queryTravelTimeEntry.getKey().getDestinationStopId() + "\n" +
 //        "Departure time: " + queryTravelTimeEntry.getKey().getDepartureTime() + "\n" +
@@ -79,7 +79,25 @@ public class Caller {
 //        gtfsDataReaderWriterForRaptor.writeRaptorTransfers(raptorTransfersFilePath);
 //    }
 
+/*
+    int desiredDepartureHour = desiredDepartureTime / 60;
+    int desiredDepartureMinute = desiredDepartureTime % 60;
 
+    double earliestArrivalTimeAtDestination = summaryEarliestArrivalTimeMap.get(destinationStopId);
+    double earliestArrivalHourAtDestination = earliestArrivalTimeAtDestination / 60;
+    double earliestArrivalMinuteAtDestination = earliestArrivalTimeAtDestination % 60;
+    double travelTime = summaryEarliestArrivalTimeMap.get(destinationStopId) - desiredDepartureTime;
+    double travelTimeHour = travelTime / 60;
+    double travelTimeMinute = travelTime % 60;
+
+    output = "Origin stop: " + stops.get(originStopId).getStopName() + "\n" +
+            "Destination stop: " + stops.get(destinationStopId).getStopName() + "\n" +
+            "Departure time from origin stop: " + desiredDepartureHour + ":" + desiredDepartureMinute + "\n" +
+            "Earliest possible arrival time at destination: " + (int) earliestArrivalHourAtDestination + ":" +
+            (int) earliestArrivalMinuteAtDestination + "\n" +
+            "Travel time: " + travelTimeHour + ":" + travelTimeMinute + "\n";
+
+            */
 
     //           shortestTravelTimes.put(query, summaryEarliestArrivalTimeMap.get(destinationStopId));
 

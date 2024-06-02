@@ -1,7 +1,7 @@
 package src.MultiModalRouter;
 
 
-// TODO: REVIEW USEFULNESS
+// TODO: REVIEW USEFULNESS and parse desired dep time to int values
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class QueryReader {
-    private ArrayList<Query> queries = new ArrayList<>();
+    private ArrayList<TransitQuery> queries = new ArrayList<>();
 
     public void readQueryList(String queriesFilePath) {
         try {
@@ -33,8 +33,8 @@ public class QueryReader {
                 int departureTime = Integer.parseInt(departureTimeHourString) * 60 + Integer.
                         parseInt(departureTimeMinuteString);
 
-                Query query = new Query(originStopId, destinationStopId, departureTime);
-                this.queries.add(query);
+                TransitQuery transitQuery = new TransitQuery(originStopId, destinationStopId, departureTime);
+                this.queries.add(transitQuery);
             }
             System.out.println("Queries read from " + queriesFilePath);
 
@@ -57,7 +57,7 @@ public class QueryReader {
     }
 
     // Getter for queries
-    public ArrayList<Query> getQueries() {
+    public ArrayList<TransitQuery> getQueries() {
         return this.queries;
     }
 }

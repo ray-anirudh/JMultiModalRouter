@@ -45,7 +45,9 @@ public class GTFSDataReaderWriter {
     private static final double EARTH_RADIUS_M = 6371000D;
     private static final int MAXIMUM_TRANSFER_DISTANCE_M = 300;    // (Gritsch, 2024) and (Tischner, 2018)
     private static final double AVERAGE_WALKING_SPEED_MPS = 1.4D;   // (Gritsch, 2024)
-    private static final double SECONDS_IN_MINUTES = 60D;
+    private static final double SECONDS_IN_MINUTE = 60D;
+    private static final int MINUTES_IN_HOUR = 60;
+    private static final int MINUTES_IN_DAY = 1440;
 
     // Initialize the RAPTOR-relevant hashmaps
     private final LinkedHashMap<Integer, Route> routes = new LinkedHashMap<>();
@@ -200,13 +202,13 @@ public class GTFSDataReaderWriter {
 
                     String arrivalTimeHourString = stopTimeDataRecord[arrivalTimeIndex].substring(0, 2);
                     String arrivalTimeMinuteString = stopTimeDataRecord[arrivalTimeIndex].substring(3, 5);
-                    int arrivalTimeMinutes = Integer.parseInt(arrivalTimeHourString) * 60 +
-                            Integer.parseInt(arrivalTimeMinuteString);
+                    int arrivalTimeMinutes = (Integer.parseInt(arrivalTimeHourString) * MINUTES_IN_HOUR +
+                            Integer.parseInt(arrivalTimeMinuteString)) % 1440;
 
                     String departureTimeHourString = stopTimeDataRecord[departureTimeIndex].substring(0, 2);
                     String departureTimeMinuteString = stopTimeDataRecord[departureTimeIndex].substring(3, 5);
-                    int departureTimeMinutes = Integer.parseInt(departureTimeHourString) * 60 +
-                            Integer.parseInt(departureTimeMinuteString);
+                    int departureTimeMinutes = (Integer.parseInt(departureTimeHourString) * MINUTES_IN_HOUR +
+                            Integer.parseInt(departureTimeMinuteString)) % 1440;
 
                     StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
@@ -427,7 +429,7 @@ public class GTFSDataReaderWriter {
                     */
                     if (fromStopId != toStopId) {
                         stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialDistanceM /
-                                (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTES));
+                                (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
                     }
                 }
             }
@@ -451,7 +453,7 @@ public class GTFSDataReaderWriter {
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                     stopSpecificTransferMap.replace(toStopId, interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_MPS *
-                            SECONDS_IN_MINUTES));
+                            SECONDS_IN_MINUTE));
                 } else {
                     stopSpecificTransferMap.remove(toStopId);
                 }
@@ -512,9 +514,11 @@ public class GTFSDataReaderWriter {
                                 get(toStopId).getStopLatitude(), this.stops.get(toStopId).getStopLongitude());
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTES));
+                                    (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
                         } else {
-                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, Double.MAX_VALUE);
+                            // Penalize unrealistic transfers
+                            final double ARBITRARY_HIGH_TRANSFER_COST = 1000000D;
+                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, ARBITRARY_HIGH_TRANSFER_COST);
                         }
                     }
                 }
@@ -734,7 +738,7 @@ public class GTFSDataReaderWriter {
     private double calculateWalkingDistance(double fromStopLatitude, double fromStopLongitude, double toStopLatitude,
                                             double toStopLongitude) {
         try {
-            // Query GMaps Directions API for walking route
+            // TransitQuery GMaps Directions API for walking route
             DirectionsResult result = DirectionsApi.newRequest(GOOGLE_GEO_API_CONTEXT)
                     .origin(new com.google.maps.model.LatLng(fromStopLatitude, fromStopLongitude))
                     .destination(new com.google.maps.model.LatLng(toStopLatitude, toStopLongitude))

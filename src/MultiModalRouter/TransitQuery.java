@@ -1,17 +1,14 @@
 package src.MultiModalRouter;
 
-
-
-// TODO: REVIEW USEFULNESS
-public class Query {
+public class TransitQuery {
     private int originStopId;
     private int destinationStopId;
-    private int desiredDepartureTime;
+    private int desiredDepartureTimeMinutes;
 
-    Query(int originStopId, int destinationStopId, int desiredDepartureTime) {
+    TransitQuery(int originStopId, int destinationStopId, int desiredDepartureTimeMinutes) {
         this.originStopId = originStopId;
         this.destinationStopId = destinationStopId;
-        this.desiredDepartureTime = desiredDepartureTime;
+        this.desiredDepartureTimeMinutes = desiredDepartureTimeMinutes;
     }
 
     public int getOriginStopId() {
@@ -22,7 +19,7 @@ public class Query {
         return destinationStopId;
     }
 
-    public int getDesiredDepartureTime() {
-        return desiredDepartureTime;
+    public int getDesiredDepartureTimeMinutes() {
+        return desiredDepartureTimeMinutes;
     }
 }
