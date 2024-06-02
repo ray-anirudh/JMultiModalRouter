@@ -10,6 +10,8 @@ import com.google.maps.model.TravelMode;
 import java.io.*;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GTFSDataReaderWriter {
 
     /**
@@ -748,7 +750,7 @@ public class GTFSDataReaderWriter {
     }
 
     // Index finder by column name strings
-    private int findIndexInArray(String columnHeaderName, String[] headerArray) {
+    private int findIndexInArray(String columnHeaderName, @NotNull String[] headerArray) {
         int columnPosition = -1;
         for (int i = 0; i <= headerArray.length; i++) {
             if (headerArray[i].equalsIgnoreCase(columnHeaderName)) {
