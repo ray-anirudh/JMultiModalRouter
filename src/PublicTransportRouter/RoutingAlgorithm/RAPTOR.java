@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.NotNull;
+
 import src.MultiModalRouter.TransitQuery;
 import src.PublicTransportRouter.GTFSDataManager.*;
 
@@ -33,10 +34,12 @@ public class RAPTOR {
 
         // Initialize RAPTOR
         int tripLegNumber = 1;
-        LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
-                new LinkedHashMap<>();
         LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
         summaryEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
+
+        // Create an empty trip-leg wise earliest arrival time map
+        LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
+                new LinkedHashMap<>();
 
         // Add the origin stop to the list of marked stops, only for the first round of route scans
         ArrayList<Integer> markedStops = new ArrayList<>();
@@ -45,7 +48,7 @@ public class RAPTOR {
 
         // Core RAPTOR loops
         while (!markedStops.isEmpty()) {
-            // Initialize trip-leg specific earliest arrival time map
+            // Initialize trip-leg specific earliest arrival time map inside the trip-leg wise map
             initializeTripLegSpecificArrivalTimeMap(tripLegNumber, originStopId, desiredDepartureTime,
                     tripLegWiseEarliestArrivalTimeMap, stops);
 
@@ -82,7 +85,7 @@ public class RAPTOR {
     }
 
     /* Initialize algorithm by setting arrival timestamps at all stops (except the origin stop) for all trip leg numbers
-    to infinity
+    to the maximum possible double value
     */
     private void initializeTripLegSpecificArrivalTimeMap (int tripLegNumber,
                                                           int originStopId,

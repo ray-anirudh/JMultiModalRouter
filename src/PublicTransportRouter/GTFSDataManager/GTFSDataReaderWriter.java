@@ -7,10 +7,10 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.TravelMode;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class GTFSDataReaderWriter {
 
