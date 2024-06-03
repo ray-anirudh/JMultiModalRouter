@@ -133,36 +133,37 @@ public class RAPTOR {
         hashmap's keys are all stop IDs in the study area, which are mapped to lists of routes (one for every stop); the
         second hashmap is for finding the earliest possible stop to hop-on when changing from one route to another
 
-        The last hashmap is modified in this method, which then contains routes to be traversed in RAPTOR
+        The last hashmap is modified in this method, which then contains routes to be traversed in RAPTOR, appended with
+        directional identifiers 111 or 222, based on the direction they serve
         */
 
         for (int markedStopId : markedStops) {
             for (int markedStopBasedRouteId : stopRoutes.get(markedStopId).getRouteList()) {
+                LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> routeStopConsidered = routeStops.
+                        get(markedStopBasedRouteId).getDirectionWiseStopSequenceMap();
 
-                if (routesServingMarkedStops.containsKey(markedStopBasedRouteId)) {
-                    int preexistingStopId = routesServingMarkedStops.get(markedStopBasedRouteId);
+                String directionalRouteId = String.valueOf(markedStopBasedRouteId);
+                if (routeStopConsidered.get(1).containsKey(markedStopId)) {
+                    directionalRouteId = directionalRouteId + "111111";     // Pay attention during stopTime traversals
+                } else if (routeStopConsidered.get(2).containsKey(markedStopId)) {
+                    directionalRouteId = directionalRouteId + "222222";     // Pay attention during stopTime traversals
+                }
 
-                    LinkedHashMap<Integer, Integer> routeBasedStopSequenceDirectionOne = routeStops.
-                            get(markedStopBasedRouteId).getDirectionWiseStopSequenceMap().get(1);
-                    LinkedHashMap<Integer, Integer> routeBasedStopSequenceDirectionTwo = routeStops.
-                            get(markedStopBasedRouteId).getDirectionWiseStopSequenceMap().get(2);
+                int directionalRouteIdInt = Integer.parseInt(directionalRouteId);
+                int directionId = Integer.parseInt(directionalRouteId.substring(directionalRouteId.
+                        length() - 1));
+
+                LinkedHashMap<Integer, Integer> directionalStopSequence = routeStopConsidered.get(directionId);
+
+                if (routesServingMarkedStops.containsKey(directionalRouteIdInt)) {
+                    int preexistingStopId = routesServingMarkedStops.get(directionalRouteIdInt);
 
                     // Traversal must begin at the earliest-sequenced stop on a route (characteristic of direction)
-                    if ((routeBasedStopSequenceDirectionOne.containsKey(preexistingStopId)) &&
-                            (routeBasedStopSequenceDirectionOne.containsKey(markedStopId))) {
-                        if (routeBasedStopSequenceDirectionOne.get(markedStopId) < routeBasedStopSequenceDirectionOne.
-                                get(preexistingStopId)) {
-                            routesServingMarkedStops.replace(markedStopBasedRouteId, markedStopId);
-                        }
-                    } else if (routeBasedStopSequenceDirectionTwo.containsKey(preexistingStopId) &&
-                            routeBasedStopSequenceDirectionTwo.containsKey(markedStopId)) {
-                        if (routeBasedStopSequenceDirectionTwo.get(markedStopId) < routeBasedStopSequenceDirectionTwo.
-                                get(preexistingStopId)) {
-                            routesServingMarkedStops.replace(markedStopBasedRouteId, markedStopId);
-                        }
+                    if (directionalStopSequence.get(markedStopId) < directionalStopSequence.get(preexistingStopId)) {
+                        routesServingMarkedStops.replace(directionalRouteIdInt, markedStopId);
                     }
                 } else {
-                    routesServingMarkedStops.put(markedStopBasedRouteId, markedStopId);
+                    routesServingMarkedStops.put(directionalRouteIdInt, markedStopId);
                 }
             }
         }
