@@ -144,9 +144,9 @@ public class RAPTOR {
 
                 String directionalRouteId = String.valueOf(markedStopBasedRouteId);
                 if (routeStopConsidered.get(1).containsKey(markedStopId)) {
-                    directionalRouteId = directionalRouteId + "111111";     // Pay attention during stopTime traversals
+                    directionalRouteId = directionalRouteId + "111";     // Pay attention during stopTime traversals
                 } else if (routeStopConsidered.get(2).containsKey(markedStopId)) {
-                    directionalRouteId = directionalRouteId + "222222";     // Pay attention during stopTime traversals
+                    directionalRouteId = directionalRouteId + "222";     // Pay attention during stopTime traversals
                 }
 
                 int directionalRouteIdInt = Integer.parseInt(directionalRouteId);
@@ -174,101 +174,118 @@ public class RAPTOR {
     public static void traverseEachRoute(int destinationStopId,
                                          int tripLegNumber,
                                          ArrayList<Integer> markedStops,
-                                         @NotNull LinkedHashMap<Integer, Integer> accumulatedRoutesFromStopsMap,
+                                         @NotNull LinkedHashMap<Integer, Integer> routesServingMarkedStops,
                                          LinkedHashMap<Integer, StopTime> stopTimes,
                                          LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap,
                                          LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                                  tripLegWiseEarliestArrivalTimeMap) {
 
-        for (HashMap.Entry<Integer, Integer> routeStopPair : accumulatedRoutesFromStopsMap.entrySet()) {
-            LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
-                    get(routeStopPair.getKey()).getTripWiseStopTimeMaps();
+        // TODO: CHECK THAT TRIP TRAVERSAL IS BASED ON STOP ID ALSO
+        // TODO: Check which round does what uodates what and so on; also check logic and speed and watertighting
+        // TODO: Check for 1440 exceeding trips
+        for (HashMap.Entry<Integer, Integer> routeStopPair : routesServingMarkedStops.entrySet()) {
 
+            // Get parameters of the route-stop pair
+            String routeIdStr = String.valueOf(routeStopPair.getKey());
+            int routeId = Integer.parseInt(routeIdStr.substring(0, routeIdStr.length() - 3));
+            int stopId = routeStopPair.getValue();
+
+            // Determine the pertinent trip
             int tripIdForTraversal = -1;
+            LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
+                    get(routeId).getTripWiseStopTimeMaps();
+
             for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                     tripWiseStopTimeMaps.entrySet()) {
-
-                StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(routeStopPair.getValue());
-                if ((stopTimeTriplet != null) && (stopTimeTriplet.getDepartureTime() >= (summaryEarliestArrivalTimeMap.
-                        get(routeStopPair.getValue()) % 1440))) {
-                    tripIdForTraversal = tripSpecificStopTimeMap.getKey();
-                    break;
+                StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
+                if (stopTimeTriplet != null) {
+                    if (stopTimeTriplet.getDepartureTime() >= summaryEarliestArrivalTimeMap.get(stopId) % 1440) {
+                        tripIdForTraversal = tripSpecificStopTimeMap.getKey();
+                        break;
+                    }
                 }
             }
 
-            LinkedHashMap<Integer, StopTimeTriplet> tripBeingTraversed = tripWiseStopTimeMaps.get(tripIdForTraversal);
-            Iterator<HashMap.Entry<Integer, StopTimeTriplet>> tripIterator = tripBeingTraversed.entrySet().iterator();
+            if (tripIdForTraversal != -1) {
+                LinkedHashMap<Integer, StopTimeTriplet> tripBeingTraversed = tripWiseStopTimeMaps.
+                        get(tripIdForTraversal);
+                Iterator<HashMap.Entry<Integer, StopTimeTriplet>> tripIterator = tripBeingTraversed.entrySet().
+                        iterator();
 
-            double previousArrivalTime = -1;
-            while (tripIterator.hasNext()) {
-                HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
-                if (stopTimeTripletEntry.getKey().equals(routeStopPair.getValue())) {
-                    previousArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
-                    break;
+                // TODO: See to the 1440+ issue
+                // double previousArrivalTime = -1;
+                while (tripIterator.hasNext()) {
+                    HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
+                    if (stopTimeTripletEntry.getKey().equals(stopId)) {
+                        // previousArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
+                        break;
+                    }
                 }
-            }
 
-            while (tripIterator.hasNext()) {
-                HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
-                double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
+                while (tripIterator.hasNext()) {
+                    HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
+                    int currentStopId = stopTimeTripletEntry.getKey();
+                    double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
 
-                if (previousArrivalTime < currentArrivalTime) {
-                    if (currentArrivalTime < Math.min(summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.getKey()),
-                            summaryEarliestArrivalTimeMap.get(destinationStopId))) {
-                        // Update earliest arrival time map for all trip legs
-                        tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopTimeTripletEntry.getKey(),
-                                currentArrivalTime);
+                    // if (previousArrivalTime < currentArrivalTime) {
+                        if (currentArrivalTime < Math.min(summaryEarliestArrivalTimeMap.get(currentStopId),
+                                summaryEarliestArrivalTimeMap.get(destinationStopId))) {
+                            // Update master earliest arrival time map
+                            tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(currentStopId,
+                                    currentArrivalTime);
 
-                        // Update earliest arrival time summary map
-                        summaryEarliestArrivalTimeMap.replace(stopTimeTripletEntry.getKey(), currentArrivalTime);
-
-                        // Update list of marked stops
-                        markedStops.add(stopTimeTripletEntry.getKey());
-                        previousArrivalTime = currentArrivalTime;
-                    } else {
-                        double minutesToBeAddedForCurrentStop = 0;
-                        if (summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.getKey()) > 2880) {
-                            minutesToBeAddedForCurrentStop = 2880;
-                        } else if (summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.getKey()) > 1440) {
-                            minutesToBeAddedForCurrentStop = 1440;
-                        }
-
-                        double minutesToBeAddedForDestinationStop = 0;
-                        if (summaryEarliestArrivalTimeMap.get(destinationStopId) > 2880) {
-                            minutesToBeAddedForDestinationStop = 2880;
-                        } else if (summaryEarliestArrivalTimeMap.get(destinationStopId) > 1440) {
-                            minutesToBeAddedForDestinationStop = 1440;
-                        }
-
-                        if (currentArrivalTime + minutesToBeAddedForCurrentStop < Math.min(summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.
-                                        getKey()) + minutesToBeAddedForCurrentStop,
-                                summaryEarliestArrivalTimeMap.get(destinationStopId) + minutesToBeAddedForDestinationStop)) {
-                            // Update earliest arrival time map for all trip legs
-                            tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopTimeTripletEntry.getKey(),
-                                    currentArrivalTime + minutesToBeAddedForCurrentStop);
-
-                            // Update earliest arrival time summary map
-                            summaryEarliestArrivalTimeMap.replace(stopTimeTripletEntry.getKey(), currentArrivalTime + minutesToBeAddedForCurrentStop);
+                            // Update summary earliest arrival time map
+                            summaryEarliestArrivalTimeMap.replace(currentStopId, currentArrivalTime);
 
                             // Update list of marked stops
-                            markedStops.add(stopTimeTripletEntry.getKey());
-                            previousArrivalTime = currentArrivalTime + minutesToBeAddedForCurrentStop;
-                        }
+                            markedStops.add(currentStopId);
+                            previousArrivalTime = currentArrivalTime;
+                        } else {
+                            double minutesToBeAddedForCurrentStop = 0;
+                            if (summaryEarliestArrivalTimeMap.get(currentStopId) > 2880) {
+                                minutesToBeAddedForCurrentStop = 2880;
+                            } else if (summaryEarliestArrivalTimeMap.get(currentStopId) > 1440) {
+                                minutesToBeAddedForCurrentStop = 1440;
+                            }
 
-                    }
+                            double minutesToBeAddedForDestinationStop = 0;
+                            if (summaryEarliestArrivalTimeMap.get(destinationStopId) > 2880) {
+                                minutesToBeAddedForDestinationStop = 2880;
+                            } else if (summaryEarliestArrivalTimeMap.get(destinationStopId) > 1440) {
+                                minutesToBeAddedForDestinationStop = 1440;
+                            }
+
+                            if (currentArrivalTime + minutesToBeAddedForCurrentStop < Math.min(summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.
+                                            getKey()) + minutesToBeAddedForCurrentStop,
+                                    summaryEarliestArrivalTimeMap.get(destinationStopId) + minutesToBeAddedForDestinationStop)) {
+                                // Update earliest arrival time map for all trip legs
+                                tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(currentStopId,
+                                        currentArrivalTime + minutesToBeAddedForCurrentStop);
+
+                                // Update earliest arrival time summary map
+                                summaryEarliestArrivalTimeMap.replace(currentStopId, currentArrivalTime + minutesToBeAddedForCurrentStop);
+
+                                // Update list of marked stops
+                                markedStops.add(currentStopId);
+                                // previousArrivalTime = currentArrivalTime + minutesToBeAddedForCurrentStop;
+                            }
+                        }
 
                 /* Check to see if an earlier trip can be found at the concerned stop (check does not apply to first
                 trip leg, as it is certain that no earlier trips could be caught at any of the iterated over stops)
                 */
                     if (tripLegNumber > 1) {
-                        if (summaryEarliestArrivalTimeMap.get(stopTimeTripletEntry.getKey()) < currentArrivalTime) {
+                        if (summaryEarliestArrivalTimeMap.get(currentStopId) < currentArrivalTime) {
 
-                            for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> revisedTripForTraversal :
-                                    tripWiseStopTimeMaps.entrySet()) {
-                                if (revisedTripForTraversal.getValue().get(stopTimeTripletEntry.getKey()).getArrivalTime() <
-                                        currentArrivalTime) {
-                                    tripIterator = revisedTripForTraversal.getValue().entrySet().iterator();
-                                    break;
+                            for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> revisedTripForTraversal
+                                    : tripWiseStopTimeMaps.entrySet()) {
+                                if (revisedTripForTraversal.getValue().get(currentStopId) != null) {
+                                    if (revisedTripForTraversal.getValue().get(currentStopId).getDepartureTime() >=
+                                            summaryEarliestArrivalTimeMap.get(currentStopId) % 1440) {
+                                        tripIterator = revisedTripForTraversal.getValue().entrySet().iterator();
+                                        break;
+                                }
+
                                 }
                             }
                         }
