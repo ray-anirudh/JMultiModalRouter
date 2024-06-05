@@ -1,23 +1,13 @@
 package src.PublicTransportRouter.RoutingAlgorithm;
-// TODO: VELOCIRAPTORRRRR DESPITE THE SEQUENCING BS (VELOCIRAPTOR IS RAZOR SHARP AND SUPERFAST FOR BIPOINT QUERIES)
 
-// TODO: CHECK THAT TRIP TRAVERSAL IS BASED ON STOP ID ALSO (AND Null pointer exceptions)
-// TODO: Check which round does what updates what and so on; also check logic and speed and watertighting for multiple rounds with live examples
-// TODO: Check where the new tripiterator instance begins to iterate
-// TODO: Check which round does what uodates what and so on; also check logic and speed and watertighting
-
-// TODO: FINAL REVIEW OF CODE BEFORE MOVING ON SHOULD COVER SPEED, EXCEPTIONS, ERROS, LOGIC FLAWS, AND ANNOTATIONS (AND ALL THE TIME 23:59 trips)
-// todo See doubles vs ints
+import org.jetbrains.annotations.NotNull;
+import src.MultiModalRouter.TransitQuery;
+import src.PublicTransportRouter.GTFSDataManager.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
-
-import src.MultiModalRouter.TransitQuery;
-import src.PublicTransportRouter.GTFSDataManager.*;
+import java.util.LinkedHashMap;
 
 public class RAPTOR {
     private static final int MINUTES_IN_DAY = 1440;
@@ -69,7 +59,7 @@ public class RAPTOR {
             lookAtFootpaths(tripLegNumber, markedStops, transfers, summaryEarliestArrivalTimeMap,
                     tripLegWiseEarliestArrivalTimeMap);
 
-            tripLegNumber++;
+            tripLegNumber += 1;
         }
 
         // Return earliest arrival time output
@@ -89,7 +79,7 @@ public class RAPTOR {
         return transitQueryResponse;
     }
 
-    // Initialize trip-leg specific arrival time map by setting timestamps at all stops
+    // Initialize trip-leg specific earliest arrival time map by setting timestamps at all stops
     private void initializeTripLegSpecificArrivalTimeMap(int tripLegNumber,
                                                          int originStopId,
                                                          int desiredDepartureTime,
@@ -153,15 +143,15 @@ public class RAPTOR {
                     directionalRouteId = directionalRouteId + "222";     // Pay attention during stopTime traversals
                 }
 
-                int directionalRouteIdInt = Integer.parseInt(directionalRouteId);
                 int directionId = Integer.parseInt(directionalRouteId.substring(directionalRouteId.
                         length() - 1));
+                int directionalRouteIdInt = Integer.parseInt(directionalRouteId);
 
                 LinkedHashMap<Integer, Integer> directionalStopSequence = routeStopConsidered.get(directionId);
                 if (routesServingMarkedStops.containsKey(directionalRouteIdInt)) {
                     int preexistingStopId = routesServingMarkedStops.get(directionalRouteIdInt);
 
-                    // Traversal must begin at the earliest-sequenced stop on a route (characteristic of direction)
+                    // Traversal must begin at the earliest-sequenced stop on a route (characterised by direction)
                     if (directionalStopSequence.get(markedStopId) < directionalStopSequence.get(preexistingStopId)) {
                         routesServingMarkedStops.replace(directionalRouteIdInt, markedStopId);
                     }
@@ -189,15 +179,21 @@ public class RAPTOR {
             String routeIdStr = String.valueOf(routeServingMarkedStop.getKey());
             int routeId = Integer.parseInt(routeIdStr.substring(0, routeIdStr.length() - 3));
             int stopId = routeServingMarkedStop.getValue();
-            int dayCounter = (int) (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY);
+
             // To handle arrival times after a temporal wraparound
+            int dayCounter = (int) (summaryEarliestArrivalTimeMap.get(stopId) / MINUTES_IN_DAY);
+
 
             // Determine the pertinent trip
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
                     get(routeId).getTripWiseStopTimeMaps();
             int tripIdForTraversal = findEarliestTripIdForTraversal(stopId, tripWiseStopTimeMaps,
                     summaryEarliestArrivalTimeMap);
+
             LinkedHashMap<Integer, StopTimeTriplet> tripBeingTraversed = tripWiseStopTimeMaps.get(tripIdForTraversal);
+            if (tripBeingTraversed == null) {
+                continue;
+            }
             Iterator<HashMap.Entry<Integer, StopTimeTriplet>> tripIterator = tripBeingTraversed.entrySet().iterator();
 
             // Traverse trip
@@ -252,18 +248,17 @@ public class RAPTOR {
 
     // Determine the earliest possible trip that can be taken from a stop along a route
     private int findEarliestTripIdForTraversal(int stopId,
-                                               LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>>
+                                               @NotNull LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>>
                                                        tripWiseStopTimeMaps,
                                                LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap) {
         int tripIdForTraversal = -1;
-
         for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                 tripWiseStopTimeMaps.entrySet()) {
 
             StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
             if (stopTimeTriplet != null) {
-                if (stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY >= summaryEarliestArrivalTimeMap.get(stopId)
-                        % MINUTES_IN_DAY) {
+                if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY) >= (summaryEarliestArrivalTimeMap.get(stopId)
+                        % MINUTES_IN_DAY)) {
                     tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                     break;
                 }
@@ -277,8 +272,8 @@ public class RAPTOR {
 
                 StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
                 if (stopTimeTriplet != null) {
-                    if (stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY + MINUTES_IN_DAY >=
-                            summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY) {
+                    if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY + MINUTES_IN_DAY) >=
+                            (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY)) {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                         break;
                     }
@@ -300,10 +295,8 @@ public class RAPTOR {
             for (HashMap.Entry<Integer, Double> transferEntry : transfers.get(markedStopId).getTransferMap().
                     entrySet()) {
 
-                double earliestArrivalTime = Math.min(tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).
-                        get(transferEntry.getKey()), tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).
-                        get(markedStopId) + transferEntry.getValue());
-
+                double earliestArrivalTime = Math.min(summaryEarliestArrivalTimeMap.get(transferEntry.getKey()),
+                        summaryEarliestArrivalTimeMap.get(markedStopId) + transferEntry.getValue());
                 tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(transferEntry.getKey(),
                         earliestArrivalTime);
                 summaryEarliestArrivalTimeMap.replace(transferEntry.getKey(), earliestArrivalTime);

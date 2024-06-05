@@ -6,7 +6,6 @@ import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.TravelMode;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -389,7 +388,7 @@ public class GTFSDataReaderWriter {
 
             for (HashMap.Entry<Integer, RouteStop> routeStopEntry : this.routeStops.entrySet()) {
                 if ((routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(1).containsKey(stopId)) ||
-                routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
+                        routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
                     stopSpecificRouteList.getRouteList().add(routeStopEntry.getKey());
                     int stopType = this.routes.get(routeStopEntry.getKey()).getRouteType();
                     this.stops.get(stopId).setStopType(stopType);
@@ -463,6 +462,31 @@ public class GTFSDataReaderWriter {
         System.out.println("Unrealistic transfers based on walking distances filtered out");
     }
 
+
+    // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
+    public void makeTransfersTransitive() {
+        for (int fromStopId : this.transfers.keySet()) {
+            for (int intermediateStopId : this.transfers.get(fromStopId).getTransferMap().keySet()) {
+                for (int toStopId : this.transfers.get(intermediateStopId).getTransferMap().keySet()) {
+                    if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
+                        double interStopWalkingDistanceM = calculateWalkingDistance(this.stops.get(fromStopId).
+                                getStopLatitude(), this.stops.get(fromStopId).getStopLongitude(), this.stops.
+                                get(toStopId).getStopLatitude(), this.stops.get(toStopId).getStopLongitude());
+                        if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
+                                    (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
+                        } else {
+                            // Penalize unrealistic transfers
+                            final double ARBITRARY_HIGH_TRANSFER_COST = 1000000D;
+                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, ARBITRARY_HIGH_TRANSFER_COST);
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println("Transitivity of transfers established");
+    }
+
     // Filter out all "stops" from outside the study area, and all allied data from the pertinent hashmaps
     public void filterHashMapsOnLatLong() {
         // For hashmaps "stops", "stopRoutes", and "transfers":
@@ -502,30 +526,6 @@ public class GTFSDataReaderWriter {
             }
         }
         System.out.println("Data external to study area deleted");
-    }
-
-    // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
-    public void makeTransfersTransitive() {
-        for (int fromStopId : this.transfers.keySet()) {
-            for (int intermediateStopId : this.transfers.get(fromStopId).getTransferMap().keySet()) {
-                for (int toStopId : this.transfers.get(intermediateStopId).getTransferMap().keySet()) {
-                    if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
-                        double interStopWalkingDistanceM = calculateWalkingDistance(this.stops.get(fromStopId).
-                                getStopLatitude(), this.stops.get(fromStopId).getStopLongitude(), this.stops.
-                                get(toStopId).getStopLatitude(), this.stops.get(toStopId).getStopLongitude());
-                        if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
-                        } else {
-                            // Penalize unrealistic transfers
-                            final double ARBITRARY_HIGH_TRANSFER_COST = 1000000D;
-                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, ARBITRARY_HIGH_TRANSFER_COST);
-                        }
-                    }
-                }
-            }
-        }
-        System.out.println("Transitivity of transfers established");
     }
 
     /**
@@ -571,7 +571,7 @@ public class GTFSDataReaderWriter {
             for (HashMap.Entry<Integer, RouteStop> routeStopEntry : this.routeStops.entrySet()) {
                 int routeId = routeStopEntry.getKey();
 
-                for(HashMap.Entry<Integer, LinkedHashMap<Integer, Integer>> directionSpecificStopSequenceMap :
+                for (HashMap.Entry<Integer, LinkedHashMap<Integer, Integer>> directionSpecificStopSequenceMap :
                         routeStopEntry.getValue().getDirectionWiseStopSequenceMap().entrySet()) {
                     int directionId = directionSpecificStopSequenceMap.getKey();
 
