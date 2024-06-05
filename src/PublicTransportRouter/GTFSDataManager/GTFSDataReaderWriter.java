@@ -200,15 +200,16 @@ public class GTFSDataReaderWriter {
                     // gtfs.de indexing of stops begins at 0 in "stop_times.txt"; we will use 1 for RAPTOR
                     int stopSequence = Integer.parseInt(stopTimeDataRecord[stopSequenceIndex]) + 1;
 
+                    // Midnight time wraparound errors exist in GTFS data
                     String arrivalTimeHourString = stopTimeDataRecord[arrivalTimeIndex].substring(0, 2);
                     String arrivalTimeMinuteString = stopTimeDataRecord[arrivalTimeIndex].substring(3, 5);
                     int arrivalTimeMinutes = (Integer.parseInt(arrivalTimeHourString) * MINUTES_IN_HOUR +
-                            Integer.parseInt(arrivalTimeMinuteString)) % 1440;
+                            Integer.parseInt(arrivalTimeMinuteString)) % MINUTES_IN_DAY;
 
                     String departureTimeHourString = stopTimeDataRecord[departureTimeIndex].substring(0, 2);
                     String departureTimeMinuteString = stopTimeDataRecord[departureTimeIndex].substring(3, 5);
                     int departureTimeMinutes = (Integer.parseInt(departureTimeHourString) * MINUTES_IN_HOUR +
-                            Integer.parseInt(departureTimeMinuteString)) % 1440;
+                            Integer.parseInt(departureTimeMinuteString)) % MINUTES_IN_DAY;
 
                     StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
