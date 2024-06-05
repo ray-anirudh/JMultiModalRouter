@@ -65,17 +65,10 @@ public class RAPTOR {
         // Return earliest arrival time output
         double earliestArrivalTimeAtDestination = summaryEarliestArrivalTimeMap.get(destinationStopId);
         if (earliestArrivalTimeAtDestination != Double.MAX_VALUE) {
-            if (earliestArrivalTimeAtDestination < MINUTES_IN_DAY) {
-                transitQueryResponse = new TransitQueryResponse((int) (Math.round(summaryEarliestArrivalTimeMap.
-                        get(destinationStopId))), (int) (Math.round(summaryEarliestArrivalTimeMap.
-                        get(destinationStopId))) - desiredDepartureTime);
-            } else {
-                transitQueryResponse = new TransitQueryResponse((int) (Math.round
-                        (summaryEarliestArrivalTimeMap.get(destinationStopId))) % MINUTES_IN_DAY, (int) (Math.round
-                        (summaryEarliestArrivalTimeMap.get(destinationStopId))) - desiredDepartureTime);
-            }
+            transitQueryResponse = new TransitQueryResponse(((int) (summaryEarliestArrivalTimeMap.get(destinationStopId)
+                    % MINUTES_IN_DAY)), ((int) (summaryEarliestArrivalTimeMap.get(destinationStopId) -
+                    desiredDepartureTime)));
         }
-
         return transitQueryResponse;
     }
 
