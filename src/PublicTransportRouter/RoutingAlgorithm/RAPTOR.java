@@ -1,4 +1,6 @@
 package src.PublicTransportRouter.RoutingAlgorithm;
+// GTFS: General Transit Feed Specification
+// RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
 import org.jetbrains.annotations.NotNull;
 import src.MultiModalRouter.TransitQuery;
