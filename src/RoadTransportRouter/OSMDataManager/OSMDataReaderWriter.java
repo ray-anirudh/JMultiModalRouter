@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
@@ -17,6 +18,9 @@ public class OSMDataReaderWriter {
     /**
      * ATTRIBUTE DEFINITIONS
      */
+    /* Array to limit the way types (classes) parsed out of the OSM extract
+    Refer to: https://wiki.openstreetmap.org/wiki/Key:highway) for more details
+    */
     private static final String[] LINK_TYPE_ARRAY = {
             "bridleway",
             // "cycleway", Reason: Cannot be used by a driving-based mode
@@ -45,6 +49,8 @@ public class OSMDataReaderWriter {
             "trunk_link",
             "unclassified"
     };
+
+    private static final int EARTH_RADIUS_M = 6371000;
 
     // Initialize the Dijkstra-relevant hashmaps
     LinkedHashMap<Integer, Node> nodes = new LinkedHashMap<>();
@@ -76,17 +82,18 @@ public class OSMDataReaderWriter {
             linkIdIndex = findIndexInArray("n", firstOsmOplRecordArray); // First object is a node
             linkDetailsIndex = findIndexInArray("T", firstOsmOplRecordArray);
             linkNodalArrayIndex = linkDetailsIndex + 1;
+
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
         }
 
         // Reader for body of "BBBikeOSMExtract.opl", including the first record
         try {
-            BufferedReader osmOplExtractReader =new BufferedReader(new FileReader(osmOplExtractFilePath));
+            BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
             String newline;
 
             // Read body and process data for all links in the network
-            while((newline = osmOplExtractReader.readLine()) != null) {
+            while ((newline = osmOplExtractReader.readLine()) != null) {
                 if (newline.substring(0, 1).equalsIgnoreCase("w")) {
                     String[] linkDataRecord = newline.split(" ");
 
@@ -105,8 +112,8 @@ public class OSMDataReaderWriter {
 
                             for (int i = 0; i <= nodalArray.length - 2; i++) {
                                 int firstNodeId;
-                                int characterOrderToParseFrom = (i == 0) ? 2 : 1;
-                                firstNodeId = Integer.parseInt(nodalArray[i].substring(characterOrderToParseFrom));
+                                int characterOrder = (i == 0) ? 2 : 1;
+                                firstNodeId = Integer.parseInt(nodalArray[i].substring(characterOrder));
                                 Node firstNode = new Node(0, 0);
 
                                 int secondNodeId;
@@ -114,8 +121,7 @@ public class OSMDataReaderWriter {
                                 Node secondNode = new Node(0, 0);
 
                                 int linkId = Integer.parseInt(wayId + "00" + (i + 1));
-                                Link link = new Link(firstNodeId, secondNodeId);
-                                link.setLinkType(linkType);
+                                Link link = new Link(firstNodeId, secondNodeId, linkType);
 
                                 this.links.put(linkId, link);
                                 this.nodes.put(firstNodeId, firstNode);
@@ -136,8 +142,8 @@ public class OSMDataReaderWriter {
     public void readAndFilterOsmNodes(String osmOplExtractFilePath) {
         // Initializing required indices
         int nodeIdIndex = 0;
-        int xCoordinateIndex = 0;
-        int yCoordinateIndex = 0;
+        int longitudeIndex = 0;
+        int latitudeIndex = 0;
 
         // Reader for first record of "BBBikeOSMExtract.opl"
         try {
@@ -146,24 +152,82 @@ public class OSMDataReaderWriter {
             // Find relevant indices using the first OPL data record
             String[] firstOsmOplRecordArray = osmOplExtractReader.readLine().split(" ");
             nodeIdIndex = findIndexInArray("n", firstOsmOplRecordArray); // First object is a node
-            xCoordinateIndex = findIndexInArray("x", firstOsmOplRecordArray);
-            yCoordinateIndex = findIndexInArray("y", firstOsmOplRecordArray);
+            longitudeIndex = findIndexInArray("x", firstOsmOplRecordArray);
+            latitudeIndex = findIndexInArray("y", firstOsmOplRecordArray);
+
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
         }
 
         // Reader for body of "BBBikeOSMExtract.opl", including the first record
         try {
-            BufferedReader osmOplExtractReader =new BufferedReader(new FileReader(osmOplExtractFilePath));
+            BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
             String newline;
+
+            while ((newline = osmOplExtractReader.readLine()) != null) {
+                // Example of node details record: n127290 v0 dV c0 t i0 u T x11.3246338 y48.2164498
+                String[] nodeDataRecord = newline.split(" ");
+                int nodeId = Integer.parseInt(nodeDataRecord[nodeIdIndex].substring(1));
+
+                if (this.nodes.containsKey(nodeId)) {
+                    double nodeLongitude = Double.parseDouble(nodeDataRecord[longitudeIndex].substring(1));
+                    double nodeLatitude = Double.parseDouble(nodeDataRecord[latitudeIndex].substring(1));
+                    Node replacementNode = new Node(nodeLongitude, nodeLatitude);
+                    this.nodes.replace(nodeId, replacementNode);
+                }
+            }
+
+        } catch (FileNotFoundException fNFE) {
+            System.out.println("File not found at specified path: " + osmOplExtractFilePath);
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
+        }
     }
 
+    // Count the number of links associated with each node
+    public void countLinksPerNode() {
+        for (HashMap.Entry<Integer, Node> nodeEntry : this.nodes.entrySet()) {
+            int numberLinks = 0;
+            for (Link link : this.links.values()) {
+                if ((link.getFirstNodeId() == nodeEntry.getKey()) || (link.getSecondNodeId() == nodeEntry.getKey())) {
+                    numberLinks++;
+                }
+            }
+            nodeEntry.getValue().setNumberLinks(numberLinks);
+        }
+    }
 
+    // Calculate the travel cost per link (purely in terms of equi-rectangular geometric distances for now, which are beeline distances)
+    public void calculateLinkLengths() {
+        for (Link link : this.links.values()) {
+            int firstNodeId = link.getFirstNodeId();
+            int secondNodeId = link.getSecondNodeId();
 
+            double firstNodeLongitudeRadians = Math.toRadians(this.nodes.get(firstNodeId).getNodeLongitude());
+            double firstNodeLatitudeRadians = Math.toRadians(this.nodes.get(firstNodeId).getNodeLatitude());
+            double secondNodeLongitudeRadians = Math.toRadians(this.nodes.get(secondNodeId).getNodeLongitude());
+            double secondNodeLatitudeRadians = Math.toRadians(this.nodes.get(secondNodeId).getNodeLatitude());
 
-    // TODO: Remove all links with stupid types, like busstop and platform, like dang
-    // TODO: Calculate all link distances, but that needs setting up of nodes first
-    // TODO set up the damn nodes dawg
+            double latitudeDifference = secondNodeLatitudeRadians - firstNodeLatitudeRadians;
+            double longitudeDifference = secondNodeLongitudeRadians - firstNodeLongitudeRadians;
+
+            double x = longitudeDifference * Math.cos((firstNodeLatitudeRadians + secondNodeLatitudeRadians) / 2);
+            double y = latitudeDifference;
+
+            double linkLengthM = Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
+
+            link.setLinkLengthM(linkLengthM);
+        }
+    }
+
+    // Remove links starting and ending at the same node
+    public void removeCircularLinks() {
+        for (HashMap.Entry<Integer, Link> linkEntry : this.links.entrySet()) {
+            if (linkEntry.getValue().getFirstNodeId() == linkEntry.getValue().getSecondNodeId()) {
+                this.links.remove(linkEntry.getKey());
+            }
+        }
+    }
 
     // Index finder using alphabets in the first record of an OSM OPL extract
     private int findIndexInArray(String alphabetToFind, @NotNull String[] headerArray) {

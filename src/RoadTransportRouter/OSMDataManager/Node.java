@@ -3,7 +3,7 @@ package src.RoadTransportRouter.OSMDataManager;
 public class Node {
     private double nodeLongitude;
     private double nodeLatitude;
-    private int associatedLinksCount;
+    private int numberLinks;
 
     Node(double nodeLongitude, double nodeLatitude) {
         this.nodeLongitude = nodeLongitude;
@@ -14,8 +14,8 @@ public class Node {
         this(0D, 0D);
     }
 
-    void setAssociatedLinksCount(int associatedLinksCount) {
-        this.associatedLinksCount = associatedLinksCount;
+    void setNumberLinks(int numberLinks) {
+        this.numberLinks = numberLinks;
     }
 
     double getNodeLongitude() {
