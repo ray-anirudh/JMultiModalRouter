@@ -1,4 +1,4 @@
-package src.RoadTransportRouter.OSMDataParser;
+package src.RoadTransportRouter.OSMDataManager;
 
 public class Link {
     private int firstNodeId;

@@ -1,4 +1,4 @@
-package src.RoadTransportRouter.OSMDataParser;
+package src.RoadTransportRouter.OSMDataManager;
 // OSM: OpenStreetMap
 // OPL: Object Per Line
 
