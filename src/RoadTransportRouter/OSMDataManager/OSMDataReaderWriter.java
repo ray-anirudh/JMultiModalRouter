@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 public class OSMDataReaderWriter {
@@ -55,22 +57,39 @@ public class OSMDataReaderWriter {
      * BEHAVIOUR DEFINITIONS
      */
 
-    public void readAndFilterOsmRoads(String osmOplExtractFilePath) {
+    // Read and filter links from the OSM extract
+    public void readAndFilterOsmLinks(String osmOplExtractFilePath) {
+        // Initializing required indices
+        int linkIdIndex = 0;
+        int linkDetailsIndex = 0;
+        int linkNodalArrayIndex = 0;
+
+        // Create link types' hashset for filtering way records
+        HashSet<String> linkTypeHashSet = new HashSet<>(Arrays.asList(LINK_TYPE_ARRAY));
+
+        // Reader for first record of "BBBikeOSMExtract.opl"
         try {
-            // Reader for "BBBikeOSMExtract.opl"
             BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
-            String newline;
 
             // Find relevant indices using the first OPL data record
             String[] firstOsmOplRecordArray = osmOplExtractReader.readLine().split(" ");
-            int linkIdIndex = findIndexInArray("n", firstOsmOplRecordArray); // First object is a node
-            int linkDetailsIndex = findIndexInArray("T", firstOsmOplRecordArray);
-            int linkNodalArrayIndex = linkDetailsIndex + 1;
+            linkIdIndex = findIndexInArray("n", firstOsmOplRecordArray); // First object is a node
+            linkDetailsIndex = findIndexInArray("T", firstOsmOplRecordArray);
+            linkNodalArrayIndex = linkDetailsIndex + 1;
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
+        }
+
+        // Reader for body of "BBBikeOSMExtract.opl", including the first record
+        try {
+            BufferedReader osmOplExtractReader =new BufferedReader(new FileReader(osmOplExtractFilePath));
+            String newline;
 
             // Read body and process data for all links in the network
             while((newline = osmOplExtractReader.readLine()) != null) {
                 if (newline.substring(0, 1).equalsIgnoreCase("w")) {
                     String[] linkDataRecord = newline.split(" ");
+
                     String wayType = linkDataRecord[linkDetailsIndex].substring(1, 8);
                     if (wayType.equalsIgnoreCase("highway")) {
                         int wayId = Integer.parseInt(linkDataRecord[linkIdIndex].substring(1));
@@ -79,26 +98,29 @@ public class OSMDataReaderWriter {
                         /* Example of link details record: Thighway=track,maxspeed:type=DE:rural,surface=asphalt,
                         tracktype=grade1 Nn1755165066,n1755165067,n262608882
                         */
-
                         String linkType = linkDetailsRecord[0].substring(9);
 
-                        String[] nodalArray = linkDataRecord[linkNodalArrayIndex].split(",");
-                        for (int i = 0; i <= nodalArray.length - 2; i++) {
-                            int firstNodeId = -1;
-                            if (i == 0) {
-                                firstNodeId = Integer.parseInt(nodalArray[i].substring(2));
-                            } else {
-                                firstNodeId = Integer.parseInt(nodalArray[i].substring(1));
+                        if (linkTypeHashSet.contains(linkType)) {
+                            String[] nodalArray = linkDataRecord[linkNodalArrayIndex].split(",");
+
+                            for (int i = 0; i <= nodalArray.length - 2; i++) {
+                                int firstNodeId;
+                                int characterOrderToParseFrom = (i == 0) ? 2 : 1;
+                                firstNodeId = Integer.parseInt(nodalArray[i].substring(characterOrderToParseFrom));
+                                Node firstNode = new Node(0, 0);
+
+                                int secondNodeId;
+                                secondNodeId = Integer.parseInt(nodalArray[i + 1].substring(1));
+                                Node secondNode = new Node(0, 0);
+
+                                int linkId = Integer.parseInt(wayId + "00" + (i + 1));
+                                Link link = new Link(firstNodeId, secondNodeId);
+                                link.setLinkType(linkType);
+
+                                this.links.put(linkId, link);
+                                this.nodes.put(firstNodeId, firstNode);
+                                this.nodes.put(secondNodeId, secondNode);
                             }
-
-                            int secondNodeId = -1;
-                            secondNodeId = Integer.parseInt(nodalArray[i + 1].substring(1));
-
-                            int linkId = Integer.parseInt(wayId + "00" + (i + 1));
-                            Link link = new Link(firstNodeId, secondNodeId);
-                            link.setLinkType(linkType);
-
-                            this.links.put(linkId, link);
                         }
                     }
                 }
@@ -110,7 +132,31 @@ public class OSMDataReaderWriter {
         }
     }
 
-    public void read
+    // Read and filter nodes from the OSM extract
+    public void readAndFilterOsmNodes(String osmOplExtractFilePath) {
+        // Initializing required indices
+        int nodeIdIndex = 0;
+        int xCoordinateIndex = 0;
+        int yCoordinateIndex = 0;
+
+        // Reader for first record of "BBBikeOSMExtract.opl"
+        try {
+            BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
+
+            // Find relevant indices using the first OPL data record
+            String[] firstOsmOplRecordArray = osmOplExtractReader.readLine().split(" ");
+            nodeIdIndex = findIndexInArray("n", firstOsmOplRecordArray); // First object is a node
+            xCoordinateIndex = findIndexInArray("x", firstOsmOplRecordArray);
+            yCoordinateIndex = findIndexInArray("y", firstOsmOplRecordArray);
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
+        }
+
+        // Reader for body of "BBBikeOSMExtract.opl", including the first record
+        try {
+            BufferedReader osmOplExtractReader =new BufferedReader(new FileReader(osmOplExtractFilePath));
+            String newline;
+    }
 
 
 
