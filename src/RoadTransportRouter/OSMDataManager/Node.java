@@ -1,21 +1,18 @@
 package src.RoadTransportRouter.OSMDataManager;
 
-public class Node {
+import java.util.ArrayList;
+
+public class Node {    // Node IDs are present in the relevant hashmap
     private double nodeLongitude;
     private double nodeLatitude;
-    private int numberLinks;
+    private ArrayList<Long> linkIdList;
 
-    Node(double nodeLongitude, double nodeLatitude) {
+    public void setNodeLongitude(double nodeLongitude) {
         this.nodeLongitude = nodeLongitude;
+    }
+
+    public void setNodeLatitude(double nodeLatitude) {
         this.nodeLatitude = nodeLatitude;
-    }
-
-    Node() {
-        this(0D, 0D);
-    }
-
-    void setNumberLinks(int numberLinks) {
-        this.numberLinks = numberLinks;
     }
 
     double getNodeLongitude() {
@@ -24,5 +21,9 @@ public class Node {
 
     double getNodeLatitude() {
         return this.nodeLatitude;
+    }
+
+    ArrayList<Long> getLinkIdList() {
+        return this.linkIdList;
     }
 }

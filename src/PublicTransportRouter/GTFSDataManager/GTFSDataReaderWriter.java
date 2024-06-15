@@ -383,12 +383,14 @@ public class GTFSDataReaderWriter {
 
     // Build the "stopRoutes" hashmap and ascribe stop types to stops based on route types
     public void padStopRoutes() {
-        for (int stopId : this.stopRoutes.keySet()) {
+        ArrayList<Integer> stopIds = new ArrayList<>(this.stopRoutes.keySet());
+        for (int stopId : stopIds) {
             StopRoute stopSpecificRouteList = new StopRoute();
 
             for (HashMap.Entry<Integer, RouteStop> routeStopEntry : this.routeStops.entrySet()) {
                 if ((routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(1).containsKey(stopId)) ||
                         routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
+
                     stopSpecificRouteList.getRouteList().add(routeStopEntry.getKey());
                     int stopType = this.routes.get(routeStopEntry.getKey()).getRouteType();
                     this.stops.get(stopId).setStopType(stopType);
@@ -407,12 +409,14 @@ public class GTFSDataReaderWriter {
 
     // Build the "transfers" hashmap, ignoring pairs of distant stops
     public void buildTransfersHashMap() {
-        for (int fromStopId : this.transfers.keySet()) {
+        ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
+        for (int fromStopId : fromStopIds) {
             double fromStopLatitudeRadians = Math.toRadians(this.stops.get(fromStopId).getStopLatitude());
             double fromStopLongitudeRadians = Math.toRadians(this.stops.get(fromStopId).getStopLongitude());
             Transfer stopSpecificTransferMap = new Transfer();
 
-            for (int toStopId : this.transfers.keySet()) {
+            ArrayList<Integer> toStopIds = new ArrayList<>(this.transfers.keySet());
+            for (int toStopId : toStopIds) {
                 double toStopLatitudeRadians = Math.toRadians(this.stops.get(toStopId).getStopLatitude());
                 double toStopLongitudeRadians = Math.toRadians(this.stops.get(toStopId).getStopLongitude());
 
@@ -440,12 +444,14 @@ public class GTFSDataReaderWriter {
 
     // Filter out unrealistic "transfers" based on GMaps API calls
     public void filterTransfersHashMap() {
-        for (int fromStopId : this.transfers.keySet()) {
+        ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
+        for (int fromStopId : fromStopIds) {
             LinkedHashMap<Integer, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
 
-            for (int toStopId : stopSpecificTransferMap.keySet()) {
+            ArrayList<Integer> toStopIds = new ArrayList<>(stopSpecificTransferMap.keySet());
+            for (int toStopId : toStopIds) {
                 double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
                 double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
                 double interStopWalkingDistanceM = calculateWalkingDistance(fromStopLatitude, fromStopLongitude,
@@ -467,7 +473,7 @@ public class GTFSDataReaderWriter {
     public void makeTransfersTransitive() {
         for (int fromStopId : this.transfers.keySet()) {
             for (int intermediateStopId : this.transfers.get(fromStopId).getTransferMap().keySet()) {
-                for (int toStopId : this.transfers.get(intermediateStopId).getTransferMap().keySet()) {
+                for (int toStopId : new ArrayList<>(this.transfers.get(intermediateStopId).getTransferMap().keySet())) {
                     if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
                         double interStopWalkingDistanceM = calculateWalkingDistance(this.stops.get(fromStopId).
                                 getStopLatitude(), this.stops.get(fromStopId).getStopLongitude(), this.stops.
@@ -490,36 +496,40 @@ public class GTFSDataReaderWriter {
     // Filter out all "stops" from outside the study area, and all allied data from the pertinent hashmaps
     public void filterHashMapsOnLatLong() {
         // For hashmaps "stops", "stopRoutes", and "transfers":
-        for (HashMap.Entry<Integer, Stop> stopEntry : this.stops.entrySet()) {
+        for (Iterator<HashMap.Entry<Integer, Stop>> iterator = this.stops.entrySet().iterator(); iterator.hasNext(); ) {
+            HashMap.Entry<Integer, Stop> stopEntry = iterator.next();
             if ((stopEntry.getValue().getStopLatitude() > STUDY_AREA_LATITUDE_MAX) ||
                     (stopEntry.getValue().getStopLatitude() < STUDY_AREA_LATITUDE_MIN) ||
                     (stopEntry.getValue().getStopLongitude() > STUDY_AREA_LONGITUDE_MAX) ||
                     (stopEntry.getValue().getStopLongitude() < STUDY_AREA_LONGITUDE_MIN)) {
-                this.stops.remove(stopEntry.getKey());
+                iterator.remove();
                 this.stopRoutes.remove(stopEntry.getKey());
                 this.transfers.remove(stopEntry.getKey());
             }
         }
 
         // For hashmaps "routes", "trips", "routeStops", and "stopTimes"
-        for (int routeId : this.stopTimes.keySet()) {
-            for (int tripId : this.stopTimes.get(routeId).getTripWiseStopTimeMaps().keySet()) {
-                for (int stopId : this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).keySet()) {
+        for (Iterator<Integer> routeIterator = this.stopTimes.keySet().iterator(); routeIterator.hasNext(); ) {
+            int routeId = routeIterator.next();
+            for (Iterator<Integer> tripIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().keySet().
+                    iterator(); tripIterator.hasNext(); ) {
+                int tripId = tripIterator.next();
+                for (Iterator<Integer> stopIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).
+                        keySet().iterator(); stopIterator.hasNext(); ) {
+                    int stopId = stopIterator.next();
                     if (!this.stops.containsKey(stopId)) {
-                        this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).remove(stopId);
+                        stopIterator.remove();
                         this.routeStops.get(routeId).getDirectionWiseStopSequenceMap().get(1).remove(stopId);
                         this.routeStops.get(routeId).getDirectionWiseStopSequenceMap().get(2).remove(stopId);
                     }
                 }
-
                 if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).isEmpty()) {
-                    this.stopTimes.get(routeId).getTripWiseStopTimeMaps().remove(tripId);
+                    tripIterator.remove();
                     this.trips.get(routeId).getTripList().remove(tripId);
                 }
             }
-
             if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().isEmpty()) {
-                this.stopTimes.remove(routeId);
+                routeIterator.remove();
                 this.trips.remove(routeId);
                 this.routes.remove(routeId);
                 this.routeStops.remove(routeId);

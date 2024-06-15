@@ -1,12 +1,12 @@
 package src.RoadTransportRouter.OSMDataManager;
 
-public class Link {
-    private int firstNodeId;
-    private int secondNodeId;
+public class Link {    // Link IDs are present in the relevant hashmap
+    private long firstNodeId;
+    private long secondNodeId;
     private String linkType;
     private double linkLengthM;
 
-    Link(int firstNodeId, int secondNodeId, String linkType) {
+    Link(long firstNodeId, long secondNodeId, String linkType) {
         this.firstNodeId = firstNodeId;
         this.secondNodeId = secondNodeId;
         this.linkType = linkType;
@@ -20,11 +20,11 @@ public class Link {
         this.linkLengthM = linkLengthM;
     }
 
-    public int getFirstNodeId() {
+    public long getFirstNodeId() {
         return this.firstNodeId;
     }
 
-    public int getSecondNodeId() {
+    public long getSecondNodeId() {
         return this.secondNodeId;
     }
 

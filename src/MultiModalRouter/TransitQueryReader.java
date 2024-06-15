@@ -8,7 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class QueryReader {
+public class TransitQueryReader {
     private ArrayList<TransitQuery> queries = new ArrayList<>();
 
     public void readQueryList(String queriesFilePath) {

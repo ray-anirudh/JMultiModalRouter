@@ -31,10 +31,10 @@ public class Stop {
     }
 
     double getStopLatitude() {
-        return stopLatitude;
+        return this.stopLatitude;
     }
 
     double getStopLongitude() {
-        return stopLongitude;
+        return this.stopLongitude;
     }
 }
