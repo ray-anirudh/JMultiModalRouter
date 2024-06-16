@@ -48,7 +48,10 @@ public class OSMDataReaderWriter {
             "unclassified"
     };
 
-    private static final int EARTH_RADIUS_M = 6371000;
+    private static final int EARTH_RADIUS_KM = 6371;
+    private static final double AVERAGE_DRIVING_SPEED_KMPH = 29;
+    // (Source: https://www.tomtom.com/traffic-index/munich-traffic/)
+    private static final int MINUTES_PER_HOUR = 60;
 
     // Initialize the Dijkstra-relevant hashmaps
     LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();
@@ -74,7 +77,6 @@ public class OSMDataReaderWriter {
 
             // Find relevant indices using the first OPL data record
             String[] firstOsmOplRecordArray = osmOplExtractReader.readLine().split(" ");
-            int linkIdIndex = findIndexInArray("n", firstOsmOplRecordArray);
             // First object is a node
             int linkAttributesIndex = findIndexInArray("T", firstOsmOplRecordArray);
             int linkNodesIndex = linkAttributesIndex + 1;
@@ -83,16 +85,17 @@ public class OSMDataReaderWriter {
             HashSet<String> linkTypeHashSet = new HashSet<>(Arrays.asList(LINK_TYPE_ARRAY));
 
             // Read body and process data for all links in the road network
+            long wayId = 0;
             while ((newline = osmOplExtractReader.readLine()) != null) {
+                wayId++;
                 if (newline.substring(0, 1).equalsIgnoreCase("w")) {
                     String[] linkDataRecord = newline.split(" ");
                     String linkAttributes = linkDataRecord[linkAttributesIndex];
 
                     if (linkAttributes.contains("highway")) {
-                        long wayId = Long.parseLong(linkDataRecord[linkIdIndex].substring(1));
                         String[] linkAttributesRecord = linkAttributes.split(",");
                         int linkTypeIndex = findIndexInArray("highway", linkAttributesRecord);
-                        /* Example of a link's details record: Thighway=track,maxspeed:type=DE:rural,surface=asphalt,
+                        /* Example of a link's record of details: Thighway=track,maxspeed:type=DE:rural,surface=asphalt,
                         tracktype=grade1 Nn1755165066,n1755165067,n262608882
                         */
 
@@ -104,18 +107,14 @@ public class OSMDataReaderWriter {
                                 // "first" and "second" nodes do not signify any ordering of nodes/ links
                                 long firstNodeId;
                                 firstNodeId = Long.parseLong(nodesArray[i].substring((i == 0) ? 2 : 1));
-                                Node firstNode = new Node();
-
                                 long secondNodeId;
                                 secondNodeId = Long.parseLong(nodesArray[i + 1].substring(1));
-                                Node secondNode = new Node();
-
-                                long linkId = Long.parseLong(wayId + "000" + (i + 1));
+                                long linkId = Long.parseLong(wayId + "0" + (i + 1) + "00");
                                 Link link = new Link(firstNodeId, secondNodeId, linkType);
 
                                 this.links.put(linkId, link);
-                                this.nodes.put(firstNodeId, firstNode);
-                                this.nodes.put(secondNodeId, secondNode);
+                                this.nodes.put(firstNodeId, new Node());
+                                this.nodes.put(secondNodeId, new Node());
                             }
                         }
                     }
@@ -129,7 +128,6 @@ public class OSMDataReaderWriter {
             System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
         }
     }
-
 
     // Remove links starting and ending at the same node (helpful against exceptional cases)
     public void removeCircularLinks() {
@@ -169,15 +167,19 @@ public class OSMDataReaderWriter {
             String newline;
 
             while ((newline = osmOplExtractReader.readLine()) != null) {
-                // Example of a node's details record: n127290 v0 dV c0 t i0 u T x11.3246338 y48.2164498
-                String[] nodeDataRecord = newline.split(" ");
-                long nodeId = Long.parseLong(nodeDataRecord[nodeIdIndex].substring(1));
+                if (newline.substring(0, 1).equalsIgnoreCase("n")) {
+                    String[] nodeDataRecord = newline.split(" ");
+                    // Example of a node's data record: n127290 v0 dV c0 t i0 u T x11.3246338 y48.2164498
+                    long nodeId = Long.parseLong(nodeDataRecord[nodeIdIndex].substring(1));
 
-                if (this.nodes.containsKey(nodeId)) {
-                    double nodeLongitude = Double.parseDouble(nodeDataRecord[longitudeIndex].substring(1));
-                    double nodeLatitude = Double.parseDouble(nodeDataRecord[latitudeIndex].substring(1));
-                    this.nodes.get(nodeId).setNodeLongitude(nodeLongitude);
-                    this.nodes.get(nodeId).setNodeLatitude(nodeLatitude);
+                    if (this.nodes.containsKey(nodeId)) {
+                        double nodeLongitude = Double.parseDouble(nodeDataRecord[longitudeIndex].
+                                substring(1));
+                        double nodeLatitude = Double.parseDouble(nodeDataRecord[latitudeIndex].
+                                substring(1));
+                        this.nodes.get(nodeId).setNodeLongitude(nodeLongitude);
+                        this.nodes.get(nodeId).setNodeLatitude(nodeLatitude);
+                    }
                 }
             }
             System.out.println("Nodes' data read from " + osmOplExtractFilePath);
@@ -202,8 +204,8 @@ public class OSMDataReaderWriter {
         System.out.println("Links associated with respective nodes");
     }
 
-    // Calculate equi-rectangular lengths of all links
-    public void calculateLinkLengths() {
+    // Calculate travel times for all links based on equi-rectangular lengths
+    public void calculateLinkTravelTimesMin() {
         for (Link link : this.links.values()) {
             Node firstNode = this.nodes.get(link.getFirstNodeId());
             Node secondNode = this.nodes.get(link.getSecondNodeId());
@@ -218,10 +220,10 @@ public class OSMDataReaderWriter {
             double x = longitudeDifference * Math.cos((firstNodeLatitudeRadians + secondNodeLatitudeRadians) / 2);
             double y = latitudeDifference;
 
-            double linkLengthM = Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
-            link.setLinkLengthM(linkLengthM);
+            double linkLengthKm = Math.sqrt(x * x + y * y) * EARTH_RADIUS_KM;
+            link.setLinkTravelTimeMin(linkLengthKm / AVERAGE_DRIVING_SPEED_KMPH * MINUTES_PER_HOUR);
         }
-        System.out.println("Link lengths calculated");
+        System.out.println("Link-wise travel times (in minutes) calculated");
     }
 
     // Contract nodes and build shortcuts
@@ -241,20 +243,19 @@ public class OSMDataReaderWriter {
                         nodesConsideredForContraction.add(this.links.get(associatedLinkId).getSecondNodeId());
                     }
                     nodesConsideredForContraction.removeIf(nodeId -> nodeId.equals(commonNodeId));
-                    long firstUncommonNodeId = nodesConsideredForContraction.get(0);
-                    long secondUncommonNodeId = nodesConsideredForContraction.get(1);
-                    Node firstUncommonNode = this.nodes.get(firstUncommonNodeId);
-                    Node secondUncommonNode = this.nodes.get(secondUncommonNodeId);
+                    long firstNoncommonNodeId = nodesConsideredForContraction.get(0);
+                    long secondNoncommonNodeId = nodesConsideredForContraction.get(1);
+                    Node firstUncommonNode = this.nodes.get(firstNoncommonNodeId);
+                    Node secondUncommonNode = this.nodes.get(secondNoncommonNodeId);
 
                     long firstLinkId = commonNode.getLinkIdList().get(0);
                     long secondLinkId = commonNode.getLinkIdList().get(1);
 
-                    Link shortcutLink = new Link(firstUncommonNodeId, secondUncommonNodeId, this.links.get(firstLinkId).
-                            getLinkType());
-                    shortcutLink.setLinkLengthM(this.links.get(firstLinkId).getLinkLengthM() + this.links.get(secondLinkId).
-                            getLinkLengthM());
-
-                    long shortcutLinkId = Long.parseLong(firstLinkId + "01");
+                    Link shortcutLink = new Link(firstNoncommonNodeId, secondNoncommonNodeId, this.links.
+                            get(firstLinkId).getLinkType());
+                    shortcutLink.setLinkTravelTimeMin(this.links.get(firstLinkId).getLinkTravelTimeMin() + this.links.
+                            get(secondLinkId).getLinkTravelTimeMin());
+                    long shortcutLinkId = firstLinkId + 1;
 
                     firstUncommonNode.getLinkIdList().remove(firstLinkId);
                     firstUncommonNode.getLinkIdList().remove(secondLinkId);
@@ -266,9 +267,9 @@ public class OSMDataReaderWriter {
                     this.links.remove(firstLinkId);
                     this.links.remove(secondLinkId);
                     this.links.put(shortcutLinkId, shortcutLink);
-
                     this.nodes.remove(commonNodeId);
 
+                    // Check to see if nodes with two associated links still exist in the graph
                     nodesWithTwoLinksExist = false;
                     for (Node node : this.nodes.values()) {
                         if (node.getLinkIdList().size() == 2) {

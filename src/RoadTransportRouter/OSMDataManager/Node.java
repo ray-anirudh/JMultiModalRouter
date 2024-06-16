@@ -7,11 +7,11 @@ public class Node {    // Node IDs are present in the relevant hashmap
     private double nodeLatitude;
     private ArrayList<Long> linkIdList;
 
-    public void setNodeLongitude(double nodeLongitude) {
+    void setNodeLongitude(double nodeLongitude) {
         this.nodeLongitude = nodeLongitude;
     }
 
-    public void setNodeLatitude(double nodeLatitude) {
+    void setNodeLatitude(double nodeLatitude) {
         this.nodeLatitude = nodeLatitude;
     }
 
