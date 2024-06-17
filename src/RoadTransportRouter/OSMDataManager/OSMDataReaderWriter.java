@@ -3,9 +3,6 @@ package src.RoadTransportRouter.OSMDataManager;
 // OPL: Object Per Line
 
 import org.jetbrains.annotations.NotNull;
-import src.PublicTransportRouter.GTFSDataManager.Route;
-import src.PublicTransportRouter.GTFSDataManager.RouteStop;
-import src.PublicTransportRouter.GTFSDataManager.Trip;
 
 import java.io.*;
 import java.util.*;
