@@ -23,7 +23,7 @@ public class Node {    // Node IDs are present in the relevant hashmap
         return this.nodeLatitude;
     }
 
-    ArrayList<Long> getLinkIdList() {
+    public ArrayList<Long> getLinkIdList() {
         return this.linkIdList;
     }
 }
