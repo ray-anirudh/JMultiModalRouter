@@ -3,11 +3,11 @@ package src.RoadTransportRouter.OSMDataManager;
 // OPL: Object Per Line
 
 import org.jetbrains.annotations.NotNull;
+import src.PublicTransportRouter.GTFSDataManager.Route;
+import src.PublicTransportRouter.GTFSDataManager.RouteStop;
+import src.PublicTransportRouter.GTFSDataManager.Trip;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class OSMDataReaderWriter {
@@ -283,6 +283,67 @@ public class OSMDataReaderWriter {
         System.out.println("Nodes contracted and shortcuts built");
     }
 
+    /**
+     * All writers below are for datasets pertinent to the Dijkstra algorithm, aligned with Dijkstra terminologies
+     */
+
+    // Write a "dijkstraLinks.txt" file
+    public void writeDijkstraLinks(String dijkstraLinksFilePath) {
+        try {
+            // Writer for "dijkstraLinks.txt"
+            BufferedWriter dijkstraLinksWriter = new BufferedWriter(new FileWriter(dijkstraLinksFilePath));
+
+            // Set up header array
+            dijkstraLinksWriter.write("link_id,link_type,first_node_id,second_node_id,link_travel_time_min\n");
+
+            // Write body based on "links" hashmap
+            for (HashMap.Entry<Long, Link> linkEntry : this.links.entrySet()) {
+                long linkId = linkEntry.getKey();
+                String linkType = linkEntry.getValue().getLinkType();
+                long firstNodeId = linkEntry.getValue().getFirstNodeId();
+                long secondNodeId = linkEntry.getValue().getSecondNodeId();
+                double linkTravelTimeMin = linkEntry.getValue().getLinkTravelTimeMin();
+
+                dijkstraLinksWriter.write(linkId + "," + linkType + "," + firstNodeId + "," + secondNodeId + "," +
+                        linkTravelTimeMin + "\n");
+            }
+            System.out.println("Links' data written to " + dijkstraLinksFilePath);
+
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check the \"links\" hashmap.");
+        }
+    }
+
+    // Write a "dijkstraNodes.txt" file
+    public void writeDijkstraNodes(String dijkstraNodesFilePath) {
+        try {
+            // Writer for "dijkstraNodes.txt"
+            BufferedWriter dijkstraNodesWriter = new BufferedWriter(new FileWriter(dijkstraNodesFilePath));
+
+            // Set up header array
+            dijkstraNodesWriter.write("node_id,node_longitude,node_latitude,associated_link_id\n");
+
+            // Write body based on "nodes" hashmap
+            for (HashMap.Entry<Long, Node> nodeEntry : this.nodes.entrySet()) {
+                long nodeId = nodeEntry.getKey();
+                double nodeLongitude = nodeEntry.getValue().getNodeLongitude();
+                double nodeLatitude = nodeEntry.getValue().getNodeLatitude();
+                for (long associatedLinkId : nodeEntry.getValue().getLinkIdList()) {
+                    dijkstraNodesWriter.write(nodeId + "," + nodeLongitude + "," + nodeLatitude + "," +
+                            associatedLinkId + "\n");
+                }
+            }
+            System.out.println("Nodes' data written to " + dijkstraNodesFilePath);
+
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check the \"nodes\" hashmap.");
+        }
+    }
+
+    /**
+     * All supporting methods are below
+     */
+
     // Index finder using alphabets in the first record of an OSM OPL extract
     private int findIndexInArray(String characterSequenceToFind, @NotNull String[] headerArray) {
         int columnPosition = -1;
@@ -292,5 +353,14 @@ public class OSMDataReaderWriter {
             }
         }
         return columnPosition;
+    }
+
+    // Getters of road network data for Dijkstra queries
+    public LinkedHashMap<Long, Link> getLinks() {
+        return this.links;
+    }
+
+    public LinkedHashMap<Long, Node> getNodes() {
+        return this.nodes;
     }
 }
