@@ -5,8 +5,21 @@ import src.RoadTransportRouter.OSMDataManager.Node;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class KDTree {   // Used for super-fast nearest neighbour queries
+public class KDTree {
+
+    /**
+     * ATTRIBUTE DEFINITIONS
+     */
+
     private KDTreeNode kDTreeRootNode;    // Represents the root (highest level) node of the tree
+
+    /**
+     * BEHAVIOUR DEFINITIONS
+     */
+
+    /**
+     * For fast nearest-neighbour searches, the below methods are executed to build and query KD-Trees
+     */
 
     KDTreeNode buildKDTree(Node[] nodes, int depth) {
         if ((nodes == null) || (nodes.length == 0)) {
