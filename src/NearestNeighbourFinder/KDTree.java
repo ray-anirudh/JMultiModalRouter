@@ -5,7 +5,7 @@ import src.RoadTransportRouter.OSMDataManager.Node;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class KDTree {
+public class KDTree {   // Used for super-fast nearest neighbour queries
     private KDTreeNode kDTreeRootNode;    // Represents the root (highest level) node of the tree
 
     KDTreeNode buildKDTree(Node[] nodes, int depth) {
@@ -44,19 +44,19 @@ public class KDTree {
         }
 
         int axis = depth % 2;
-        KDTreeNode nextKDTreeNode = (axis == 0 ? sourceLatitude < kDTreeNode.getNode().getNodeLatitude() :
-                sourceLongitude < kDTreeNode.getNode().getNodeLongitude()) ? kDTreeNode.getLeft() :
+        KDTreeNode nextKDTreeNode = (((axis == 0) ? sourceLatitude < kDTreeNode.getNode().getNodeLatitude() :
+                sourceLongitude < kDTreeNode.getNode().getNodeLongitude())) ? kDTreeNode.getLeft() :
                 kDTreeNode.getRight();
         KDTreeNode otherKDTreeNode = (nextKDTreeNode == kDTreeNode.getLeft()) ? kDTreeNode.getRight() : kDTreeNode.
                 getLeft();
 
-        bestKDTreeNode = nearestNeighbourSearch(nextKDTreeNode, sourceLongitude, sourceLatitude, bestKDTreeNode,
+        bestKDTreeNode = nearestNeighbourSearch(sourceLongitude, sourceLatitude, nextKDTreeNode, bestKDTreeNode,
                 depth + 1);
-        double axisDistance = (axis == 0 ? Math.abs(kDTreeNode.getNode().getNodeLatitude() - sourceLatitude) :
-                Math.abs(kDTreeNode.getNode().getNodeLongitude() - sourceLongitude));
+        double axisDistance = (axis == 0) ? Math.abs(kDTreeNode.getNode().getNodeLatitude() - sourceLatitude) :
+                Math.abs(kDTreeNode.getNode().getNodeLongitude() - sourceLongitude);
 
         if (axisDistance < bestDistance) {
-            bestKDTreeNode = nearestNeighbourSearch(otherKDTreeNode, sourceLongitude, sourceLatitude, bestKDTreeNode,
+            bestKDTreeNode = nearestNeighbourSearch(sourceLongitude, sourceLatitude, otherKDTreeNode, bestKDTreeNode,
                     depth + 1);
         }
         return bestKDTreeNode;
@@ -67,7 +67,7 @@ public class KDTree {
             throw new IllegalStateException("KD-Tree is empty.");
         }
 
-        KDTreeNode bestKDTreeNode = nearestNeighbourSearch(kDTreeRootNode, sourceLongitude, sourceLatitude,
+        KDTreeNode bestKDTreeNode = nearestNeighbourSearch(sourceLongitude, sourceLatitude, kDTreeRootNode,
                 kDTreeRootNode, 0);
         return bestKDTreeNode.getNode();
     }
