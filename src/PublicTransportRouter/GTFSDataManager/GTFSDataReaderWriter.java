@@ -366,10 +366,11 @@ public class GTFSDataReaderWriter {
                             stopDataRecord[stopNameIndex].substring(1, stopDataRecord[stopNameIndex].length() - 1) :
                             stopDataRecord[stopNameIndex];
                     int stopType = -1;
+                    int stopTripCount = 0;
                     double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex]);
                     double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex]);
 
-                    Stop stop = new Stop(stopName, stopType, stopLatitude, stopLongitude);
+                    Stop stop = new Stop(stopName, stopType, stopTripCount, stopLatitude, stopLongitude);
                     this.stops.replace(stopId, stop);
                 }
             }
@@ -393,8 +394,13 @@ public class GTFSDataReaderWriter {
                         routeStopEntry.getValue().getDirectionWiseStopSequenceMap().get(2).containsKey(stopId)) {
 
                     stopSpecificRouteList.getRouteList().add(routeStopEntry.getKey());
-                    int stopType = this.routes.get(routeStopEntry.getKey()).getRouteType();
-                    this.stops.get(stopId).setStopType(stopType);
+                    Route route = this.routes.get(routeStopEntry.getKey());
+                    int routeType = route.getRouteType();
+                    int routeTripCount = route.getNumberTrips();
+
+                    Stop stop = this.stops.get(stopId);
+                    stop.setStopType(routeType);
+                    stop.setStopTripCount(stop.getStopTripCount() + routeTripCount);
                 }
             }
             this.stopRoutes.replace(stopId, stopSpecificRouteList);
