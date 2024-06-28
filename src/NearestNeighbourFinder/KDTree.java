@@ -75,6 +75,7 @@ public class KDTree {
         return bestKDTreeNode;
     }
 
+    // Find the nearest node to a source point from amongst a set of nodes
     public Node findNearest(double sourceLongitude, double sourceLatitude) {
         if (kDTreeRootNode == null) {
             throw new IllegalStateException("KD-Tree is empty.");
@@ -83,5 +84,19 @@ public class KDTree {
         KDTreeNode bestKDTreeNode = nearestNeighbourSearch(sourceLongitude, sourceLatitude, kDTreeRootNode,
                 kDTreeRootNode, 0);
         return bestKDTreeNode.getNode();
+    }
+
+    // Determine snapping cost, which is the cost of getting from one point to another (aerial distance) on foot
+    public double calculateSnappingCost(double longitudeOne, double latitudeOne, double longitudeTwo,
+                                        double latitudeTwo) {
+        final int EARTH_RADIUS_M = 6371000;
+        final double AVERAGE_WALKING_SPEED_MS = 1.42;
+
+        // Determine and return the equi-rectangular distance
+        double longitudeDifference = Math.toRadians(longitudeTwo - longitudeOne);
+        double latitudeDifference = Math.toRadians(latitudeTwo - latitudeOne);
+        double x = longitudeDifference * Math.cos(Math.toRadians((latitudeTwo + latitudeOne) / 2));
+        double y = latitudeDifference;
+        return ((Math.sqrt(x * x + y * y) * EARTH_RADIUS_M) / AVERAGE_WALKING_SPEED_MS);
     }
 }
