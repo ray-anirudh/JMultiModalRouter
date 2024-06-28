@@ -2,7 +2,9 @@ package src.MultiModalRouter;
 // TODO: HEURISTICS CAN BE BASED ON STOPS (STOPTYPE (ASCRIBED VIA ROUTETYPE - BIGGEST CURRENT CANDIDATE), PARENTSTOPPRESENCE), ROUTES (ROUTETYPES, #TRIPS, #STOPS)
 // TODO: HEURISTIC DATA CAN BE ASCRIBED IN GTFSDATAMANAGER
 // TODO: QUERY PARSING TO PEERFECT INPUT TYPES MUST HAPPEN IN THE CALLER, AND NOT HERE, OR IN THE QUERY CODE (SUCH AS LOCATING STOP AND THEN HOMING IN ON THE STOPIDS)
+// TODO REVIEW ALL CODE TO GOD LEVEL PERFECTION BEFORE RUNNING THIS SHIT
 
+import src.NearestNeighbourFinder.KDTree;
 import src.PublicTransportRouter.GTFSDataManager.*;
 import src.RoadTransportRouter.OSMDataManager.Link;
 import src.RoadTransportRouter.OSMDataManager.Node;
@@ -20,6 +22,30 @@ public class Caller {
 //        "Departure time: " + queryTravelTimeEntry.getKey().getDepartureTime() + "\n" +
 //        "Travel time: " + queryTravelTimeEntry.getValue() + "\n");
 //        }
+
+
+    /* todo example usage
+    public class Main {
+    public static void main(String[] args) {
+        Node[] nodes = {
+            new Node(52.5200, 13.4050), // Berlin
+            new Node(48.8566, 2.3522),  // Paris
+            new Node(51.5074, -0.1278), // London
+            new Node(50.1109, 8.6821)   // Frankfurt
+        };
+
+        KDTree tree = new KDTree();
+        tree.build(nodes);
+
+        // Find nodes within 500 km but outside 100 km of Brussels (50.8503, 4.3517)
+        List<Node> nearbyNodes = tree.findNodesWithinDoughnut(4.3517, 50.8503, 100, 500);
+
+        for (Node node : nearbyNodes) {
+            System.out.println("Node within doughnut range: (" + node.getNodeLatitude() + ", " + node.getNodeLongitude() + ")");
+        }
+    }
+}
+     */
 
 
     public static void main(String[] args) {
@@ -47,6 +73,35 @@ public class Caller {
         // Get all data for Dijkstra algorithm's execution
         LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
         LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+
+        // Build KD-Tree for snapping to Dijkstra-relevant network nodes
+        Node[] nodesForKDTree = nodes.values().toArray(new Node[0]);
+        KDTree snappingKDTree = new KDTree();
+        snappingKDTree.build(nodesForKDTree);
+
+        // Load all multi-modal queries
+        MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
+        String multiModalQueriesFilePath = "";
+        LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = multiModalQueryReader.
+                readMultiModalQueries(multiModalQueriesFilePath);
+
+        // Iterate through all multi-modal queries
+        for(MultiModalQuery multiModalQuery : multiModalQueries.values()) {
+            double originLongitude = multiModalQuery.getOriginLongitude();
+            double originLatitude = multiModalQuery.getOriginLatitude();
+            int departureTime = multiModalQuery.getDepartureTime();
+            double destinationLongitude = multiModalQuery.getDestinationLongitude();
+            double destinationLatitude = multiModalQuery.getDestinationLatitude();
+
+            Node nodeNearestToOrigin = snappingKDTree.findNearest(originLongitude, originLatitude);
+            Node nodeNearestToDestination = snappingKDTree.findNearest(destinationLongitude, destinationLatitude);
+            long originNodeId = nodeNearestToOrigin.getNodeId();
+            long destinationNodeId = nodeNearestToDestination.getNodeId();
+
+            // todo calculate snapping costs mate
+
+        }
+
     }
 
     // Get RAPTOR-relevant datasets ready

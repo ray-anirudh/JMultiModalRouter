@@ -1,7 +1,9 @@
 package src.NearestNeighbourFinder;
 
+import src.PublicTransportRouter.GTFSDataManager.Stop;
 import src.RoadTransportRouter.OSMDataManager.Node;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -85,6 +87,41 @@ public class KDTree {
                 kDTreeRootNode, 0);
         return bestKDTreeNode.getNode();
     }
+
+    public void doughnutSearch(double sourceLongitude, double sourceLatitude,
+                               KDTreeNode kDTreeNode, double maximumWalkingDistance, double maximumDrivingDistance,
+                               int depth, ArrayList<Stop> stopsInVicinity) {
+        if (kDTreeNode == null) {
+            return;
+        }
+
+        double distance = kDTreeNode.getNode().equiRectangularDistanceTo(sourceLongitude, sourceLatitude);
+
+        if ((distance > maximumWalkingDistance) && (distance <= maximumDrivingDistance)) {
+            stopsInVicinity.add()
+        }
+/*todo make this shit work
+        if (distance > innerRange && distance <= outerRange) {
+            result.add(node.getNode());
+        }
+
+        int axis = depth % 2;
+        double nodeValue = (axis == 0) ? node.getNode().getNodeLatitude() : node.getNode().getNodeLongitude();
+        double sourceValue = (axis == 0) ? sourceLatitude : sourceLongitude;
+
+        if (sourceValue - outerRange <= nodeValue) {
+            doughnutSearch(node.getLeft(), sourceLongitude, sourceLatitude, innerRange, outerRange, depth + 1, result);
+        }
+
+        if (sourceValue + outerRange >= nodeValue) {
+            doughnutSearch(node.getRight(), sourceLongitude, sourceLatitude, innerRange, outerRange, depth + 1, result);
+        }
+    }
+
+ */
+    }
+
+    // Find a set of
 
     // Determine snapping cost, which is the cost of getting from one point to another (aerial distance) on foot
     public double calculateSnappingCost(double longitudeOne, double latitudeOne, double longitudeTwo,

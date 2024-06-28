@@ -45,7 +45,7 @@ public class MultiModalQueryReader {
 
                 multiModalQueryId++;
             }
-            System.out.println("Multi-modal queries read from " + multiModalQueriesFilePath + " and queries hashmap" +
+            System.out.println("Multi-modal queries read from " + multiModalQueriesFilePath + ", and queries map" +
                     "built");
 
         } catch (FileNotFoundException fNFE) {

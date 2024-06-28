@@ -176,6 +176,7 @@ public class OSMDataReaderWriter {
                                 substring(1));
                         this.nodes.get(nodeId).setNodeLongitude(nodeLongitude);
                         this.nodes.get(nodeId).setNodeLatitude(nodeLatitude);
+                        this.nodes.get(nodeId).setNodeId(nodeId);
                     }
                 }
             }
