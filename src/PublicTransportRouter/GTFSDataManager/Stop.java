@@ -1,6 +1,7 @@
 package src.PublicTransportRouter.GTFSDataManager;
 
 public class Stop {
+    private int stopId;
     private String stopName;    // Stop IDs are contained in the pertinent hashmap
     private int stopType;
     // Ascribed via route type information (Refer to: https://gtfs.org/de/schedule/reference/#routestxt)
@@ -30,12 +31,20 @@ public class Stop {
         return Math.sqrt(x * x + y * y) * EARTH_RADIUS_KM;
     }
 
+    void setStopId(int stopId) {
+        this.stopId = stopId;
+    }
+
     void setStopType(int stopType) {
         this.stopType = stopType;
     }
 
     void setStopTripCount(int stopTripCount) {
         this.stopTripCount = stopTripCount;
+    }
+
+    public int getStopId() {
+        return this.stopId;
     }
 
     public String getStopName() {

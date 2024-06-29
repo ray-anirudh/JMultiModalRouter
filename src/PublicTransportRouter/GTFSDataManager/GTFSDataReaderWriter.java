@@ -225,6 +225,7 @@ public class GTFSDataReaderWriter {
 
                     if (!this.stops.containsKey(stopId)) {
                         Stop stop = new Stop();
+                        stop.setStopId(stopId);
                         StopRoute stopRoute = new StopRoute();
                         Transfer transfer = new Transfer();
                         this.stops.put(stopId, stop);
