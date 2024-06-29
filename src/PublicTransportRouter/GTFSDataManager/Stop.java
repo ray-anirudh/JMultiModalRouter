@@ -20,6 +20,16 @@ public class Stop {
         this(null, 0, 0, 0D, 0D);
     }
 
+    public double equiRectangularDistanceTo(double otherLongitude, double otherLatitude) {
+        final int EARTH_RADIUS_KM = 6371;
+        double longitudeDifference = Math.toRadians(this.stopLongitude - otherLongitude);
+        double latitudeDifference = Math.toRadians(this.stopLatitude - otherLatitude);
+
+        double x = longitudeDifference * Math.cos(Math.toRadians((this.stopLatitude + otherLatitude) / 2));
+        double y = latitudeDifference;
+        return Math.sqrt(x * x + y * y) * EARTH_RADIUS_KM;
+    }
+
     void setStopType(int stopType) {
         this.stopType = stopType;
     }
@@ -40,11 +50,11 @@ public class Stop {
         return this.stopTripCount;
     }
 
-    double getStopLatitude() {
+    public double getStopLatitude() {
         return this.stopLatitude;
     }
 
-    double getStopLongitude() {
+    public double getStopLongitude() {
         return this.stopLongitude;
     }
 }

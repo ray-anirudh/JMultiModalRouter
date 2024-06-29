@@ -3,8 +3,9 @@ package src.MultiModalRouter;
 // TODO: HEURISTIC DATA CAN BE ASCRIBED IN GTFSDATAMANAGER
 // TODO: QUERY PARSING TO PEERFECT INPUT TYPES MUST HAPPEN IN THE CALLER, AND NOT HERE, OR IN THE QUERY CODE (SUCH AS LOCATING STOP AND THEN HOMING IN ON THE STOPIDS)
 // TODO REVIEW ALL CODE TO GOD LEVEL PERFECTION BEFORE RUNNING THIS SHIT
+// TODO DO TURURURURU DO LIKE A MASSSSSSSIVVVVE (DEEEEEEP, EVERY SINGLE LINE - TAKE 3-4 DAYS) REVIEW BEFORE YOU GET GOINGGGGG
 
-import src.NearestNeighbourFinder.KDTree;
+import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.PublicTransportRouter.GTFSDataManager.*;
 import src.RoadTransportRouter.OSMDataManager.Link;
 import src.RoadTransportRouter.OSMDataManager.Node;
@@ -34,7 +35,7 @@ public class Caller {
             new Node(50.1109, 8.6821)   // Frankfurt
         };
 
-        KDTree tree = new KDTree();
+        KDTreeForNodes tree = new KDTreeForNodes();
         tree.build(nodes);
 
         // Find nodes within 500 km but outside 100 km of Brussels (50.8503, 4.3517)
@@ -76,8 +77,8 @@ public class Caller {
 
         // Build KD-Tree for snapping to Dijkstra-relevant network nodes
         Node[] nodesForKDTree = nodes.values().toArray(new Node[0]);
-        KDTree snappingKDTree = new KDTree();
-        snappingKDTree.build(nodesForKDTree);
+        KDTreeForNodes snappingKDTreeForNodes = new KDTreeForNodes();
+        snappingKDTreeForNodes.buildNodeBasedKDTree(nodesForKDTree);
 
         // Load all multi-modal queries
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
@@ -93,12 +94,28 @@ public class Caller {
             double destinationLongitude = multiModalQuery.getDestinationLongitude();
             double destinationLatitude = multiModalQuery.getDestinationLatitude();
 
-            Node nodeNearestToOrigin = snappingKDTree.findNearest(originLongitude, originLatitude);
-            Node nodeNearestToDestination = snappingKDTree.findNearest(destinationLongitude, destinationLatitude);
+            Node nodeNearestToOrigin = snappingKDTreeForNodes.findNearestNode(originLongitude, originLatitude);
+            Node nodeNearestToDestination = snappingKDTreeForNodes.findNearestNode(destinationLongitude, destinationLatitude);
             long originNodeId = nodeNearestToOrigin.getNodeId();
             long destinationNodeId = nodeNearestToDestination.getNodeId();
 
             // todo calculate snapping costs mate
+            // Determine snapping cost, which is the cost of getting from one point to another (aerial distance) on foot
+            /*public double calculateSnappingCost(double longitudeOne, double latitudeOne, double longitudeTwo,
+            double latitudeTwo) {
+                final int EARTH_RADIUS_M = 6371000;
+                final double AVERAGE_WALKING_SPEED_MS = 1.42;
+
+                // Determine and return the equi-rectangular distance
+                double longitudeDifference = Math.toRadians(longitudeTwo - longitudeOne);
+                double latitudeDifference = Math.toRadians(latitudeTwo - latitudeOne);
+                double x = longitudeDifference * Math.cos(Math.toRadians((latitudeTwo + latitudeOne) / 2));
+                double y = latitudeDifference;
+                return ((Math.sqrt(x * x + y * y) * EARTH_RADIUS_M) / AVERAGE_WALKING_SPEED_MS);
+            }
+            */
+
+            // todo inner and outer radius arguments will be maximum walking, maximum driving, 0, and max walking distances
 
         }
 

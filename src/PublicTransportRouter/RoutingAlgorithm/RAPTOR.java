@@ -15,7 +15,7 @@ public class RAPTOR {
     private static final int MINUTES_IN_DAY = 1440;
 
     // Determine the earliest arrival time for a single transit-based query
-    // todo: replace transit query with actual stop Ids and dep times, and check that either value is not null before RAPTOR runs
+    // todo replace transit query with actual stop Ids and dep times, and check that either value is not null before RAPTOR runs
     public TransitQueryResponse findShortestTransitPath(@NotNull TransitQuery transitQuery,
                                                         LinkedHashMap<Integer, RouteStop> routeStops,
                                                         LinkedHashMap<Integer, StopTime> stopTimes,
