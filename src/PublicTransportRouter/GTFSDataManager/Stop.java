@@ -22,13 +22,13 @@ public class Stop {
     }
 
     public double equiRectangularDistanceTo(double otherLongitude, double otherLatitude) {
-        final int EARTH_RADIUS_KM = 6371;
+        final int EARTH_RADIUS_M = 6371000;
         double longitudeDifference = Math.toRadians(this.stopLongitude - otherLongitude);
         double latitudeDifference = Math.toRadians(this.stopLatitude - otherLatitude);
 
         double x = longitudeDifference * Math.cos(Math.toRadians((this.stopLatitude + otherLatitude) / 2));
         double y = latitudeDifference;
-        return Math.sqrt(x * x + y * y) * EARTH_RADIUS_KM;
+        return Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
     }
 
     void setStopId(int stopId) {

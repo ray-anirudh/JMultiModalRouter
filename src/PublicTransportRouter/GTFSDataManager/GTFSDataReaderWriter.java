@@ -757,7 +757,7 @@ public class GTFSDataReaderWriter {
     private double calculateWalkingDistance(double fromStopLatitude, double fromStopLongitude, double toStopLatitude,
                                             double toStopLongitude) {
         try {
-            // TransitQuery GMaps Directions API for walking route
+            // GMaps Directions API for accurate transfer distance determination
             DirectionsResult result = DirectionsApi.newRequest(GOOGLE_GEO_API_CONTEXT)
                     .origin(new com.google.maps.model.LatLng(fromStopLatitude, fromStopLongitude))
                     .destination(new com.google.maps.model.LatLng(toStopLatitude, toStopLongitude))

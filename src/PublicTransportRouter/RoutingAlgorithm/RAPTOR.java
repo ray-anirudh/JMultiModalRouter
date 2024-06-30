@@ -3,7 +3,6 @@ package src.PublicTransportRouter.RoutingAlgorithm;
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
 import org.jetbrains.annotations.NotNull;
-import src.MultiModalRouter.TransitQuery;
 import src.PublicTransportRouter.GTFSDataManager.*;
 
 import java.util.ArrayList;
@@ -15,17 +14,15 @@ public class RAPTOR {
     private static final int MINUTES_IN_DAY = 1440;
 
     // Determine the earliest arrival time for a single transit-based query
-    // todo replace transit query with actual stop Ids and dep times, and check that either value is not null before RAPTOR runs
-    public TransitQueryResponse findShortestTransitPath(@NotNull TransitQuery transitQuery,
+    // TODO replace transit query with actual stop Ids and dep times, and check that either value is not null before RAPTOR runs
+    public TransitQueryResponse findShortestTransitPath(int originStopId,
+                                                        int destinationStopId,
+                                                        double desiredDepartureTime,
                                                         LinkedHashMap<Integer, RouteStop> routeStops,
                                                         LinkedHashMap<Integer, StopTime> stopTimes,
                                                         @NotNull LinkedHashMap<Integer, Stop> stops,
                                                         LinkedHashMap<Integer, StopRoute> stopRoutes,
                                                         LinkedHashMap<Integer, Transfer> transfers) {
-        // Parse query information
-        int originStopId = transitQuery.getOriginStopId();
-        int destinationStopId = transitQuery.getDestinationStopId();
-        int desiredDepartureTime = transitQuery.getDesiredDepartureTimeMinutes();
 
         // Initialize earliest arrival time output
         TransitQueryResponse transitQueryResponse = new TransitQueryResponse(-1, -1);
@@ -78,7 +75,7 @@ public class RAPTOR {
     // Initialize trip-leg specific earliest arrival time map by setting timestamps at all stops
     private void initializeTripLegSpecificArrivalTimeMap(int tripLegNumber,
                                                          int originStopId,
-                                                         int desiredDepartureTime,
+                                                         double desiredDepartureTime,
                                                          LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                                                  previousEarliestArrivalTimeMap,
                                                          LinkedHashMap<Integer, Stop> stops) {
@@ -92,7 +89,7 @@ public class RAPTOR {
             for (int stopId : stops.keySet()) {
                 firstEarliestArrivalTimeMap.put(stopId, Double.MAX_VALUE);
             }
-            firstEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
+            firstEarliestArrivalTimeMap.replace(originStopId, desiredDepartureTime);
             previousEarliestArrivalTimeMap.put(tripLegNumber, firstEarliestArrivalTimeMap);
         } else {
             // Replicate earliest arrival times reported in previous trip-legs
