@@ -97,8 +97,10 @@ public class Caller {
         LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = multiModalQueryReader.
                 readMultiModalQueries(multiModalQueriesFilePath);
 
+        int routingQueryCount = 0;
         // Iterate through all multi-modal queries
         for(MultiModalQuery multiModalQuery : multiModalQueries.values()) {
+            routingQueryCount++;
             double originLongitude = multiModalQuery.getOriginLongitude();
             double originLatitude = multiModalQuery.getOriginLatitude();
             int departureTime = multiModalQuery.getDepartureTime();
@@ -126,12 +128,8 @@ public class Caller {
             // Set up nearest neighbor stop lists
             ArrayList<Stop> stopsNearOriginNode = doughnutKDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
                     originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
-            System.out.println("Number of transit stops considered around origin: " + stopsNearOriginNode.size());
-
             ArrayList<Stop> stopsNearDestinationNode = doughnutKDTreeForStops.findStopsWithinDoughnut(
                     destinationLongitude, destinationLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
-            System.out.println("Number of transit stops considered around destination: " + stopsNearDestinationNode.
-                    size());
 
             // Find nearest network nodes of the found stops
             ArrayList<Node> nearestNodesOfStopsNearOriginNode = new ArrayList<>();
@@ -213,8 +211,24 @@ public class Caller {
             String selectedOriginStopName = stops.get(selectedOriginStopId).getStopName();
             String selectedDestinationStopName = stops.get(selectedDestinationStopId).getStopName();
 
+            // Print result
+            System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
+                    "Origin coordinates: (" + originLatitude + ", " + originLongitude + ")\n" +
+                    "Destination coordinates: (" + destinationLatitude + ", " + destinationLongitude + "\n" +
+                    "Departure time: " + (departureTime / 60) + ":" + (departureTime % 60) + "\n" +
+                    "Number of transit stops considered around origin: " + stopsNearOriginNode.size() + "\n" +
+                    "Number of transit stops considered around destination: " + stopsNearDestinationNode.size() + "\n" +
+                    "Origin stop in solution: " + selectedOriginStopName + "(" + selectedOriginStopId + ")\n" +
+                    "Destination stop in solution: " + selectedDestinationStopName + "(" + selectedDestinationStopId +
+                    ")\n" +
+                    "Travel time from origin to " + selectedOriginStopName + ": " + timeSpentFromOriginToOriginStop +
+                    "minutes\n" +
+                    "Travel time from " + selectedOriginStopName + " to " + selectedDestinationStopName + ": " +
+                    timeSpentInTransit + "minutes\n" +
+                    "Travel time from " + selectedDestinationStopName + " to destination: " +
+                    timeSpentFromDestinationStopToDestination + "\n" +
+                    "Total travel time: " + leastTotalTravelTime + "\n" );
         }
-
     }
 
     // Get RAPTOR-relevant datasets ready
