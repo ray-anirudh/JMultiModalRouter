@@ -127,7 +127,7 @@ public class RAPTOR {
             for (int markedStopBasedRouteId : stopRoutes.get(markedStopId).getRouteList()) {
 
                 LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> routeStopConsidered = routeStops.
-                        get(markedStopBasedRouteId).getDirectionWiseStopSequenceMap();
+                        get(markedStopBasedRouteId).getDirectionWiseStopMaps();
 
                 String directionalRouteId = String.valueOf(markedStopBasedRouteId);
                 if (routeStopConsidered.get(1).containsKey(markedStopId)) {

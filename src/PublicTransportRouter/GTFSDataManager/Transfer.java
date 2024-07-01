@@ -8,12 +8,8 @@ public class Transfer {
     the pertinent hashmap
     */
 
-    Transfer(LinkedHashMap<Integer, Double> transferMap) {
-        this.transferMap = transferMap;
-    }
-
     Transfer() {
-        this(new LinkedHashMap<>());    // All values are initialized to zeroes
+        this.transferMap = new LinkedHashMap<>();    // All values are initialized to zeroes
     }
 
     public LinkedHashMap<Integer, Double> getTransferMap() {

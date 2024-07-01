@@ -10,6 +10,8 @@ public class MultiModalQueryReader {
      * BEHAVIOUR DEFINITIONS
      * The reader below is to create a map of multi-modal queries for the JMultiModalRouter algorithm
      */
+
+    // Build hashmap for multi-modal routing queries
     LinkedHashMap<Integer, MultiModalQuery> readMultiModalQueries (String multiModalQueriesFilePath) {
         LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 

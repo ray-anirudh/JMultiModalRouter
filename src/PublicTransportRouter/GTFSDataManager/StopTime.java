@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 public class StopTime {
     private final LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps;
     /* Integer keys refer to trip IDs within a route; overarching route IDs are in the pertinent hashmap
-    Internal hashmap has actual stop IDs mapped to arrival and departure times, as well as stop sequences
+    Internal hashmap has actual stop IDs mapped to arrival times, departure times and stop sequences
     */
 
     StopTime(LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps) {

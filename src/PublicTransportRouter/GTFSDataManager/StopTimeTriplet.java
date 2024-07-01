@@ -14,11 +14,9 @@ public class StopTimeTriplet {
     public int getStopSequence() {
         return this.stopSequence;
     }
-
     public int getArrivalTime() {
         return this.arrivalTime;
     }
-
     public int getDepartureTime() {
         return this.departureTime;
     }

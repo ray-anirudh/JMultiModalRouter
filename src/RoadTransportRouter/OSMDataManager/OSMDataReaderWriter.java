@@ -65,7 +65,7 @@ public class OSMDataReaderWriter {
      * All readers and dataset manipulators below are for Dijkstra-relevant data, and sourced from OSM files
      */
 
-    // Read and filter links from the OSM extract
+    // Build "links" hashmap from the OSM extract
     public void readAndFilterOsmLinks(String osmOplExtractFilePath) {
         try {
             // Reader for first record of "BBBikeOSMExtract.opl"
@@ -137,7 +137,7 @@ public class OSMDataReaderWriter {
         System.out.println("Circular links removed");
     }
 
-    // Read and filter nodes from the OSM extract
+    // Build "nodes" hashmap from the OSM extract
     public void readAndFilterOsmNodes(String osmOplExtractFilePath) {
         // Initializing required indices
         int nodeIdIndex = 0;

@@ -13,7 +13,6 @@ import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.NearestNeighbourFinder.KDTreeForStops;
 import src.PublicTransportRouter.GTFSDataManager.*;
 import src.PublicTransportRouter.RoutingAlgorithm.RAPTOR;
-import src.PublicTransportRouter.RoutingAlgorithm.TransitQueryResponse;
 import src.RoadTransportRouter.OSMDataManager.Link;
 import src.RoadTransportRouter.OSMDataManager.Node;
 import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
@@ -28,32 +27,7 @@ public class Caller {
     private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 6_000;
 
-// In results, we need to cover nanotime, origin stop LL, desti stop LL, dep time, number of stops in Odoughnut, number of stops in Ddoughnut, number of relations analysed, best response features
     // We need to do the above for both (exact solution vs heuristic governed solution)
-
-    /* todo example usage
-    public class Main {
-    public static void main(String[] args) {
-        Node[] nodes = {
-            new Node(52.5200, 13.4050), // Berlin
-            new Node(48.8566, 2.3522),  // Paris
-            new Node(51.5074, -0.1278), // London
-            new Node(50.1109, 8.6821)   // Frankfurt
-        };
-
-        KDTreeForNodes tree = new KDTreeForNodes();
-        tree.build(nodes);
-
-        // Find nodes within 500 km but outside 100 km of Brussels (50.8503, 4.3517)
-        List<Node> nearbyNodes = tree.findNodesWithinDoughnut(4.3517, 50.8503, 100, 500);
-
-        for (Node node : nearbyNodes) {
-            System.out.println("Node within doughnut range: (" + node.getNodeLatitude() + ", " + node.getNodeLongitude() + ")");
-        }
-    }
-}
-     */
-
 
     public static void main(String[] args) {
         // GTFS data reader-writer instantiation to read, write, and store data
