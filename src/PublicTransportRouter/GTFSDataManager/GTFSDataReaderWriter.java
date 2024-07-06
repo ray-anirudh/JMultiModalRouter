@@ -42,7 +42,6 @@ public class GTFSDataReaderWriter {
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
-    private static final double EARTH_RADIUS_M = 6_371_000D;    // todo see to keep or not
     private static final int MAXIMUM_TRANSFER_DISTANCE_M = 300;    // (Gritsch, 2024) and (Tischner, 2018)
     private static final double AVERAGE_WALKING_SPEED_MPS = 1.4D;   // (Gritsch, 2024)
     private static final double SECONDS_IN_MINUTE = 60D;
@@ -79,9 +78,6 @@ public class GTFSDataReaderWriter {
 
     /**
      * BEHAVIOUR DEFINITIONS
-     */
-
-    /**
      * All readers and dataset manipulators below are for RAPTOR-relevant data, and sourced from GTFS files
      */
 
