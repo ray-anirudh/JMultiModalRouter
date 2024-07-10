@@ -176,7 +176,6 @@ public class RAPTOR {
             // To handle arrival times after a temporal wraparound
             int dayCounter = (int) (summaryEarliestArrivalTimeMap.get(stopId) / MINUTES_IN_DAY);
 
-
             // Determine the pertinent trip
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
                     get(routeId).getTripWiseStopTimeMaps();
