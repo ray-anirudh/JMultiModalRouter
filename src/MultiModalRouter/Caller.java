@@ -27,8 +27,6 @@ public class Caller {
     private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 6_000;
 
-    // We need to do the above for both (exact solution vs heuristic governed solution)
-
     public static void main(String[] args) {
         // GTFS data reader-writer instantiation to read, write, and store data
         GTFSDataReaderWriter gtfsDataReaderWriterForRaptor = new GTFSDataReaderWriter();
@@ -57,13 +55,13 @@ public class Caller {
         LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
         Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
 
-        // Build KD-Tree for snapping to Dijkstra-relevant network nodes
-        KDTreeForNodes snappingKDTreeForNodes = new KDTreeForNodes();
-        snappingKDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
-
         // Build KD-Tree for snapping to RAPTOR-relevant transit stops
-        KDTreeForStops doughnutKDTreeForStops = new KDTreeForStops();
-        doughnutKDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
+        KDTreeForStops kDTreeForStops = new KDTreeForStops();
+        kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
+
+        // Build KD-Tree for snapping to Dijkstra-relevant network nodes
+        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
+        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
 
         // Load all multi-modal queries
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
@@ -81,8 +79,8 @@ public class Caller {
             double destinationLongitude = multiModalQuery.getDestinationLongitude();
             double destinationLatitude = multiModalQuery.getDestinationLatitude();
 
-            Node nodeNearestToOrigin = snappingKDTreeForNodes.findNearestNode(originLongitude, originLatitude);
-            Node nodeNearestToDestination = snappingKDTreeForNodes.findNearestNode(destinationLongitude,
+            Node nodeNearestToOrigin = kDTreeForNodes.findNearestNode(originLongitude, originLatitude);
+            Node nodeNearestToDestination = kDTreeForNodes.findNearestNode(destinationLongitude,
                     destinationLatitude);
             long originNodeId = nodeNearestToOrigin.getNodeId();
             long destinationNodeId = nodeNearestToDestination.getNodeId();
@@ -100,16 +98,17 @@ public class Caller {
                     / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
             // Set up nearest neighbor stop lists
-            ArrayList<Stop> stopsNearOriginNode = doughnutKDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
+            ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
                     originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
-            ArrayList<Stop> stopsNearDestinationNode = doughnutKDTreeForStops.findStopsWithinDoughnut(
+            ArrayList<Stop> stopsNearDestinationNode = kDTreeForStops.findStopsWithinDoughnut(
                     destinationLongitude, destinationLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
 
             // Find nearest network nodes of the found stops
             ArrayList<Node> nearestNodesOfStopsNearOriginNode = new ArrayList<>();
             ArrayList<Double> nNSnappingCostsOfStopsNearOriginNode = new ArrayList<>();
+            // todo null safety of stop lists for areas in remote places
             for (Stop stopNearOriginNode : stopsNearOriginNode) {
-                Node nearestNodeOfStopNearOriginNode = snappingKDTreeForNodes.findNearestNode(stopNearOriginNode.
+                Node nearestNodeOfStopNearOriginNode = kDTreeForNodes.findNearestNode(stopNearOriginNode.
                         getStopLongitude(), stopNearOriginNode.getStopLatitude());
                 double costOriginBasedStopToNearestNode = nearestNodeOfStopNearOriginNode.equiRectangularDistanceTo(
                         stopNearOriginNode.getStopLongitude(), stopNearOriginNode.getStopLatitude()) /
@@ -121,7 +120,7 @@ public class Caller {
             ArrayList<Node> nearestNodesOfStopsNearDestinationNode = new ArrayList<>();
             ArrayList<Double> nNSnappingCostsOfStopsNearDestinationNode = new ArrayList<>();
             for (Stop stopNearDestinationNode : stopsNearDestinationNode) {
-                Node nearestNodeOfStopNearDestinationNode = snappingKDTreeForNodes.findNearestNode(
+                Node nearestNodeOfStopNearDestinationNode = kDTreeForNodes.findNearestNode(
                         stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.getStopLatitude());
                 double costDestinationBasedStopToNearestNode = nearestNodeOfStopNearDestinationNode.
                         equiRectangularDistanceTo(stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.
@@ -149,6 +148,7 @@ public class Caller {
             }
 
             // Execute RAPTOR runs
+            // todo handle transresponses with -1, -1 parameters
             double leastTotalTravelTime = Double.MAX_VALUE;
             double timeSpentInTransit = -1;
             double timeSpentFromOriginToOriginStop = -1;
@@ -239,8 +239,8 @@ public class Caller {
         gtfsDataReaderWriterForRaptor.filterTransfersHashMap();
 
         // Limit dataset to study area and ensure transitivity of transfers
-        gtfsDataReaderWriterForRaptor.filterHashMapsOnLatLong();
         gtfsDataReaderWriterForRaptor.makeTransfersTransitive();
+        gtfsDataReaderWriterForRaptor.filterHashMapsOnLatLong();
 
         // Write out data used for RAPTOR
         gtfsDataReaderWriterForRaptor.writeRaptorRoutes(raptorRoutesFilePath);
@@ -252,7 +252,7 @@ public class Caller {
         gtfsDataReaderWriterForRaptor.writeRaptorTransfers(raptorTransfersFilePath);
     }
 
-    // Get Dijkstra- and Contraction Hierarchies-relevant datasets ready
+    // Get Dijkstra-relevant datasets ready
     public static void getDijkstraMaps(String osmOplExtractFilePath,
                                        String dijkstraFolderPath,
                                        OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
@@ -266,7 +266,7 @@ public class Caller {
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
-        osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step must be optional
+        osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional
 
         // Write out data used for the Dijkstra algorithm
         osmDataReaderWriterForDijkstra.writeDijkstraLinks(dijkstraLinksFilePath);

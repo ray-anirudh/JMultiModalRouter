@@ -2,8 +2,9 @@ package src.PublicTransportRouter.RoutingAlgorithm;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
-import org.jetbrains.annotations.NotNull;
 import src.PublicTransportRouter.GTFSDataManager.*;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +14,7 @@ import java.util.LinkedHashMap;
 public class RAPTOR {
     private static final int MINUTES_IN_DAY = 1440;
 
-    // Determine the earliest arrival time for a single transit-based query
-    // TODO replace transit query with actual stop Ids and dep times, and check that either value is not null before RAPTOR runs
+    // Determine the shortest travel time for a single transit-based query
     public TransitQueryResponse findShortestTransitPath(int originStopId,
                                                         int destinationStopId,
                                                         double desiredDepartureTime,
@@ -30,7 +30,7 @@ public class RAPTOR {
         // Initialize RAPTOR
         int tripLegNumber = 1;
         LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
-        summaryEarliestArrivalTimeMap.replace(originStopId, (double) desiredDepartureTime);
+        summaryEarliestArrivalTimeMap.replace(originStopId, desiredDepartureTime);
 
         // Create an empty trip-leg wise earliest arrival time map
         LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
@@ -81,7 +81,7 @@ public class RAPTOR {
                                                          LinkedHashMap<Integer, Stop> stops) {
         /* In the method arguments' first hashmap, external integer keys refer to trip leg numbers, internal integer
         keys to stop IDs, and internal decimal values to the known earliest arrival times at the corresponding stops;
-        the stop-arrival time pair is repeatedly built for every trip leg number iteration, in the external code
+        the stop-arrival time map is repeatedly built for every trip leg number iteration, in the external code
         */
         if (tripLegNumber == 1) {
             LinkedHashMap<Integer, Double> firstEarliestArrivalTimeMap = new LinkedHashMap<>();

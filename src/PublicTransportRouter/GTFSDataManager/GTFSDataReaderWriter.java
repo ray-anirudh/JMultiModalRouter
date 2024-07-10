@@ -33,7 +33,7 @@ public class GTFSDataReaderWriter {
             "390"  // Nahreisezug
     };
 
-    // Initialize GMaps API context with the API key of "Anirudh Ray"
+    // Initialize GMaps API context with a valid API key
     private static final GeoApiContext GOOGLE_GEO_API_CONTEXT = new GeoApiContext.Builder().
             apiKey("Your Google API Key").build();
 
@@ -556,8 +556,7 @@ public class GTFSDataReaderWriter {
                 int numberStops = routeEntry.getValue().getNumberStops();
                 int routeType = routeEntry.getValue().getRouteType();
 
-                raptorRoutesWriter.write(routeId + "," + numberTrips + "," + numberStops + "," + routeType +
-                        "\n");
+                raptorRoutesWriter.write(routeId + "," + numberTrips + "," + numberStops + "," + routeType + "\n");
             }
             System.out.println("Routes' data written to " + raptorRoutesFilePath);
 
@@ -667,18 +666,19 @@ public class GTFSDataReaderWriter {
             BufferedWriter raptorStopsWriter = new BufferedWriter(new FileWriter(raptorStopsFilePath));
 
             // Set up header array
-            raptorStopsWriter.write("stop_id,stop_name,location_type,stop_lat,stop_lon\n");
+            raptorStopsWriter.write("stop_id,stop_name,location_type,stop_trip_count,stop_lon,stop_lat\n");
 
             // Write body based on "stops" hashmap
             for (HashMap.Entry<Integer, Stop> stopEntry : this.stops.entrySet()) {
                 int stopId = stopEntry.getKey();
                 String stopName = stopEntry.getValue().getStopName();
                 int locationType = stopEntry.getValue().getStopType();
+                int stopTripCount = stopEntry.getValue().getStopTripCount();
                 double stopLatitude = stopEntry.getValue().getStopLatitude();
                 double stopLongitude = stopEntry.getValue().getStopLongitude();
 
-                raptorStopsWriter.write(stopId + "," + stopName + "," + locationType + "," + stopLatitude + "," +
-                        stopLongitude + "\n");
+                raptorStopsWriter.write(stopId + "," + stopName + "," + locationType + "," + stopTripCount + "," +
+                        stopLatitude + "," + stopLongitude + "\n");
             }
             System.out.println("Stops' data written to " + raptorStopsFilePath);
 
