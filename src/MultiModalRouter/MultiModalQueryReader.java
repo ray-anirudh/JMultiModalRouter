@@ -37,7 +37,10 @@ public class MultiModalQueryReader {
                 String[] multiModalQueryRecord = newline.split(",");
                 double originLongitude = Double.parseDouble(multiModalQueryRecord[originLongitudeIndex]);
                 double originLatitude = Double.parseDouble(multiModalQueryRecord[originLatitudeIndex]);
-                int departureTime = Integer.parseInt(multiModalQueryRecord[departureTimeIndex]);
+                String departureTimeHourString = multiModalQueryRecord[departureTimeIndex].substring(0, 2);
+                String departureTimeMinuteString = multiModalQueryRecord[departureTimeIndex].substring(3, 5);
+                int departureTime = Integer.parseInt(departureTimeHourString) * 60 +
+                        Integer.parseInt(departureTimeMinuteString);
                 double destinationLongitude = Double.parseDouble(multiModalQueryRecord[destinationLongitudeIndex]);
                 double destinationLatitude = Double.parseDouble(multiModalQueryRecord[destinationLatitudeIndex]);
 

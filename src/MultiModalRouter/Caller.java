@@ -25,7 +25,10 @@ public class Caller {
 
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;
     private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
+    // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 6_000;
+    private static final int MINUTES_PER_HOUR = 60;
+    private static final int MINUTES_PER_DAY = 1440;
 
     public static void main(String[] args) {
         // GTFS data reader-writer instantiation to read, write, and store data
@@ -75,132 +78,154 @@ public class Caller {
             routingQueryCount++;
             double originLongitude = multiModalQuery.getOriginLongitude();
             double originLatitude = multiModalQuery.getOriginLatitude();
-            int departureTime = multiModalQuery.getDepartureTime();
+            int originDepartureTime = multiModalQuery.getDepartureTime();
             double destinationLongitude = multiModalQuery.getDestinationLongitude();
             double destinationLatitude = multiModalQuery.getDestinationLatitude();
 
-            Node nodeNearestToOrigin = kDTreeForNodes.findNearestNode(originLongitude, originLatitude);
-            Node nodeNearestToDestination = kDTreeForNodes.findNearestNode(destinationLongitude,
-                    destinationLatitude);
-            long originNodeId = nodeNearestToOrigin.getNodeId();
-            long destinationNodeId = nodeNearestToDestination.getNodeId();
+            Node originNode = kDTreeForNodes.findNearestNode(originLongitude, originLatitude);
+            Node destinationNode = kDTreeForNodes.findNearestNode(destinationLongitude, destinationLatitude);
+            long originNodeId = originNode.getNodeId();
+            long destinationNodeId = destinationNode.getNodeId();
 
             double originNodeLongitude = nodes.get(originNodeId).getNodeLongitude();
             double originNodeLatitude = nodes.get(originNodeId).getNodeLatitude();
             double destinationNodeLongitude = nodes.get(destinationNodeId).getNodeLongitude();
             double destinationNodeLatitude = nodes.get(destinationNodeId).getNodeLatitude();
 
-            // Determine snapping cost, which is the cost of getting from one point to another (aerial distance) on foot
-            double costOriginToOriginNode = nodeNearestToOrigin.equiRectangularDistanceTo(originNodeLongitude,
+            // Determine snapping cost - minutes required to get from one point to another (aerial distance) on foot
+            double costOriginToOriginNode = originNode.equiRectangularDistanceTo(originNodeLongitude,
                     originNodeLatitude) / AVERAGE_WALKING_SPEED_M_PER_MIN;
-            double costDestinationToDestinationNode = nodeNearestToDestination.
-                    equiRectangularDistanceTo(destinationNodeLongitude, destinationNodeLatitude)
-                    / AVERAGE_WALKING_SPEED_M_PER_MIN;
+            double costDestinationNodeToDestination = destinationNode.equiRectangularDistanceTo
+                    (destinationNodeLongitude, destinationNodeLatitude) / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
             // Set up nearest neighbor stop lists
-            ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
+            ArrayList<Stop> originNodeStops = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
                     originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
-            ArrayList<Stop> stopsNearDestinationNode = kDTreeForStops.findStopsWithinDoughnut(
-                    destinationLongitude, destinationLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
+            ArrayList<Stop> destinationNodeStops = kDTreeForStops.findStopsWithinDoughnut(destinationNodeLongitude,
+                    destinationNodeLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
 
-            // Find nearest network nodes of the found stops
-            ArrayList<Node> nearestNodesOfStopsNearOriginNode = new ArrayList<>();
-            ArrayList<Double> nNSnappingCostsOfStopsNearOriginNode = new ArrayList<>();
-            // todo null safety of stop lists for areas in remote places
-            for (Stop stopNearOriginNode : stopsNearOriginNode) {
-                Node nearestNodeOfStopNearOriginNode = kDTreeForNodes.findNearestNode(stopNearOriginNode.
-                        getStopLongitude(), stopNearOriginNode.getStopLatitude());
-                double costOriginBasedStopToNearestNode = nearestNodeOfStopNearOriginNode.equiRectangularDistanceTo(
+            if ((originNodeStops == null) || (destinationNodeStops == null)) {
+                System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
+                        "Origin coordinates: (" + originLatitude + ", " + originLongitude + ")\n" +
+                        "Destination coordinates: (" + destinationLatitude + ", " + destinationLongitude + "\n" +
+                        "Departure time: " + (originDepartureTime / 60) + ":" + (originDepartureTime % 60) + "\n" +
+                        "Transit stops could not be found near origin and/ or destination nodes.");
+                continue;
+            }
+
+            // Find nearest network nodes of the found stops (snapping costs are yet in minutes)
+            ArrayList<Node> nearestNodesOfOriginStops = new ArrayList<>();
+            ArrayList<Double> nNSnappingCostsOfOriginStops = new ArrayList<>();
+            ArrayList<Node> nearestNodesOfDestinationStops = new ArrayList<>();
+            ArrayList<Double> nNSnappingCostsOfDestinationStops = new ArrayList<>();
+
+            for (Stop stopNearOriginNode : originNodeStops) {
+                Node nearestNodeOfOriginStop = kDTreeForNodes.findNearestNode(stopNearOriginNode.getStopLongitude(),
+                        stopNearOriginNode.getStopLatitude());
+                double costOriginStopToNearestNode = nearestNodeOfOriginStop.equiRectangularDistanceTo(
                         stopNearOriginNode.getStopLongitude(), stopNearOriginNode.getStopLatitude()) /
                         AVERAGE_WALKING_SPEED_M_PER_MIN;
-                nearestNodesOfStopsNearOriginNode.add(nearestNodeOfStopNearOriginNode);
-                nNSnappingCostsOfStopsNearOriginNode.add(costOriginBasedStopToNearestNode);
+                nearestNodesOfOriginStops.add(nearestNodeOfOriginStop);
+                nNSnappingCostsOfOriginStops.add(costOriginStopToNearestNode);
             }
 
-            ArrayList<Node> nearestNodesOfStopsNearDestinationNode = new ArrayList<>();
-            ArrayList<Double> nNSnappingCostsOfStopsNearDestinationNode = new ArrayList<>();
-            for (Stop stopNearDestinationNode : stopsNearDestinationNode) {
-                Node nearestNodeOfStopNearDestinationNode = kDTreeForNodes.findNearestNode(
-                        stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.getStopLatitude());
-                double costDestinationBasedStopToNearestNode = nearestNodeOfStopNearDestinationNode.
-                        equiRectangularDistanceTo(stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.
-                                getStopLatitude()) / AVERAGE_WALKING_SPEED_M_PER_MIN;
-                nearestNodesOfStopsNearDestinationNode.add(nearestNodeOfStopNearDestinationNode);
-                nNSnappingCostsOfStopsNearDestinationNode.add(costDestinationBasedStopToNearestNode);
+            for (Stop stopNearDestinationNode : destinationNodeStops) {
+                Node nearestNodeOfDestinationStop = kDTreeForNodes.findNearestNode(stopNearDestinationNode.
+                        getStopLongitude(), stopNearDestinationNode.getStopLatitude());
+                double costDestinatioStopToNearestNode = nearestNodeOfDestinationStop.equiRectangularDistanceTo
+                        (stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.getStopLatitude()) /
+                        AVERAGE_WALKING_SPEED_M_PER_MIN;
+                nearestNodesOfDestinationStops.add(nearestNodeOfDestinationStop);
+                nNSnappingCostsOfDestinationStops.add(costDestinatioStopToNearestNode);
             }
 
-            // Dijkstra-runs for origin and destination stops
-            ArrayList<Double> dijkstraArrivalTimesToOriginStops = new ArrayList<>();
-            for (int i = 0; i < nearestNodesOfStopsNearOriginNode.size(); i++) {
+            // Dijkstra-runs for origin and destination stops (attained travel times have minutes as units)
+            ArrayList<Double> arrivalTimesToOriginStopsNodes = new ArrayList<>();
+            for (int i = 0; i < nearestNodesOfOriginStops.size(); i++) {
                 DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
                 double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(originNodeId,
-                        nearestNodesOfStopsNearOriginNode.get(i).getNodeId(), nodes, links);
-                dijkstraArrivalTimesToOriginStops.add(departureTime + nNSnappingCostsOfStopsNearOriginNode.get(i) +
-                        dijkstraTravelTime);
+                        nearestNodesOfOriginStops.get(i).getNodeId(), nodes, links);
+                arrivalTimesToOriginStopsNodes.add(originDepartureTime + dijkstraTravelTime +
+                                nNSnappingCostsOfOriginStops.get(i));
             }
 
-            ArrayList<Double> dijkstraTravelTimesFromDestinationStop = new ArrayList<>();
-            for (int i = 0; i < nearestNodesOfStopsNearDestinationNode.size(); i++) {
+            ArrayList<Double> travelTimesFromDestinationStopsNodes = new ArrayList<>();
+            for (int i = 0; i < nearestNodesOfDestinationStops.size(); i++) {
                 DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-                double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(destinationNodeId,
-                        nearestNodesOfStopsNearDestinationNode.get(i).getNodeId(), nodes, links);
-                dijkstraTravelTimesFromDestinationStop.add(dijkstraTravelTime);
+                double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(nearestNodesOfDestinationStops.
+                        get(i).getNodeId(), destinationNodeId, nodes, links);
+                travelTimesFromDestinationStopsNodes.add(dijkstraTravelTime);
             }
 
             // Execute RAPTOR runs
-            // todo handle transresponses with -1, -1 parameters
             double leastTotalTravelTime = Double.MAX_VALUE;
-            double timeSpentInTransit = -1;
-            double timeSpentFromOriginToOriginStop = -1;
-            double timeSpentFromDestinationStopToDestination = -1;
+            double totalTransitDuration = -1;
+            double originToOriginStopDuration = -1;
+            double destinationStopToDestinationDuration = -1;
             int selectedOriginStopId = -1;
             int selectedDestinationStopId = -1;
+            String selectedOriginStopName = "";
+            String selectedDestinationStopName = "";
 
-            for (int originStopCounter = 0; originStopCounter < stopsNearOriginNode.size(); originStopCounter++) {
-                for (int destinationStopCounter = 0; destinationStopCounter < stopsNearDestinationNode.size();
+            for (int originStopCounter = 0; originStopCounter < originNodeStops.size(); originStopCounter++) {
+                for (int destinationStopCounter = 0; destinationStopCounter < destinationNodeStops.size();
                 destinationStopCounter++) {
+
                     RAPTOR rAPTOR = new RAPTOR();
-                    double transitTime = rAPTOR.findShortestTransitPath(
-                            stopsNearOriginNode.get(originStopCounter).getStopId(),
-                            stopsNearDestinationNode.get(destinationStopCounter).getStopId(),
-                            departureTime + costOriginToOriginNode +
-                                    dijkstraArrivalTimesToOriginStops.get(originStopCounter),
+                    double transitTime = rAPTOR.findShortestTransitPath(originNodeStops.get(originStopCounter).
+                                    getStopId(), destinationNodeStops.get(destinationStopCounter).getStopId(),
+                            arrivalTimesToOriginStopsNodes.get(originStopCounter),
                             routeStops, stopTimes, stops, stopRoutes, transfers).getTravelTimeMinutes();
-                    double totalTravelTime = costOriginToOriginNode + dijkstraArrivalTimesToOriginStops.
-                            get(originStopCounter) + nNSnappingCostsOfStopsNearOriginNode.get(originStopCounter) +
-                            transitTime + nNSnappingCostsOfStopsNearDestinationNode.get(destinationStopCounter) +
-                            costDestinationToDestinationNode;
-                    if (totalTravelTime < leastTotalTravelTime) {
-                        leastTotalTravelTime = totalTravelTime;
-                        timeSpentInTransit = transitTime;
-                        timeSpentFromOriginToOriginStop = costOriginToOriginNode + dijkstraArrivalTimesToOriginStops.
-                                get(originStopCounter) + nNSnappingCostsOfStopsNearOriginNode.get(originStopCounter);
-                        timeSpentFromDestinationStopToDestination = nNSnappingCostsOfStopsNearDestinationNode.
-                                get(destinationStopCounter) + costDestinationToDestinationNode;
-                        selectedOriginStopId = stopsNearOriginNode.get(originStopCounter).getStopId();
-                        selectedDestinationStopId = stopsNearDestinationNode.get(destinationStopCounter).getStopId();
+
+                    selectedOriginStopId = originNodeStops.get(originStopCounter).getStopId();
+                    selectedOriginStopName = originNodeStops.get(originStopCounter).getStopName();
+                    selectedDestinationStopId = destinationNodeStops.get(destinationStopCounter).getStopId();
+                    selectedDestinationStopName = destinationNodeStops.get(destinationStopCounter).getStopName();
+
+                    if (transitTime != -1) {
+                        totalTransitDuration = transitTime;
+                        originToOriginStopDuration = costOriginToOriginNode + arrivalTimesToOriginStopsNodes.
+                                get(originStopCounter) + nNSnappingCostsOfOriginStops.get(originStopCounter);
+                        destinationStopToDestinationDuration = nNSnappingCostsOfDestinationStops.
+                                get(destinationStopCounter) + travelTimesFromDestinationStopsNodes.
+                                get(destinationStopCounter) + costDestinationNodeToDestination;
+
+                        double totalTravelTime = originToOriginStopDuration + totalTransitDuration +
+                                destinationStopToDestinationDuration;
+                        if (totalTravelTime < leastTotalTravelTime) {
+                            leastTotalTravelTime = totalTravelTime;
+                        }
+
+                    } else {
+                        System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
+                                "Origin coordinates: (" + originLatitude + ", " + originLongitude + ")\n" +
+                                "Destination coordinates: (" + destinationLatitude + ", " + destinationLongitude + "\n"
+                                +
+                                "Departure time: " + (originDepartureTime / 60) + ":" + (originDepartureTime % 60) +
+                                "\n" +
+                                "No transit route found between stops " + selectedOriginStopName + " and " +
+                                selectedDestinationStopName + ".");
                     }
                 }
             }
-            String selectedOriginStopName = stops.get(selectedOriginStopId).getStopName();
-            String selectedDestinationStopName = stops.get(selectedDestinationStopId).getStopName();
 
             // Print result
             System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
                     "Origin coordinates: (" + originLatitude + ", " + originLongitude + ")\n" +
                     "Destination coordinates: (" + destinationLatitude + ", " + destinationLongitude + "\n" +
-                    "Departure time: " + (departureTime / 60) + ":" + (departureTime % 60) + "\n" +
-                    "Number of transit stops considered around origin: " + stopsNearOriginNode.size() + "\n" +
-                    "Number of transit stops considered around destination: " + stopsNearDestinationNode.size() + "\n" +
+                    "Departure time: " + ((originDepartureTime % MINUTES_PER_DAY) / MINUTES_PER_HOUR) + ":" +
+                    ((originDepartureTime % MINUTES_PER_DAY) % MINUTES_PER_HOUR) + "\n" +
+                    "Number of transit stops considered around origin: " + originNodeStops.size() + "\n" +
+                    "Number of transit stops considered around destination: " + destinationNodeStops.size() + "\n" +
                     "Origin stop in solution: " + selectedOriginStopName + "(" + selectedOriginStopId + ")\n" +
                     "Destination stop in solution: " + selectedDestinationStopName + "(" + selectedDestinationStopId +
                     ")\n" +
-                    "Travel time from origin to " + selectedOriginStopName + ": " + timeSpentFromOriginToOriginStop +
+                    "Travel time from origin to " + selectedOriginStopName + ": " + originToOriginStopDuration +
                     "minutes\n" +
                     "Travel time from " + selectedOriginStopName + " to " + selectedDestinationStopName + ": " +
-                    timeSpentInTransit + "minutes\n" +
+                    totalTransitDuration + "minutes\n" +
                     "Travel time from " + selectedDestinationStopName + " to destination: " +
-                    timeSpentFromDestinationStopToDestination + "\n" +
+                    destinationStopToDestinationDuration + "\n" +
                     "Total travel time: " + leastTotalTravelTime + "\n" );
         }
     }
@@ -266,7 +291,7 @@ public class Caller {
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
-        osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional
+        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional
 
         // Write out data used for the Dijkstra algorithm
         osmDataReaderWriterForDijkstra.writeDijkstraLinks(dijkstraLinksFilePath);

@@ -17,7 +17,7 @@ public class RAPTOR {
     // Determine the shortest travel time for a single transit-based query
     public TransitQueryResponse findShortestTransitPath(int originStopId,
                                                         int destinationStopId,
-                                                        double desiredDepartureTime,
+                                                        double departureTimeOriginStop,
                                                         LinkedHashMap<Integer, RouteStop> routeStops,
                                                         LinkedHashMap<Integer, StopTime> stopTimes,
                                                         @NotNull LinkedHashMap<Integer, Stop> stops,
@@ -30,7 +30,7 @@ public class RAPTOR {
         // Initialize RAPTOR
         int tripLegNumber = 1;
         LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
-        summaryEarliestArrivalTimeMap.replace(originStopId, desiredDepartureTime);
+        summaryEarliestArrivalTimeMap.replace(originStopId, departureTimeOriginStop);
 
         // Create an empty trip-leg wise earliest arrival time map
         LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
@@ -44,7 +44,7 @@ public class RAPTOR {
         // Core RAPTOR loops
         while (!markedStops.isEmpty()) {
             // Initialize trip-leg specific earliest arrival time map inside the trip-leg wise earliest arrival time map
-            initializeTripLegSpecificArrivalTimeMap(tripLegNumber, originStopId, desiredDepartureTime,
+            initializeTripLegSpecificArrivalTimeMap(tripLegNumber, originStopId, departureTimeOriginStop,
                     tripLegWiseEarliestArrivalTimeMap, stops);
 
             routesServingMarkedStops.clear();
@@ -67,7 +67,7 @@ public class RAPTOR {
         if (earliestArrivalTimeAtDestination != Double.MAX_VALUE) {
             transitQueryResponse = new TransitQueryResponse(((int) (summaryEarliestArrivalTimeMap.get(destinationStopId)
                     % MINUTES_IN_DAY)), ((int) (summaryEarliestArrivalTimeMap.get(destinationStopId) -
-                    desiredDepartureTime)));
+                    departureTimeOriginStop)));
         }
         return transitQueryResponse;
     }

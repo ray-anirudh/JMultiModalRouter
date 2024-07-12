@@ -9,7 +9,7 @@ public class Node {    // Node IDs are present in the relevant hashmap
     private ArrayList<Long> linkIdList;
 
     public double equiRectangularDistanceTo(double otherPointLongitude, double otherPointLatitude) {
-        final int EARTH_RADIUS_M = 6371000;
+        final int EARTH_RADIUS_M = 6_371_000;
         double longitudeDifference = Math.toRadians(this.nodeLongitude - otherPointLongitude);
         double latitudeDifference = Math.toRadians(this.nodeLatitude - otherPointLatitude);
 
