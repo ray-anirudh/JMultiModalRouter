@@ -45,10 +45,10 @@ public class Stop {
     public String getStopName() {
         return this.stopName;
     }
-    int getStopType() {
+    public int getStopType() {
         return this.stopType;
     }
-    int getStopTripCount() {
+    public int getStopTripCount() {
         return this.stopTripCount;
     }
     public double getStopLongitude() {

@@ -18,6 +18,7 @@ import src.RoadTransportRouter.OSMDataManager.Node;
 import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
 import src.RoadTransportRouter.RoutingAlgorithm.DijkstraBasedRouter;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -27,11 +28,13 @@ public class Caller {
     private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 6_000;
+    private static final int TRIPS_SERVED_FOR_HIGH_FREQUENCY_CLASSIFICATION = 135;
     private static final int MINUTES_PER_HOUR = 60;
     private static final int MINUTES_PER_DAY = 1440;
 
     public static void main(String[] args) {
         // GTFS data reader-writer instantiation to read, write, and store data
+        long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRaptor = new GTFSDataReaderWriter();
         String gtfsFolderPath = "";
         String raptorFolderPath = "";
@@ -46,8 +49,10 @@ public class Caller {
         Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
         LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRaptor.getStopRoutes();
         LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRaptor.getTransfers();
+        long gtfsEndTime = System.nanoTime();
 
         // OSM data reader-writer instantiation to read, write, and store data
+        long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
         String osmOplExtractFilePath = "";
         String dijkstraFolderPath = "";
@@ -57,14 +62,17 @@ public class Caller {
         LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
         LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
         Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
+        long osmEndTime = System.nanoTime();
 
         // Build KD-Tree for snapping to RAPTOR-relevant transit stops
+        long kDStartTime = System.nanoTime();
         KDTreeForStops kDTreeForStops = new KDTreeForStops();
         kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
 
         // Build KD-Tree for snapping to Dijkstra-relevant network nodes
         KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
         kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+        long kDEndTime = System.nanoTime();
 
         // Load all multi-modal queries
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
@@ -73,8 +81,10 @@ public class Caller {
                 readMultiModalQueries(multiModalQueriesFilePath);
 
         int routingQueryCount = 0;
+        long cumulativeQueryProcessingDuration = 0;
         // Iterate through all multi-modal queries
         for(MultiModalQuery multiModalQuery : multiModalQueries.values()) {
+            long queryStartTime = System.nanoTime();
             routingQueryCount++;
             double originLongitude = multiModalQuery.getOriginLongitude();
             double originLatitude = multiModalQuery.getOriginLatitude();
@@ -98,11 +108,55 @@ public class Caller {
             double costDestinationNodeToDestination = destinationNode.equiRectangularDistanceTo
                     (destinationNodeLongitude, destinationNodeLatitude) / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
-            // Set up nearest neighbor stop lists
+            /**
+             * Set up nearest neighbor stop lists of different types for full-blown and heuristic implementations
+             */
+
+            // Stop lists containing all types of transit stops in a node's vicinity
             ArrayList<Stop> originNodeStops = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
                     originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
             ArrayList<Stop> destinationNodeStops = kDTreeForStops.findStopsWithinDoughnut(destinationNodeLongitude,
                     destinationNodeLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
+
+            // Stop lists containing all types of transit stops in a node's vicinity, except bus stops
+            ArrayList<Stop> originNodeNonBusStops = new ArrayList<>();
+            for (Stop stop : originNodeStops) {
+                if (stop.getStopType() != 3) {
+                    originNodeNonBusStops.add(stop);
+                }
+            }
+            ArrayList<Stop> destinationNodeNonBusStops = new ArrayList<>();
+            for (Stop stop : destinationNodeStops) {
+                if (stop.getStopType() != 3) {
+                    destinationNodeNonBusStops.add(stop);
+                }
+            }
+
+            // Stop lists containing transit stops exceeding a pre-defined number of served trips
+            ArrayList<Stop> originNodeHighFrequencyStops = new ArrayList<>();
+            for (Stop stop : originNodeStops) {
+                if (stop.getStopTripCount() >= TRIPS_SERVED_FOR_HIGH_FREQUENCY_CLASSIFICATION) {
+                    originNodeHighFrequencyStops.add(stop);
+                }
+            }
+            ArrayList<Stop> destinationNodeHighFrequencyStops = new ArrayList<>();
+            for (Stop stop : destinationNodeStops) {
+                if (stop.getStopTripCount() >= TRIPS_SERVED_FOR_HIGH_FREQUENCY_CLASSIFICATION) {
+                    destinationNodeHighFrequencyStops.add(stop);
+                }
+            }
+
+            // Set up arraylists for all types of nearest-stop lists
+            ArrayList<ArrayList<Stop>> originStopLists = new ArrayList<>();
+            originStopLists.add(originNodeStops);
+            originStopLists.add(originNodeNonBusStops);
+            originStopLists.add(originNodeHighFrequencyStops);
+            ArrayList<ArrayList<Stop>> destinationStopLists = new ArrayList<>();
+            destinationStopLists.add(destinationNodeStops);
+            destinationStopLists.add(destinationNodeNonBusStops);
+            destinationStopLists.add(destinationNodeHighFrequencyStops);
+
+            // Iterate over all types of nearest-stop lists
 
             if ((originNodeStops == null) || (destinationNodeStops == null)) {
                 System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
@@ -209,8 +263,12 @@ public class Caller {
                 }
             }
 
+            long queryEndTime = System.nanoTime();
+            long queryProcessingDuration = queryEndTime - queryStartTime;
+            cumulativeQueryProcessingDuration += queryProcessingDuration;
+
             // Print result
-            System.out.println("Multi-modal routing query #" + routingQueryCount+ "\n" +
+            System.out.println("Multi-modal routing query #" + routingQueryCount + "\n" +
                     "Origin coordinates: (" + originLatitude + ", " + originLongitude + ")\n" +
                     "Destination coordinates: (" + destinationLatitude + ", " + destinationLongitude + "\n" +
                     "Departure time: " + ((originDepartureTime % MINUTES_PER_DAY) / MINUTES_PER_HOUR) + ":" +
@@ -226,8 +284,15 @@ public class Caller {
                     totalTransitDuration + "minutes\n" +
                     "Travel time from " + selectedDestinationStopName + " to destination: " +
                     destinationStopToDestinationDuration + "\n" +
-                    "Total travel time: " + leastTotalTravelTime + "\n" );
+                    "Total travel time: " + leastTotalTravelTime + "\n" +
+                    "Time elapsed in processing query #" + routingQueryCount + ": " + queryProcessingDuration + "ns");
         }
+
+        System.out.println("Times elapsed (in nasnoseconds) for:" + "\n" +
+                "1. Preprocessing GTFS data: " + (gtfsEndTime - gtfsStartTime) + "\n" +
+                "2. Preprocessing OSM-OPL data: " + (osmEndTime - osmStartTime) + "\n" +
+                "3. Building KD Trees for Stops and Nodes: " + (kDEndTime - kDStartTime) + "\n" +
+                "4. Processing " + routingQueryCount + " queries: " + cumulativeQueryProcessingDuration);
     }
 
     // Get RAPTOR-relevant datasets ready
