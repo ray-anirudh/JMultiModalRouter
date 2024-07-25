@@ -64,7 +64,8 @@ public class RAPTOR {
 
         // Return earliest arrival time output
         double earliestArrivalTimeAtDestination = summaryEarliestArrivalTimeMap.get(destinationStopId);
-        if (earliestArrivalTimeAtDestination != Double.MAX_VALUE) {
+        if ((earliestArrivalTimeAtDestination != Double.MAX_VALUE) && (earliestArrivalTimeAtDestination != Double.
+                POSITIVE_INFINITY)) {
             transitQueryResponse = new TransitQueryResponse(((int) (summaryEarliestArrivalTimeMap.get(destinationStopId)
                     % MINUTES_IN_DAY)), ((int) (summaryEarliestArrivalTimeMap.get(destinationStopId) -
                     departureTimeOriginStop)));
@@ -75,7 +76,7 @@ public class RAPTOR {
     // Initialize trip-leg specific earliest arrival time map by setting timestamps at all stops
     private void initializeTripLegSpecificArrivalTimeMap(int tripLegNumber,
                                                          int originStopId,
-                                                         double desiredDepartureTime,
+                                                         double departureTimeOriginStop,
                                                          LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                                                  previousEarliestArrivalTimeMap,
                                                          LinkedHashMap<Integer, Stop> stops) {
@@ -89,7 +90,7 @@ public class RAPTOR {
             for (int stopId : stops.keySet()) {
                 firstEarliestArrivalTimeMap.put(stopId, Double.MAX_VALUE);
             }
-            firstEarliestArrivalTimeMap.replace(originStopId, desiredDepartureTime);
+            firstEarliestArrivalTimeMap.replace(originStopId, departureTimeOriginStop);
             previousEarliestArrivalTimeMap.put(tripLegNumber, firstEarliestArrivalTimeMap);
         } else {
             // Replicate earliest arrival times reported in previous trip-legs
@@ -134,6 +135,8 @@ public class RAPTOR {
                     directionalRouteId = directionalRouteId + "111";     // Pay attention during stopTime traversals
                 } else if (routeStopConsidered.get(2).containsKey(markedStopId)) {
                     directionalRouteId = directionalRouteId + "222";     // Pay attention during stopTime traversals
+                } else {
+                    continue;
                 }
 
                 int directionId = Integer.parseInt(directionalRouteId.substring(directionalRouteId.

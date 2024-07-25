@@ -292,7 +292,7 @@ public class GTFSDataReaderWriter {
         System.out.println("Routes' hashmap padded with data on numbers of stops");
     }
 
-    // Build the "routeStops" hashmap
+    // Build the "routeStops" hashmap (carries most improvement potential for future research)
     public void padGTFSRouteStops() {
         for (HashMap.Entry<Integer, StopTime> stopTimeEntry : this.stopTimes.entrySet()) {
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimeEntry.
