@@ -3,7 +3,7 @@ package src.PublicTransportRouter.GTFSDataManager;
 // Class features are key for heuristic-related operations
 public class Stop {
     private int stopId;
-    private String stopName;    // Stop IDs are also contained in the pertinent hashmap
+    private String stopName;    // Stop IDs are also contained in the pertinent hashmap, as well
     private int stopType;
     // Ascribed via route type information (Refer to: https://gtfs.org/de/schedule/reference/#routestxt)
     private int stopTripCount;     // Number of trips served per day via the stop

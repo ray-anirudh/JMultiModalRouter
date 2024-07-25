@@ -1,6 +1,6 @@
 package src.RoadTransportRouter.OSMDataManager;
 // OSM: OpenStreetMap
-// OPL: Object Per Line
+// OPL: Object-Per-Line (format)
 
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ public class OSMDataReaderWriter {
      * ATTRIBUTE DEFINITIONS
      */
 
-    /* Array to limit the way types (classes) parsed out of the OSM extract
+    /* Array to limit the way types (classes) parsed out of the OSM-OPL extract
     Refer to: https://wiki.openstreetmap.org/wiki/Key:highway) for more details
     */
     private static final String[] LINK_TYPE_ARRAY = {
@@ -46,26 +46,23 @@ public class OSMDataReaderWriter {
     };
 
     private static final int EARTH_RADIUS_KM = 6371;
-    private static final double AVERAGE_DRIVING_SPEED_KMPH = 29;
+    private static final int AVERAGE_DRIVING_SPEED_KMPH = 29;
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/)
     private static final int MINUTES_PER_HOUR = 60;
 
     // Initialize the Dijkstra-relevant hashmaps
     LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();
-    // Keys for "nodes" hashmap refer to node IDs, and values pertain to nodal coordinates and associated links' lists
+    // Keys in "nodes" hashmap refer to node IDs, and values pertain to nodal coordinates and lists of associated links
 
     LinkedHashMap<Long, Link> links = new LinkedHashMap<>();
-    // Keys for "links" hashmap refer to link IDs, and values pertain to associated nodes, link types, and travel costs
+    // Keys in "links" hashmap refer to link IDs, and values pertain to associated nodes, link types, and travel times
 
     /**
      * BEHAVIOUR DEFINITIONS
-     */
-
-    /**
      * All readers and dataset manipulators below are for Dijkstra-relevant data, and sourced from OSM files
      */
 
-    // Build "links" hashmap from the OSM extract
+    // Build "links" hashmap from the OSM-OPL extract
     public void readAndFilterOsmLinks(String osmOplExtractFilePath) {
         try {
             // Reader for first record of "BBBikeOSMExtract.opl"
@@ -137,7 +134,7 @@ public class OSMDataReaderWriter {
         System.out.println("Circular links removed");
     }
 
-    // Build "nodes" hashmap from the OSM extract
+    // Build "nodes" hashmap from the OSM-OPL extract
     public void readAndFilterOsmNodes(String osmOplExtractFilePath) {
         // Initializing required indices
         int nodeIdIndex = 0;
@@ -158,11 +155,12 @@ public class OSMDataReaderWriter {
             System.out.println("Input-output exception. Please check input file: " + osmOplExtractFilePath);
         }
 
-        // Reader for body of "BBBikeOSMExtract.opl", including the first record
         try {
+            // Reader for body of "BBBikeOSMExtract.opl", including the first record
             BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
             String newline;
 
+            // Read body and process data for all nodes in the road network
             while ((newline = osmOplExtractReader.readLine()) != null) {
                 if (newline.substring(0, 1).equalsIgnoreCase("n")) {
                     String[] nodeDataRecord = newline.split(" ");

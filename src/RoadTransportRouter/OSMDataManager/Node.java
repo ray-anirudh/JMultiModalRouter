@@ -2,7 +2,7 @@ package src.RoadTransportRouter.OSMDataManager;
 
 import java.util.ArrayList;
 
-public class Node {    // Node IDs are present in the relevant hashmap
+public class Node {    // Node IDs are present in the relevant hashmap, as well
     private long nodeId;
     private double nodeLongitude;
     private double nodeLatitude;
@@ -15,7 +15,7 @@ public class Node {    // Node IDs are present in the relevant hashmap
 
         double x = longitudeDifference * Math.cos(Math.toRadians((this.nodeLatitude + otherPointLatitude) / 2));
         double y = latitudeDifference;
-        return Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
+        return EARTH_RADIUS_M * (Math.sqrt(x * x + y * y));
     }
 
     void setNodeId(long nodeId) {

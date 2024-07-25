@@ -12,10 +12,6 @@ public class Link {    // Link IDs are present in the relevant hashmap
         this.linkType = linkType;
     }
 
-    Link() {
-        this(0L, 0L, null);
-    }
-
     void setLinkTravelTimeMin(double linkTravelTimeMin) {
         this.linkTravelTimeMin = linkTravelTimeMin;
     }
