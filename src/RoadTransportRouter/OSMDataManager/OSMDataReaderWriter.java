@@ -45,10 +45,8 @@ public class OSMDataReaderWriter {
             "unclassified"
     };
 
-    private static final int EARTH_RADIUS_KM = 6371;
-    private static final int AVERAGE_DRIVING_SPEED_KMPH = 29;
+    private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/)
-    private static final int MINUTES_PER_HOUR = 60;
 
     // Initialize the Dijkstra-relevant hashmaps
     LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();
@@ -156,7 +154,7 @@ public class OSMDataReaderWriter {
         }
 
         try {
-            // Reader for body of "BBBikeOSMExtract.opl", including the first record
+            // Reader for body of "BBBikeOSMExtract.opl" (including the first record)
             BufferedReader osmOplExtractReader = new BufferedReader(new FileReader(osmOplExtractFilePath));
             String newline;
 
@@ -189,12 +187,15 @@ public class OSMDataReaderWriter {
 
     // Associate links with respective nodes
     public void associateLinksWithNode() {
-        for (HashMap.Entry<Long, Node> nodeEntry : this.nodes.entrySet()) {
-            for (HashMap.Entry<Long, Link> linkEntry : this.links.entrySet()) {
-                if ((linkEntry.getValue().getFirstNodeId() == nodeEntry.getKey()) || (linkEntry.getValue().
-                        getSecondNodeId() == nodeEntry.getKey())) {
-                    nodeEntry.getValue().getLinkIdList().add(linkEntry.getKey());
-                }
+        for (HashMap.Entry<Long, Link> linkEntry : this.links.entrySet()) {
+            long linkId = linkEntry.getKey();
+            long firstNodeId = linkEntry.getValue().getFirstNodeId();
+            long secondNodeId = linkEntry.getValue().getSecondNodeId();
+
+            if (this.nodes.containsKey(firstNodeId)) {
+                this.nodes.get(firstNodeId).getLinkIdList().add(linkId);
+            } else if (this.nodes.containsKey(secondNodeId)) {
+                this.nodes.get(secondNodeId).getLinkIdList().add(linkId);
             }
         }
         System.out.println("Links associated with respective nodes");
@@ -206,23 +207,16 @@ public class OSMDataReaderWriter {
             Node firstNode = this.nodes.get(link.getFirstNodeId());
             Node secondNode = this.nodes.get(link.getSecondNodeId());
 
-            double firstNodeLatitudeRadians = Math.toRadians(firstNode.getNodeLatitude());
-            double firstNodeLongitudeRadians = Math.toRadians(firstNode.getNodeLongitude());
-            double secondNodeLatitudeRadians = Math.toRadians(secondNode.getNodeLatitude());
-            double secondNodeLongitudeRadians = Math.toRadians(secondNode.getNodeLongitude());
+            double secondNodeLongitude = secondNode.getNodeLongitude();
+            double secondNodeLatitude = secondNode.getNodeLatitude();
+            double linkLengthM = firstNode.equiRectangularDistanceTo(secondNodeLongitude, secondNodeLatitude);
 
-            double latitudeDifference = secondNodeLatitudeRadians - firstNodeLatitudeRadians;
-            double longitudeDifference = secondNodeLongitudeRadians - firstNodeLongitudeRadians;
-            double x = longitudeDifference * Math.cos((firstNodeLatitudeRadians + secondNodeLatitudeRadians) / 2);
-            double y = latitudeDifference;
-
-            double linkLengthKm = Math.sqrt(x * x + y * y) * EARTH_RADIUS_KM;
-            link.setLinkTravelTimeMin(linkLengthKm / AVERAGE_DRIVING_SPEED_KMPH * MINUTES_PER_HOUR);
+            link.setLinkTravelTimeMin(linkLengthM / AVERAGE_DRIVING_SPEED_M_PER_MIN);
         }
         System.out.println("Link-wise travel times (in minutes) calculated");
     }
 
-    // Contract nodes and build shortcuts
+    // Contract nodes and build shortcuts (implemented only for two-link nodes, but also possible for more-link nodes)
     public void contractNodesAndBuildShortcuts() {
         boolean nodesWithTwoLinksExist = true;
 
@@ -239,6 +233,7 @@ public class OSMDataReaderWriter {
                         nodesConsideredForContraction.add(this.links.get(associatedLinkId).getSecondNodeId());
                     }
                     nodesConsideredForContraction.removeIf(nodeId -> nodeId.equals(commonNodeId));
+
                     long firstNoncommonNodeId = nodesConsideredForContraction.get(0);
                     long secondNoncommonNodeId = nodesConsideredForContraction.get(1);
                     Node firstUncommonNode = this.nodes.get(firstNoncommonNodeId);
@@ -340,7 +335,7 @@ public class OSMDataReaderWriter {
      * All supporting methods are below
      */
 
-    // Index finder using alphabets in the first record of an OSM OPL extract
+    // Index finder based on presence of certain alphabets in an array element
     private int findIndexInArray(String characterSequenceToFind, @NotNull String[] headerArray) {
         int columnPosition = -1;
         for (int i = 0; i <= headerArray.length; i++) {
@@ -351,7 +346,7 @@ public class OSMDataReaderWriter {
         return columnPosition;
     }
 
-    // Getters of road network data for Dijkstra queries
+    // Getters of road network data for the Dijkstra algorithm
     public LinkedHashMap<Long, Link> getLinks() {
         return this.links;
     }
