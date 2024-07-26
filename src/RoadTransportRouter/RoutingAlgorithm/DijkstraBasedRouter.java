@@ -2,6 +2,7 @@ package src.RoadTransportRouter.RoutingAlgorithm;
 
 import src.RoadTransportRouter.OSMDataManager.*;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -14,28 +15,35 @@ public class DijkstraBasedRouter {
 
         // Initialize variables and collections for iterations
         TreeMap<Double, Long> visitedNodes = new TreeMap<>();
-        visitedNodes.put(0D, originNodeId);    // Departure time is treated as 0
+        visitedNodes.put(0D, originNodeId);    // Arrival time for origin node is treated as zero
+        TreeMap<Double, Long> nodesUnderEvaluation = new TreeMap<>();
+        HashSet<Long> traversedLinksIds = new HashSet<>();
 
-        // Execute Dijkstra algorithm
-        while (!(visitedNodes.firstEntry().getValue().equals(destinationNodeId))) {
-            long currentNodeId = visitedNodes.firstEntry().getValue();
-            double baselineTravelTime = visitedNodes.firstEntry().getKey();
+        // Execute the Dijkstra algorithm
+        while(!(visitedNodes.lastEntry().getValue().equals(destinationNodeId))) {
+            long currentNodeId = visitedNodes.lastEntry().getValue();
+            double currentNodeTravelTimeMin = visitedNodes.lastEntry().getKey();
 
-            for (long linkId : nodes.get(currentNodeId).getLinkIdList()) {
-                Link linkUnderConsideration = links.get(linkId);
-                double totalTravelTimeToOtherNode = baselineTravelTime + linkUnderConsideration.getLinkTravelTimeMin();
+            for (long linkIdUnderConsideration : nodes.get(currentNodeId).getLinkIdList()) {
+                if (!traversedLinksIds.contains(linkIdUnderConsideration)) {
+                    Link linkUnderConsideration = links.get(linkIdUnderConsideration);
+                    double travelTimeToOtherNodeMin = currentNodeTravelTimeMin + linkUnderConsideration.
+                            getLinkTravelTimeMin();
+                    long otherNodeId = (linkUnderConsideration.getFirstNodeId() == currentNodeId) ?
+                            linkUnderConsideration.getSecondNodeId() : linkUnderConsideration.getFirstNodeId();
 
-                long otherNodeId = -1;
-                if (linkUnderConsideration.getFirstNodeId() == currentNodeId) {
-                    otherNodeId = linkUnderConsideration.getSecondNodeId();
-                } else if (linkUnderConsideration.getSecondNodeId() == currentNodeId) {
-                    otherNodeId = linkUnderConsideration.getFirstNodeId();
+                    // Update the collections of nodes yet to be relaxed and of links whose travel times are known
+                    nodesUnderEvaluation.put(travelTimeToOtherNodeMin, otherNodeId);
+                    traversedLinksIds.add(linkIdUnderConsideration);
                 }
-                visitedNodes.put(totalTravelTimeToOtherNode, otherNodeId);
             }
+
+            // Add the cheapest node to the collection of visited nodes, thereby removing it from under observation
+            visitedNodes.put(nodesUnderEvaluation.firstEntry().getKey(), nodesUnderEvaluation.firstEntry().getValue());
+            nodesUnderEvaluation.remove(nodesUnderEvaluation.firstKey());
         }
 
         // Return the travel time in minutes
-        return visitedNodes.firstKey();
+        return visitedNodes.lastKey();
     }
 }
