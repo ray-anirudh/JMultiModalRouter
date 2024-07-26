@@ -13,6 +13,8 @@ public class DijkstraBasedRouter {
                                            LinkedHashMap<Long, Node> nodes,
                                            LinkedHashMap<Long, Link> links) {
 
+        double travelTimeMin = 0;
+
         // Initialize variables and collections for iterations
         TreeMap<Double, Long> visitedNodes = new TreeMap<>();
         visitedNodes.put(0D, originNodeId);    // Arrival time for origin node is treated as zero
@@ -44,6 +46,7 @@ public class DijkstraBasedRouter {
         }
 
         // Return the travel time in minutes
-        return visitedNodes.lastKey();
+        travelTimeMin = visitedNodes.lastKey();
+        return travelTimeMin;
     }
 }
