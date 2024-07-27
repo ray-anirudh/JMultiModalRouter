@@ -7,18 +7,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class KDTreeForStops {
-
-    /**
-     * ATTRIBUTE DEFINITIONS
-     */
-
     private KDTreeStop kDTreeRootStop;    // Represents the root (highest level) stop of the tree
 
     /**
      * BEHAVIOUR DEFINITIONS
-     */
-
-    /**
      * For fast nearest-neighbour searches, the below methods are executed to build and query stop-based KD-Trees
      */
 
@@ -32,8 +24,7 @@ public class KDTreeForStops {
                 getStopLongitude()));
 
         int medianIndex = stops.length / 2;     // Indexing for roots of new subtrees
-        KDTreeStop stop = new KDTreeStop(stops[medianIndex]);
-        // Setting up roots of new subtrees; stop is ascribed to a KDTreeStop
+        KDTreeStop stop = new KDTreeStop(stops[medianIndex]);   // Setting up stop-based roots of new subtrees
 
         stop.setLeft(buildKDTreeForStops(Arrays.copyOfRange(stops, 0, medianIndex), depth + 1));
         stop.setRight(buildKDTreeForStops(Arrays.copyOfRange(stops, medianIndex + 1, stops.length),
@@ -46,8 +37,8 @@ public class KDTreeForStops {
         this.kDTreeRootStop = buildKDTreeForStops(stops, 0);
     }
 
-    public void doughnutSearchForStops(double sourceLongitude, double sourceLatitude, ArrayList<Stop> nearbyStops,
-                                       KDTreeStop kDTreeStop, double innerRadius, double outerRadius, int depth) {
+    private void doughnutSearchForStops(double sourceLongitude, double sourceLatitude, ArrayList<Stop> nearbyStops,
+                                        KDTreeStop kDTreeStop, double innerRadius, double outerRadius, int depth) {
         if (kDTreeStop == null) {
             return;
         }
@@ -63,14 +54,23 @@ public class KDTreeForStops {
                 getStopLongitude();
         double sourceValue = (axis == 0) ? sourceLatitude : sourceLongitude;
 
-        if (sourceValue - outerRadius <= nodeValue) {
-            doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, kDTreeStop.getLeft(), innerRadius,
-                    outerRadius, depth + 1);
-        }
+        double latConversion = 111320; // Meters per degree of latitude
+        double longConversion = latConversion * Math.cos(Math.toRadians(sourceLatitude));
 
-        if (sourceValue + outerRadius >= nodeValue) {
-            doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, kDTreeStop.getRight(), innerRadius,
-                    outerRadius, depth + 1);
+        double axisDistance = (axis == 0)
+                ? Math.abs(kDTreeStop.getStop().getStopLatitude() - sourceLatitude) * latConversion
+                : Math.abs(kDTreeStop.getStop().getStopLongitude() - sourceLongitude) * longConversion;
+
+        if (axisDistance <= outerRadius) {
+            if (sourceValue - (outerRadius / (axis == 0 ? latConversion : longConversion)) <= nodeValue) {
+                doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, kDTreeStop.getLeft(), innerRadius,
+                        outerRadius, depth + 1);
+            }
+
+            if (sourceValue + (outerRadius / (axis == 0 ? latConversion : longConversion)) >= nodeValue) {
+                doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, kDTreeStop.getRight(), innerRadius,
+                        outerRadius, depth + 1);
+            }
         }
     }
 
@@ -81,7 +81,6 @@ public class KDTreeForStops {
 
         doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, this.kDTreeRootStop, innerRadius,
                 outerRadius, 0);
-
         return nearbyStops;
     }
 }

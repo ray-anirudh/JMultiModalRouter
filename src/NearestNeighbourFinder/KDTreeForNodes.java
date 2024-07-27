@@ -6,18 +6,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class KDTreeForNodes {
-
-    /**
-     * ATTRIBUTE DEFINITIONS
-     */
-
     private KDTreeNode kDTreeRootNode;    // Represents the root (highest level) node of the tree
 
     /**
      * BEHAVIOUR DEFINITIONS
-     */
-
-    /**
      * For fast nearest-neighbour searches, the below methods are executed to build and query node-based KD-Trees
      */
 
@@ -27,12 +19,11 @@ public class KDTreeForNodes {
         }
 
         int axis = depth % 2;
-        Arrays.sort(nodes, Comparator.comparingDouble(node -> (axis == 0) ? node.getNodeLatitude() : node.
-                getNodeLongitude()));
+        Arrays.sort(nodes, Comparator.comparingDouble(node -> (axis == 0) ? node.getNodeLatitude() :
+                node.getNodeLongitude()));
 
         int medianIndex = nodes.length / 2;     // Indexing for roots of new subtrees
-        KDTreeNode node = new KDTreeNode(nodes[medianIndex]);
-        // Setting up roots of new subtrees; nodes is ascribed to a KDTreeNode
+        KDTreeNode node = new KDTreeNode(nodes[medianIndex]);   // Setting up node-based roots of new subtrees
 
         node.setLeft(buildKDTreeForNodes(Arrays.copyOfRange(nodes, 0, medianIndex), depth + 1));
         node.setRight(buildKDTreeForNodes(Arrays.copyOfRange(nodes, medianIndex + 1, nodes.length),
@@ -59,20 +50,24 @@ public class KDTreeForNodes {
         }
 
         int axis = depth % 2;
-        KDTreeNode nextKDTreeNode = (((axis == 0) ? sourceLatitude < kDTreeNode.getNode().getNodeLatitude() :
-                sourceLongitude < kDTreeNode.getNode().getNodeLongitude())) ? kDTreeNode.getLeft() :
+        KDTreeNode nextKDTreeNode = ((axis == 0) ? (sourceLatitude < kDTreeNode.getNode().getNodeLatitude()) :
+                (sourceLongitude < kDTreeNode.getNode().getNodeLongitude())) ? kDTreeNode.getLeft() :
                 kDTreeNode.getRight();
-        KDTreeNode otherKDTreeNode = (nextKDTreeNode == kDTreeNode.getLeft()) ? kDTreeNode.getRight() : kDTreeNode.
-                getLeft();
+        KDTreeNode otherKDTreeNode = (nextKDTreeNode == kDTreeNode.getLeft()) ? kDTreeNode.getRight() :
+                kDTreeNode.getLeft();
 
         bestKDTreeNode = nearestNeighbourSearchForNodes(sourceLongitude, sourceLatitude, nextKDTreeNode, bestKDTreeNode,
                 depth + 1);
-        double axisDistance = (axis == 0) ? Math.abs(kDTreeNode.getNode().getNodeLatitude() - sourceLatitude) :
-                Math.abs(kDTreeNode.getNode().getNodeLongitude() - sourceLongitude);
 
+        double axisDistance = (axis == 0) ?
+                Math.abs(kDTreeNode.getNode().getNodeLatitude() - sourceLatitude) * 111_320 :
+                Math.abs(kDTreeNode.getNode().getNodeLongitude() - sourceLongitude) * 111_320 *
+                        Math.cos(Math.toRadians(kDTreeNode.getNode().getNodeLatitude()));
+
+        // Search goes in the direction of the other node if the next node is deemed to be a suboptimal option
         if (axisDistance < bestDistance) {
-            bestKDTreeNode = nearestNeighbourSearchForNodes(sourceLongitude, sourceLatitude, otherKDTreeNode, bestKDTreeNode,
-                    depth + 1);
+            bestKDTreeNode = nearestNeighbourSearchForNodes(sourceLongitude, sourceLatitude, otherKDTreeNode,
+                    bestKDTreeNode, depth + 1);
         }
         return bestKDTreeNode;
     }
@@ -80,7 +75,7 @@ public class KDTreeForNodes {
     // Find the nearest node to a source point from amongst a set of nodes
     public Node findNearestNode(double sourceLongitude, double sourceLatitude) {
         if (kDTreeRootNode == null) {
-            throw new IllegalStateException("KD-Tree is empty.");
+            throw new IllegalStateException("Node-based KD-Tree is empty.");
         }
 
         KDTreeNode bestKDTreeNode = nearestNeighbourSearchForNodes(sourceLongitude, sourceLatitude, this.kDTreeRootNode,
