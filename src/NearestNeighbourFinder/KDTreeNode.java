@@ -2,7 +2,7 @@ package src.NearestNeighbourFinder;
 
 import src.RoadTransportRouter.OSMDataManager.Node;
 
-public class KDTreeNode {   // Use for KD-Trees
+public class KDTreeNode {   // Use for node-based KD-Trees
     private Node node;  // KD-Tree nodes are modelled on top of network nodes
     private KDTreeNode left;
     private KDTreeNode right;
