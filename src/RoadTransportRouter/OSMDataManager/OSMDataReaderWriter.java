@@ -46,7 +46,7 @@ public class OSMDataReaderWriter {
     };
 
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
-    // (Source: https://www.tomtom.com/traffic-index/munich-traffic/)
+    // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
 
     // Initialize the Dijkstra-relevant hashmaps
     LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();

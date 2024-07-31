@@ -34,12 +34,14 @@ import java.util.LinkedHashMap;
 
 public class Caller {
 
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;
-    private static final double MAXIMUM_WALKING_DISTANCE_M = 1_500;
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2; // Translates to 1.4 m/s
+    private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 6_000;
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 3_000;
     private static final int GTFS_BUS_ROUTE_TYPE_ID = 3;
+    // Parameter for stop-hierarchy heuristic
     private static final int MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_STOPS = 135;
+    // Parameter for stop-frequency heuristic
     private static final int MINUTES_PER_HOUR = 60;
     private static final int MINUTES_PER_DAY = 1440;
 
@@ -91,12 +93,12 @@ public class Caller {
         String multiModalQueriesResponsesFilePath = "";
         LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = multiModalQueryReader.
                 readMultiModalQueries(multiModalQueriesFilePath);
-        LinkedHashMap<Integer, MultiModalQueryResponse> multiModalQueriesResponses = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MultiModalQueryResponses> multiModalQueriesResponses = new LinkedHashMap<>();
 
         // Create hashmaps to collect responses from routing queries
-        LinkedHashMap<Integer, MultiModalQueryResponse> multiModalQueriesResponsesExact = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MultiModalQueryResponse> multiModalQueriesResponsesNonBus = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MultiModalQueryResponse> multiModalQueriesResponsesHighFrequency = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MultiModalQueryResponses> multiModalQueriesResponsesExact = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MultiModalQueryResponses> multiModalQueriesResponsesNonBus = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MultiModalQueryResponses> multiModalQueriesResponsesHighFrequency = new LinkedHashMap<>();
 
         int routingQueryCount = 0;
         long cumulativeQueryProcessingDuration = 0;
@@ -106,7 +108,7 @@ public class Caller {
 
             // Instantiate an empty multi-modal query response and add it to all hashmaps
             routingQueryCount++;
-            MultiModalQueryResponse multiModalQueryResponse = new MultiModalQueryResponse();
+            MultiModalQueryResponses multiModalQueryResponse = new MultiModalQueryResponses();
             multiModalQueriesResponsesExact.put(routingQueryCount, multiModalQueryResponse);
             multiModalQueriesResponsesNonBus.put(routingQueryCount, multiModalQueryResponse);
             multiModalQueriesResponsesHighFrequency.put(routingQueryCount, multiModalQueryResponse);
@@ -305,7 +307,7 @@ public class Caller {
 
                 // Print result
                 System.out.println("Solution found for multi-modal routing query #" + routingQueryCount);
-                MultiModalQueryResponse multiModalQueryResponse = new MultiModalQueryResponse(listTypeIndex,
+                MultiModalQueryResponses multiModalQueryResponse = new MultiModalQueryResponses(listTypeIndex,
                         originLongitude, originLatitude, destinationLongitude, destinationLatitude,
                         (((originDepartureTime % MINUTES_PER_DAY) / MINUTES_PER_HOUR) + ":" +
                                 ((originDepartureTime % MINUTES_PER_DAY) % MINUTES_PER_HOUR)), originStops.size(),
@@ -316,7 +318,7 @@ public class Caller {
             }
         }
 
-        writeMultiModalQueriesResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
+        writeMultiModalResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
         System.out.println("Times elapsed (in nanoseconds) for:" + "\n" +
                 "1. Preprocessing GTFS data: " + (gtfsEndTime - gtfsStartTime) + "\n" +
                 "2. Preprocessing OSM-OPL data: " + (osmEndTime - osmStartTime) + "\n" +
@@ -393,8 +395,8 @@ public class Caller {
     }
 
     // Write out responses to multi-modal queries in a .txt file
-    static void writeMultiModalQueriesResponses(String multiModalQueriesResponsesFilePath,
-                                         LinkedHashMap<Integer, MultiModalQueryResponse>
+    static void writeMultiModalResponses(String multiModalQueriesResponsesFilePath,
+                                         LinkedHashMap<Integer, MultiModalQueryResponses>
                                                  multiModalQueriesResponses) {
         try {
             // Writer for "multiModalQueriesResponses.txt"
@@ -409,9 +411,9 @@ public class Caller {
                     "TravelTimeDestinationStopToDestination,TimeElapsedQueryProcessing,TotalTravelTime,AccuracyMarker");
 
             // Write body based on "multiModalQueriesResponses" hashmap
-            for(HashMap.Entry<Integer, MultiModalQueryResponse> multiModalQueryResponseEntry :
+            for(HashMap.Entry<Integer, MultiModalQueryResponses> multiModalQueryResponseEntry :
                     multiModalQueriesResponses.entrySet()) {
-                MultiModalQueryResponse multiModalQueryResponse = multiModalQueryResponseEntry.getValue();
+                MultiModalQueryResponses multiModalQueryResponse = multiModalQueryResponseEntry.getValue();
                 int routingQueryId = multiModalQueryResponseEntry.getKey();
                 int listTypeIndex = multiModalQueryResponse.getListTypeIndex();
                 double originLongitude = multiModalQueryResponse.getOriginLongitude();
