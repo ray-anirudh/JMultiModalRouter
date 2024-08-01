@@ -239,182 +239,182 @@ public class MultiModalQueryResponses {
 
     // Set up getters :)
     public double getOriginPointLongitude() {
-        return originPointLongitude;
+        return this.originPointLongitude;
     }
 
     public double getOriginPointLatitude() {
-        return originPointLatitude;
+        return this.originPointLatitude;
     }
 
     public double getDestinationPointLongitude() {
-        return destinationPointLongitude;
+        return this.destinationPointLongitude;
     }
 
     public double getDestinationPointLatitude() {
-        return destinationPointLatitude;
+        return this.destinationPointLatitude;
     }
 
     public int getDepartureTimeOriginPointInt() {
-        return departureTimeOriginPointInt;
+        return this.departureTimeOriginPointInt;
     }
 
     public long getNearestOriginNodeId() {
-        return nearestOriginNodeId;
+        return this.nearestOriginNodeId;
     }
 
     public long getNearestDestinationNodeId() {
-        return nearestDestinationNodeId;
+        return this.nearestDestinationNodeId;
     }
 
     public int getCountOriginStopsConsideredExactSolution() {
-        return countOriginStopsConsideredExactSolution;
+        return this.countOriginStopsConsideredExactSolution;
     }
 
     public int getCountDestinationStopsConsideredExactSolution() {
-        return countDestinationStopsConsideredExactSolution;
+        return this.countDestinationStopsConsideredExactSolution;
     }
 
     public long getTimeElapsedQueryProcessingExactSolution() {
-        return timeElapsedQueryProcessingExactSolution;
+        return this.timeElapsedQueryProcessingExactSolution;
     }
 
     public int getOriginStopIdExactSolution() {
-        return originStopIdExactSolution;
+        return this.originStopIdExactSolution;
     }
 
     public String getOriginStopNameExactSolution() {
-        return originStopNameExactSolution;
+        return this.originStopNameExactSolution;
     }
 
     public int getDestinationStopIdExactSolution() {
-        return destinationStopIdExactSolution;
+        return this.destinationStopIdExactSolution;
     }
 
     public String getDestinationStopNameExactSolution() {
-        return destinationStopNameExactSolution;
+        return this.destinationStopNameExactSolution;
     }
 
     public double getTravelTimeOriginToOriginStopExactSolution() {
-        return travelTimeOriginToOriginStopExactSolution;
+        return this.travelTimeOriginToOriginStopExactSolution;
     }
 
     public double getTravelTimeOriginStopToDestinationStopExactSolution() {
-        return travelTimeOriginStopToDestinationStopExactSolution;
+        return this.travelTimeOriginStopToDestinationStopExactSolution;
     }
 
     public double getTravelTimeDestinationStopToDestinationExactSolution() {
-        return travelTimeDestinationStopToDestinationExactSolution;
+        return this.travelTimeDestinationStopToDestinationExactSolution;
     }
 
     public double getTotalTravelTimeExactSolution() {
-        return totalTravelTimeExactSolution;
+        return this.totalTravelTimeExactSolution;
     }
 
     public String getEarliestArrivalTimeExactSolution() {
-        return earliestArrivalTimeExactSolution;
+        return this.earliestArrivalTimeExactSolution;
     }
 
     public int getCountOriginStopsConsideredSHSolution() {
-        return countOriginStopsConsideredSHSolution;
+        return this.countOriginStopsConsideredSHSolution;
     }
 
     public int getCountDestinationStopsConsideredSHSolution() {
-        return countDestinationStopsConsideredSHSolution;
+        return this.countDestinationStopsConsideredSHSolution;
     }
 
     public long getTimeElapsedQueryProcessingSHSolution() {
-        return timeElapsedQueryProcessingSHSolution;
+        return this.timeElapsedQueryProcessingSHSolution;
     }
 
     public int getOriginStopIdSHSolution() {
-        return originStopIdSHSolution;
+        return this.originStopIdSHSolution;
     }
 
     public String getOriginStopNameSHSolution() {
-        return originStopNameSHSolution;
+        return this.originStopNameSHSolution;
     }
 
     public int getDestinationStopIdSHSolution() {
-        return destinationStopIdSHSolution;
+        return this.destinationStopIdSHSolution;
     }
 
     public String getDestinationStopNameSHSolution() {
-        return destinationStopNameSHSolution;
+        return this.destinationStopNameSHSolution;
     }
 
     public double getTravelTimeOriginToOriginStopSHSolution() {
-        return travelTimeOriginToOriginStopSHSolution;
+        return this.travelTimeOriginToOriginStopSHSolution;
     }
 
     public double getTravelTimeOriginStopToDestinationStopSHSolution() {
-        return travelTimeOriginStopToDestinationStopSHSolution;
+        return this.travelTimeOriginStopToDestinationStopSHSolution;
     }
 
     public double getTravelTimeDestinationStopToDestinationSHSolution() {
-        return travelTimeDestinationStopToDestinationSHSolution;
+        return this.travelTimeDestinationStopToDestinationSHSolution;
     }
 
     public double getTotalTravelTimeSHSolution() {
-        return totalTravelTimeSHSolution;
+        return this.totalTravelTimeSHSolution;
     }
 
     public String getEarliestArrivalTimeSHSolution() {
-        return earliestArrivalTimeSHSolution;
+        return this.earliestArrivalTimeSHSolution;
     }
 
     public boolean isAccuracyMarkerSHSolution() {
-        return accuracyMarkerSHSolution;
+        return this.accuracyMarkerSHSolution;
     }
 
     public int getCountOriginStopsConsideredSFSolution() {
-        return countOriginStopsConsideredSFSolution;
+        return this.countOriginStopsConsideredSFSolution;
     }
 
     public int getCountDestinationStopsConsideredSFSolution() {
-        return countDestinationStopsConsideredSFSolution;
+        return this.countDestinationStopsConsideredSFSolution;
     }
 
     public long getTimeElapsedQueryProcessingSFSolution() {
-        return timeElapsedQueryProcessingSFSolution;
+        return this.timeElapsedQueryProcessingSFSolution;
     }
 
     public int getOriginStopIdSFSolution() {
-        return originStopIdSFSolution;
+        return this.originStopIdSFSolution;
     }
 
     public String getOriginStopNameSFSolution() {
-        return originStopNameSFSolution;
+        return this.originStopNameSFSolution;
     }
 
     public int getDestinationStopIdSFSolution() {
-        return destinationStopIdSFSolution;
+        return this.destinationStopIdSFSolution;
     }
 
     public String getDestinationStopNameSFSolution() {
-        return destinationStopNameSFSolution;
+        return this.destinationStopNameSFSolution;
     }
 
     public double getTravelTimeOriginToOriginStopSFSolution() {
-        return travelTimeOriginToOriginStopSFSolution;
+        return this.travelTimeOriginToOriginStopSFSolution;
     }
 
     public double getTravelTimeOriginStopToDestinationStopSFSolution() {
-        return travelTimeOriginStopToDestinationStopSFSolution;
+        return this.travelTimeOriginStopToDestinationStopSFSolution;
     }
 
     public double getTravelTimeDestinationStopToDestinationSFSolution() {
-        return travelTimeDestinationStopToDestinationSFSolution;
+        return this.travelTimeDestinationStopToDestinationSFSolution;
     }
 
     public double getTotalTravelTimeSFSolution() {
-        return totalTravelTimeSFSolution;
+        return this.totalTravelTimeSFSolution;
     }
 
     public String getEarliestArrivalTimeSFSolution() {
-        return earliestArrivalTimeSFSolution;
+        return this.earliestArrivalTimeSFSolution;
     }
 
     public boolean isAccuracyMarkerSFSolution() {
-        return accuracyMarkerSFSolution;
+        return this.accuracyMarkerSFSolution;
     }
 }

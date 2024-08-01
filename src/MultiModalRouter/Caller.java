@@ -48,22 +48,22 @@ public class Caller {
     public static void main(String[] args) {
         // GTFS data reader-writer instantiation to read, write, and store data
         long gtfsStartTime = System.nanoTime();
-        GTFSDataReaderWriter gtfsDataReaderWriterForRaptor = new GTFSDataReaderWriter();
+        GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
         String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
                 "Data/GTFSDataMunich/Downloaded/AGGTFSData";
-        String raptorFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
                 "MasterThesis/Data/GTFSDataMunich";
-        getRaptorMaps(gtfsFolderPath, raptorFolderPath, gtfsDataReaderWriterForRaptor);
+        getRAPTORMaps(gtfsFolderPath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
 
         // Get all data for RAPTOR execution
-        LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRaptor.getRoutes();
-        LinkedHashMap<Integer, RouteStop> routeStops = gtfsDataReaderWriterForRaptor.getRouteStops();
-        LinkedHashMap<Integer, Trip> trips = gtfsDataReaderWriterForRaptor.getTrips();
-        LinkedHashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRaptor.getStopTimes();
-        LinkedHashMap<Integer, Stop> stops = gtfsDataReaderWriterForRaptor.getStops();
+        LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRAPTOR.getRoutes();
+        LinkedHashMap<Integer, RouteStop> routeStops = gtfsDataReaderWriterForRAPTOR.getRouteStops();
+        LinkedHashMap<Integer, Trip> trips = gtfsDataReaderWriterForRAPTOR.getTrips();
+        LinkedHashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRAPTOR.getStopTimes();
+        LinkedHashMap<Integer, Stop> stops = gtfsDataReaderWriterForRAPTOR.getStops();
         Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
-        LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRaptor.getStopRoutes();
-        LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRaptor.getTransfers();
+        LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRAPTOR.getStopRoutes();
+        LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRAPTOR.getTransfers();
         long gtfsEndTime = System.nanoTime();
         long gtfsDataProcessingDuration = gtfsEndTime - gtfsStartTime;
 
@@ -165,12 +165,10 @@ public class Caller {
                                 costDestinationNodeToDestination, kDTreeForNodes, destinationNodeStops, nodes, links);
 
                 // Execute RAPTOR runs (arrival times at each stop are defined within the method call)
-
-                runRAPTOR();
-
-
+                determineLeastTotalTravelTimeSFRAPTOR(originPointDepartureTime, originNodeStops, destinationNodeStops,
+                        travelTimesOriginToOriginStops, travelTimesDestinationStopsToDestination,
+                        multiModalQueryResponses, routeStops, stopTimes, stops, stopRoutes, transfers);
             }
-
 
             // Stop lists containing all types of transit stops except bus stops (stop hierarchy heuristic)
             if ((originNodeStops.size() != 0) && (destinationNodeStops.size() != 0)) {
@@ -266,9 +264,9 @@ public class Caller {
     }
 
     // Initialize RAPTOR-relevant datasets
-    public static void getRaptorMaps(String gtfsFolderPath,
-                                     String raptorFolderPath,
-                                     GTFSDataReaderWriter gtfsDataReaderWriterForRaptor) {
+    private static void getRAPTORMaps(String gtfsFolderPath,
+                              String rAPTORFolderPath,
+                              GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR) {
         // Ready filepath arguments to read
         String gtfsRoutesFilePath = gtfsFolderPath + "/routes.txt";
         String gtfsTripsFilePath = gtfsFolderPath + "/trips.txt";
@@ -276,46 +274,46 @@ public class Caller {
         String gtfsStopsFilePath = gtfsFolderPath + "/stops.txt";
 
         // Ready filepath arguments to write
-        String raptorRoutesFilePath = raptorFolderPath + "/routes.txt";
-        String raptorRouteStopsFilePath = raptorFolderPath + "/routeStops.txt";
-        String tripsFilePath = raptorFolderPath + "/trips.txt";
-        String raptorStopTimesFilePath = raptorFolderPath + "/stop_times.txt";
-        String raptorStopsFilePath = raptorFolderPath + "/stops.txt";
-        String raptorStopRoutesFilePath = raptorFolderPath + "/stopRoutes.txt";
-        String raptorTransfersFilePath = raptorFolderPath + "/transfers.txt";
+        String rAPTORRoutesFilePath = rAPTORFolderPath + "/routes.txt";
+        String rAPTORRouteStopsFilePath = rAPTORFolderPath + "/routeStops.txt";
+        String tripsFilePath = rAPTORFolderPath + "/trips.txt";
+        String rAPTORStopTimesFilePath = rAPTORFolderPath + "/stop_times.txt";
+        String rAPTORStopsFilePath = rAPTORFolderPath + "/stops.txt";
+        String rAPTORStopRoutesFilePath = rAPTORFolderPath + "/stopRoutes.txt";
+        String rAPTORTransfersFilePath = rAPTORFolderPath + "/transfers.txt";
 
         // Read and manage data for main RAPTOR loop
-        gtfsDataReaderWriterForRaptor.readAndFilterGTFSRoutes(gtfsRoutesFilePath);
-        gtfsDataReaderWriterForRaptor.readAndFilterGTFSTrips(gtfsTripsFilePath);
-        gtfsDataReaderWriterForRaptor.readAndFilterGTFSStopTimes(gtfsStopTimesFilePath);
-        gtfsDataReaderWriterForRaptor.sortStopTimes();
-        gtfsDataReaderWriterForRaptor.padGTFSRoutes();
-        gtfsDataReaderWriterForRaptor.padGTFSRouteStops();
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSRoutes(gtfsRoutesFilePath);
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSTrips(gtfsTripsFilePath);
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStopTimes(gtfsStopTimesFilePath);
+        gtfsDataReaderWriterForRAPTOR.sortStopTimes();
+        gtfsDataReaderWriterForRAPTOR.padGTFSRoutes();
+        gtfsDataReaderWriterForRAPTOR.padGTFSRouteStops();
 
         // Read and manage data for ancillary RAPTOR loop
-        gtfsDataReaderWriterForRaptor.readAndFilterGTFSStops(gtfsStopsFilePath);
-        gtfsDataReaderWriterForRaptor.padStopRoutes();
-        gtfsDataReaderWriterForRaptor.buildTransfersHashMap();
-        gtfsDataReaderWriterForRaptor.filterTransfersHashMap();
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStops(gtfsStopsFilePath);
+        gtfsDataReaderWriterForRAPTOR.padStopRoutes();
+        gtfsDataReaderWriterForRAPTOR.buildTransfersHashMap();
+        gtfsDataReaderWriterForRAPTOR.filterTransfersHashMap();
 
         // Limit dataset to study area and ensure transitivity of transfers
-        gtfsDataReaderWriterForRaptor.makeTransfersTransitive();
-        gtfsDataReaderWriterForRaptor.filterHashMapsOnLatLong();
+        gtfsDataReaderWriterForRAPTOR.makeTransfersTransitive();
+        gtfsDataReaderWriterForRAPTOR.filterHashMapsOnLatLong();
 
         // Write out data used for RAPTOR
-        gtfsDataReaderWriterForRaptor.writeRaptorRoutes(raptorRoutesFilePath);
-        gtfsDataReaderWriterForRaptor.writeRaptorRouteStops(raptorRouteStopsFilePath);
-        gtfsDataReaderWriterForRaptor.writeTrips(tripsFilePath);
-        gtfsDataReaderWriterForRaptor.writeRaptorStopTimes(raptorStopTimesFilePath);
-        gtfsDataReaderWriterForRaptor.writeRaptorStops(raptorStopsFilePath);
-        gtfsDataReaderWriterForRaptor.writeRaptorStopRoutes(raptorStopRoutesFilePath);
-        gtfsDataReaderWriterForRaptor.writeRaptorTransfers(raptorTransfersFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorRoutes(rAPTORRoutesFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorRouteStops(rAPTORRouteStopsFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeTrips(tripsFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorStopTimes(rAPTORStopTimesFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorStops(rAPTORStopsFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorStopRoutes(rAPTORStopRoutesFilePath);
+        gtfsDataReaderWriterForRAPTOR.writeRaptorTransfers(rAPTORTransfersFilePath);
     }
 
     // Get Dijkstra-relevant datasets ready
-    public static void getDijkstraMaps(String osmOplExtractFilePath,
-                                       String dijkstraFolderPath,
-                                       @NotNull OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
+    private static void getDijkstraMaps(String osmOplExtractFilePath,
+                                String dijkstraFolderPath,
+                                @NotNull OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
         // Ready filepath arguments to write
         String dijkstraLinksFilePath = dijkstraFolderPath + "/dijkstraLinks.txt";
         String dijkstraNodesFilePath = dijkstraFolderPath + "/dijkstraNodes.txt";
@@ -334,12 +332,12 @@ public class Caller {
     }
 
     // Find travel times incorporating Dijkstra runs and snapping costs at both ends of such runs
-    public static ArrayList<Double> findTravelTimesFromOriginToOriginStops(long originNodeId,
-                                                                           double costOriginToOriginNode,
-                                                                           KDTreeForNodes kDTreeForNodes,
-                                                                           ArrayList<Stop> stopsNearOrigin,
-                                                                           LinkedHashMap<Long, Node> nodes,
-                                                                           LinkedHashMap<Long, Link> links) {
+    private static ArrayList<Double> findTravelTimesFromOriginToOriginStops(long originNodeId,
+                                                                    double costOriginToOriginNode,
+                                                                    KDTreeForNodes kDTreeForNodes,
+                                                                    ArrayList<Stop> stopsNearOrigin,
+                                                                    LinkedHashMap<Long, Node> nodes,
+                                                                    LinkedHashMap<Long, Link> links) {
         ArrayList<Double> travelTimesOriginToOriginStops = new ArrayList<>();
 
         for (Stop stopNearOriginNode : stopsNearOrigin) {
@@ -360,7 +358,7 @@ public class Caller {
         return travelTimesOriginToOriginStops;
     }
 
-    public static ArrayList<Double> findTravelTimesFromDestinationStopsToDestination
+    private static ArrayList<Double> findTravelTimesFromDestinationStopsToDestination
             (long destinationNodeId,
              double costDestinationNodeToDestination,
              KDTreeForNodes kDTreeForNodes,
@@ -388,57 +386,219 @@ public class Caller {
     }
 
     //
-    public static double determineLeastTotalTravelTimeViaRAPTOR(int originPointDepartureTime,
-                                   ArrayList<Stop> originStopList,
-                                   ArrayList<Stop> destinationStopList,
-                                   ArrayList<Double> travelTimesOriginToOriginStops,
-                                   ArrayList<Double> travelTimesDestinationStopsToDestination,
-                                   MultiModalQueryResponses multiModalQueryResponses,
-                                   LinkedHashMap<Integer, RouteStop> routeStops,
-                                   LinkedHashMap<Integer, StopTime> stopTimes,
-                                   LinkedHashMap<Integer, Stop> stops,
-                                   LinkedHashMap<Integer, StopRoute> stopRoutes,
-                                   LinkedHashMap<Integer, Transfer> transfers) {
+    private static void determineLeastTotalTravelTimeExactRAPTOR(int originPointDepartureTime,
+                                                         ArrayList<Stop> originStopList,
+                                                         ArrayList<Stop> destinationStopList,
+                                                         ArrayList<Double> travelTimesOriginToOriginStops,
+                                                         ArrayList<Double> travelTimesDestinationStopsToDestination,
+                                                         MultiModalQueryResponses multiModalQueryResponses,
+                                                         LinkedHashMap<Integer, RouteStop> routeStops,
+                                                         LinkedHashMap<Integer, StopTime> stopTimes,
+                                                         LinkedHashMap<Integer, Stop> stops,
+                                                         LinkedHashMap<Integer, StopRoute> stopRoutes,
+                                                         LinkedHashMap<Integer, Transfer> transfers) {
 
         double leastTotalTravelTime = Double.MAX_VALUE;
-        int originStopIndexLeastTotalTravelTime;
-        int destinationStopIndexLeastTotalTravelTime;
+        int originStopIndexLeastTotalTravelTimeExact = -1;
+        int destinationStopIndexLeastTotalTravelTimeExact = -1;
 
         for (int originStopCounter = 0; originStopCounter < originStopList.size(); originStopCounter++) {
             for (int destinationStopCounter = 0; destinationStopCounter < destinationStopList.size();
                  destinationStopCounter++) {
-
                 int originStopId = originStopList.get(originStopCounter).getStopId();
                 int destinationStopId = destinationStopList.get(destinationStopCounter).getStopId();
 
-                RAPTOR rAPTOR = new RAPTOR();
-                double totalTransitDuration = rAPTOR.findShortestTransitPath(originStopId, destinationStopId,
-                        (originPointDepartureTime + travelTimesOriginToOriginStops.get(originStopCounter)),
-                        routeStops, stopTimes, stops, stopRoutes, transfers).getTravelTimeMinutes();
+                double totalTravelTimeForStopPair = runRAPTOR(originPointDepartureTime, originStopId, destinationStopId,
+                        travelTimesOriginToOriginStops.get(originStopCounter),
+                        travelTimesDestinationStopsToDestination.get(destinationStopCounter),
+                        routeStops, stopTimes, stops, stopRoutes, transfers);
 
-                if (totalTransitDuration != -1) {
-                    double originToOriginStopDuration = travelTimesOriginToOriginStops.get(originStopCounter);
-                    double destinationStopToDestinationDuration = travelTimesDestinationStopsToDestination.
-                            get(destinationStopCounter);
-                    double totalTravelTime = originToOriginStopDuration + totalTransitDuration +
-                            destinationStopToDestinationDuration;
-
-                    if (totalTravelTime < leastTotalTravelTime) {
-                        leastTotalTravelTime = totalTravelTime;
+                if (totalTravelTimeForStopPair != -1) {
+                    if (totalTravelTimeForStopPair < leastTotalTravelTime) {
+                        leastTotalTravelTime = totalTravelTimeForStopPair;
+                        originStopIndexLeastTotalTravelTimeExact = originStopCounter;
+                        destinationStopIndexLeastTotalTravelTimeExact = destinationStopCounter;
                     }
                 }
             }
         }
 
         if (leastTotalTravelTime != Double.MAX_VALUE) {
-            multiModalQueryReturnResponses.set
+            multiModalQueryResponses.setCountOriginStopsConsideredExactSolution(originStopList.size());
+            multiModalQueryResponses.setCountDestinationStopsConsideredExactSolution(destinationStopList.size());
+            multiModalQueryResponses.setOriginStopIdExactSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeExact).getStopId());
+            multiModalQueryResponses.setOriginStopNameExactSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeExact).getStopName());
+            multiModalQueryResponses.setDestinationStopIdExactSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeExact).getStopId());
+            multiModalQueryResponses.setDestinationStopNameExactSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeExact).getStopName());
+            multiModalQueryResponses.setTravelTimeOriginToOriginStopExactSolution(travelTimesOriginToOriginStops.
+                    get(originStopIndexLeastTotalTravelTimeExact));
+            multiModalQueryResponses.setTravelTimeDestinationStopToDestinationExactSolution(
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeExact));
+            multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopExactSolution(leastTotalTravelTime -
+                    travelTimesOriginToOriginStops.get(originStopIndexLeastTotalTravelTimeExact) -
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeExact));
+            multiModalQueryResponses.setTotalTravelTimeExactSolution(leastTotalTravelTime);
+            multiModalQueryResponses.setEarliestArrivalTimeExactSolution(
+                    (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) / MINUTES_PER_HOUR) +
+                            ":" + (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) %
+                            MINUTES_PER_HOUR));
+        }
+    }
+
+    private static void determineLeastTotalTravelTimeSHRAPTOR(int originPointDepartureTime,
+                                                      ArrayList<Stop> originStopList,
+                                                      ArrayList<Stop> destinationStopList,
+                                                      ArrayList<Double> travelTimesOriginToOriginStops,
+                                                      ArrayList<Double> travelTimesDestinationStopsToDestination,
+                                                      MultiModalQueryResponses multiModalQueryResponses,
+                                                      LinkedHashMap<Integer, RouteStop> routeStops,
+                                                      LinkedHashMap<Integer, StopTime> stopTimes,
+                                                      LinkedHashMap<Integer, Stop> stops,
+                                                      LinkedHashMap<Integer, StopRoute> stopRoutes,
+                                                      LinkedHashMap<Integer, Transfer> transfers) {
+
+        double leastTotalTravelTime = Double.MAX_VALUE;
+        int originStopIndexLeastTotalTravelTimeSH = -1;
+        int destinationStopIndexLeastTotalTravelTimeSH = -1;
+
+        for (int originStopCounter = 0; originStopCounter < originStopList.size(); originStopCounter++) {
+            for (int destinationStopCounter = 0; destinationStopCounter < destinationStopList.size();
+                 destinationStopCounter++) {
+                int originStopId = originStopList.get(originStopCounter).getStopId();
+                int destinationStopId = destinationStopList.get(destinationStopCounter).getStopId();
+
+                double totalTravelTimeForStopPair = runRAPTOR(originPointDepartureTime, originStopId, destinationStopId,
+                        travelTimesOriginToOriginStops.get(originStopCounter),
+                        travelTimesDestinationStopsToDestination.get(destinationStopCounter),
+                        routeStops, stopTimes, stops, stopRoutes, transfers);
+
+                if (totalTravelTimeForStopPair != -1) {
+                    if (totalTravelTimeForStopPair < leastTotalTravelTime) {
+                        leastTotalTravelTime = totalTravelTimeForStopPair;
+                        originStopIndexLeastTotalTravelTimeSH = originStopCounter;
+                        destinationStopIndexLeastTotalTravelTimeSH = destinationStopCounter;
+                    }
+                }
+            }
         }
 
-        return leastTotalTravelTime;
+        if (leastTotalTravelTime != Double.MAX_VALUE) {
+            multiModalQueryResponses.setCountOriginStopsConsideredSHSolution(originStopList.size());
+            multiModalQueryResponses.setCountDestinationStopsConsideredSHSolution(destinationStopList.size());
+            multiModalQueryResponses.setOriginStopIdSHSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeSH).getStopId());
+            multiModalQueryResponses.setOriginStopNameSHSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeSH).getStopName());
+            multiModalQueryResponses.setDestinationStopIdSHSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeSH).getStopId());
+            multiModalQueryResponses.setDestinationStopNameSHSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeSH).getStopName());
+            multiModalQueryResponses.setTravelTimeOriginToOriginStopSHSolution(travelTimesOriginToOriginStops.
+                    get(originStopIndexLeastTotalTravelTimeSH));
+            multiModalQueryResponses.setTravelTimeDestinationStopToDestinationSHSolution(
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeSH));
+            multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopSHSolution(leastTotalTravelTime -
+                    travelTimesOriginToOriginStops.get(originStopIndexLeastTotalTravelTimeSH) -
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeSH));
+            multiModalQueryResponses.setTotalTravelTimeSHSolution(leastTotalTravelTime);
+            multiModalQueryResponses.setEarliestArrivalTimeSHSolution(
+                    (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) / MINUTES_PER_HOUR) +
+                            ":" + (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) %
+                            MINUTES_PER_HOUR));
+        }
+    }
+
+    private static void determineLeastTotalTravelTimeSFRAPTOR(int originPointDepartureTime,
+                                                      ArrayList<Stop> originStopList,
+                                                      ArrayList<Stop> destinationStopList,
+                                                      ArrayList<Double> travelTimesOriginToOriginStops,
+                                                      ArrayList<Double> travelTimesDestinationStopsToDestination,
+                                                      MultiModalQueryResponses multiModalQueryResponses,
+                                                      LinkedHashMap<Integer, RouteStop> routeStops,
+                                                      LinkedHashMap<Integer, StopTime> stopTimes,
+                                                      LinkedHashMap<Integer, Stop> stops,
+                                                      LinkedHashMap<Integer, StopRoute> stopRoutes,
+                                                      LinkedHashMap<Integer, Transfer> transfers) {
+
+        double leastTotalTravelTime = Double.MAX_VALUE;
+        int originStopIndexLeastTotalTravelTimeSF = -1;
+        int destinationStopIndexLeastTotalTravelTimeSF = -1;
+
+        for (int originStopCounter = 0; originStopCounter < originStopList.size(); originStopCounter++) {
+            for (int destinationStopCounter = 0; destinationStopCounter < destinationStopList.size();
+                 destinationStopCounter++) {
+                int originStopId = originStopList.get(originStopCounter).getStopId();
+                int destinationStopId = destinationStopList.get(destinationStopCounter).getStopId();
+
+                double totalTravelTimeForStopPair = runRAPTOR(originPointDepartureTime, originStopId, destinationStopId,
+                        travelTimesOriginToOriginStops.get(originStopCounter),
+                        travelTimesDestinationStopsToDestination.get(destinationStopCounter),
+                        routeStops, stopTimes, stops, stopRoutes, transfers);
+
+                if (totalTravelTimeForStopPair != -1) {
+                    if (totalTravelTimeForStopPair < leastTotalTravelTime) {
+                        leastTotalTravelTime = totalTravelTimeForStopPair;
+                        originStopIndexLeastTotalTravelTimeSF = originStopCounter;
+                        destinationStopIndexLeastTotalTravelTimeSF = destinationStopCounter;
+                    }
+                }
+            }
+        }
+
+        if (leastTotalTravelTime != Double.MAX_VALUE) {
+            multiModalQueryResponses.setCountOriginStopsConsideredSFSolution(originStopList.size());
+            multiModalQueryResponses.setCountDestinationStopsConsideredSFSolution(destinationStopList.size());
+            multiModalQueryResponses.setOriginStopIdSFSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeSF).getStopId());
+            multiModalQueryResponses.setOriginStopNameSFSolution(originStopList.
+                    get(originStopIndexLeastTotalTravelTimeSF).getStopName());
+            multiModalQueryResponses.setDestinationStopIdSFSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeSF).getStopId());
+            multiModalQueryResponses.setDestinationStopNameSFSolution(destinationStopList.
+                    get(destinationStopIndexLeastTotalTravelTimeSF).getStopName());
+            multiModalQueryResponses.setTravelTimeOriginToOriginStopSFSolution(travelTimesOriginToOriginStops.
+                    get(originStopIndexLeastTotalTravelTimeSF));
+            multiModalQueryResponses.setTravelTimeDestinationStopToDestinationSFSolution(
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeSF));
+            multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopSFSolution(leastTotalTravelTime -
+                    travelTimesOriginToOriginStops.get(originStopIndexLeastTotalTravelTimeSF) -
+                    travelTimesDestinationStopsToDestination.get(destinationStopIndexLeastTotalTravelTimeSF));
+            multiModalQueryResponses.setTotalTravelTimeSFSolution(leastTotalTravelTime);
+            multiModalQueryResponses.setEarliestArrivalTimeSFSolution(
+                    (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) / MINUTES_PER_HOUR) +
+                            ":" + (int) (((originPointDepartureTime + leastTotalTravelTime) % MINUTES_PER_DAY) %
+                            MINUTES_PER_HOUR));
+        }
+    }
+
+    // Run RAPTOR given an origin stop-destination stop pair
+    private static double runRAPTOR(int originPointDepartureTime, int originStopId, int destinationStopId,
+                                    double travelTimeOriginToOriginStop, double travelTimeDestinationStopToDestination,
+                                    LinkedHashMap<Integer, RouteStop> routeStops,
+                                    LinkedHashMap<Integer, StopTime> stopTimes, LinkedHashMap<Integer, Stop> stops,
+                                    LinkedHashMap<Integer, StopRoute> stopRoutes,
+                                    LinkedHashMap<Integer, Transfer> transfers) {
+        double totalTravelTime = -1;
+
+        RAPTOR rAPTOR = new RAPTOR();
+        double totalTransitDuration = rAPTOR.findShortestTransitPath(originStopId, destinationStopId,
+                (originPointDepartureTime + travelTimeOriginToOriginStop),
+                routeStops, stopTimes, stops, stopRoutes, transfers).getTravelTimeMinutes();
+
+        if (totalTransitDuration != -1) {
+            totalTravelTime = travelTimeOriginToOriginStop + totalTransitDuration +
+                    travelTimeDestinationStopToDestination;
+        }
+
+        return totalTravelTime;
     }
 
     // Write out responses to multi-modal queries in a .txt file
-    static void writeMultiModalResponses(String multiModalQueriesResponsesFilePath,
+    private static void writeMultiModalResponses(String multiModalQueriesResponsesFilePath,
                                          LinkedHashMap<Integer, MultiModalQueryResponses>
                                                  multiModalQueriesResponses) {
         try {
