@@ -7,7 +7,6 @@ public class MultiModalQueryResponses {
     private double destinationPointLongitude;
     private double destinationPointLatitude;
     private int departureTimeOriginPointInt;
-    private String departureTimeOriginPointString;
     private long nearestOriginNodeId;
     private long nearestDestinationNodeId;
 
@@ -74,10 +73,6 @@ public class MultiModalQueryResponses {
 
     public void setDepartureTimeOriginPointInt(int departureTimeOriginPointInt) {
         this.departureTimeOriginPointInt = departureTimeOriginPointInt;
-    }
-
-    public void setDepartureTimeOriginPointString(String departureTimeOriginPointString) {
-        this.departureTimeOriginPointString = departureTimeOriginPointString;
     }
 
     public void setNearestOriginNodeId(long nearestOriginNodeId) {
@@ -261,10 +256,6 @@ public class MultiModalQueryResponses {
 
     public int getDepartureTimeOriginPointInt() {
         return departureTimeOriginPointInt;
-    }
-
-    public String getDepartureTimeOriginPointString() {
-        return departureTimeOriginPointString;
     }
 
     public long getNearestOriginNodeId() {
