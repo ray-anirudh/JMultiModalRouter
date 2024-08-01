@@ -35,6 +35,7 @@ public class KDTreeForStops {
 
     public void buildStopBasedKDTree(Stop[] stops) {
         this.kDTreeRootStop = buildKDTreeForStops(stops, 0);
+        System.out.println("KD-Tree created for stops");
     }
 
     private void doughnutSearchForStops(double sourceLongitude, double sourceLatitude, ArrayList<Stop> nearbyStops,

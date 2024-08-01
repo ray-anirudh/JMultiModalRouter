@@ -55,86 +55,194 @@ public class MultiModalQueryResponses {
     private String earliestArrivalTimeSFSolution;
     private boolean accuracyMarkerSFSolution;
 
-    MultiModalQueryResponses(double originPointLongitude, double originPointLatitude,
-                             double destinationPointLongitude, double destinationPointLatitude,
-                             int departureTimeOriginPointInt, String departureTimeOriginPointString,
-                             long nearestOriginNodeId, long nearestDestinationNodeId,
-                             int countOriginStopsConsideredExactSolution,
-                             int countDestinationStopsConsideredExactSolution,
-                             long timeElapsedQueryProcessingExactSolution, int originStopIdExactSolution,
-                             String originStopNameExactSolution, int destinationStopIdExactSolution,
-                             String destinationStopNameExactSolution, double travelTimeOriginToOriginStopExactSolution,
-                             double travelTimeOriginStopToDestinationStopExactSolution,
-                             double travelTimeDestinationStopToDestinationExactSolution,
-                             double totalTravelTimeExactSolution, String earliestArrivalTimeExactSolution,
-                             int countOriginStopsConsideredSHSolution, int countDestinationStopsConsideredSHSolution,
-                             long timeElapsedQueryProcessingSHSolution, int originStopIdSHSolution,
-                             String originStopNameSHSolution, int destinationStopIdSHSolution,
-                             String destinationStopNameSHSolution, double travelTimeOriginToOriginStopSHSolution,
-                             double travelTimeOriginStopToDestinationStopSHSolution,
-                             double travelTimeDestinationStopToDestinationSHSolution,
-                             double totalTravelTimeSHSolution, String earliestArrivalTimeSHSolution,
-                             boolean accuracyMarkerSHSolution, int countOriginStopsConsideredSFSolution,
-                             int countDestinationStopsConsideredSFSolution, long timeElapsedQueryProcessingSFSolution,
-                             int originStopIdSFSolution, String originStopNameSFSolution,
-                             int destinationStopIdSFSolution, String destinationStopNameSFSolution,
-                             double travelTimeOriginToOriginStopSFSolution,
-                             double travelTimeOriginStopToDestinationStopSFSolution,
-                             double travelTimeDestinationStopToDestinationSFSolution,
-                             double totalTravelTimeSFSolution, String earliestArrivalTimeSFSolution,
-                             boolean accuracyMarkerSFSolution) {
+    // Set up setters :)
+    public void setOriginPointLongitude(double originPointLongitude) {
         this.originPointLongitude = originPointLongitude;
+    }
+
+    public void setOriginPointLatitude(double originPointLatitude) {
         this.originPointLatitude = originPointLatitude;
+    }
+
+    public void setDestinationPointLongitude(double destinationPointLongitude) {
         this.destinationPointLongitude = destinationPointLongitude;
+    }
+
+    public void setDestinationPointLatitude(double destinationPointLatitude) {
         this.destinationPointLatitude = destinationPointLatitude;
+    }
+
+    public void setDepartureTimeOriginPointInt(int departureTimeOriginPointInt) {
         this.departureTimeOriginPointInt = departureTimeOriginPointInt;
+    }
+
+    public void setDepartureTimeOriginPointString(String departureTimeOriginPointString) {
         this.departureTimeOriginPointString = departureTimeOriginPointString;
+    }
+
+    public void setNearestOriginNodeId(long nearestOriginNodeId) {
         this.nearestOriginNodeId = nearestOriginNodeId;
+    }
+
+    public void setNearestDestinationNodeId(long nearestDestinationNodeId) {
         this.nearestDestinationNodeId = nearestDestinationNodeId;
+    }
+
+    public void setCountOriginStopsConsideredExactSolution(int countOriginStopsConsideredExactSolution) {
         this.countOriginStopsConsideredExactSolution = countOriginStopsConsideredExactSolution;
+    }
+
+    public void setCountDestinationStopsConsideredExactSolution(int countDestinationStopsConsideredExactSolution) {
         this.countDestinationStopsConsideredExactSolution = countDestinationStopsConsideredExactSolution;
+    }
+
+    public void setTimeElapsedQueryProcessingExactSolution(long timeElapsedQueryProcessingExactSolution) {
         this.timeElapsedQueryProcessingExactSolution = timeElapsedQueryProcessingExactSolution;
+    }
+
+    public void setOriginStopIdExactSolution(int originStopIdExactSolution) {
         this.originStopIdExactSolution = originStopIdExactSolution;
+    }
+
+    public void setOriginStopNameExactSolution(String originStopNameExactSolution) {
         this.originStopNameExactSolution = originStopNameExactSolution;
+    }
+
+    public void setDestinationStopIdExactSolution(int destinationStopIdExactSolution) {
         this.destinationStopIdExactSolution = destinationStopIdExactSolution;
+    }
+
+    public void setDestinationStopNameExactSolution(String destinationStopNameExactSolution) {
         this.destinationStopNameExactSolution = destinationStopNameExactSolution;
+    }
+
+    public void setTravelTimeOriginToOriginStopExactSolution(double travelTimeOriginToOriginStopExactSolution) {
         this.travelTimeOriginToOriginStopExactSolution = travelTimeOriginToOriginStopExactSolution;
+    }
+
+    public void setTravelTimeOriginStopToDestinationStopExactSolution(double travelTimeOriginStopToDestinationStopExactSolution) {
         this.travelTimeOriginStopToDestinationStopExactSolution = travelTimeOriginStopToDestinationStopExactSolution;
+    }
+
+    public void setTravelTimeDestinationStopToDestinationExactSolution(double travelTimeDestinationStopToDestinationExactSolution) {
         this.travelTimeDestinationStopToDestinationExactSolution = travelTimeDestinationStopToDestinationExactSolution;
+    }
+
+    public void setTotalTravelTimeExactSolution(double totalTravelTimeExactSolution) {
         this.totalTravelTimeExactSolution = totalTravelTimeExactSolution;
+    }
+
+    public void setEarliestArrivalTimeExactSolution(String earliestArrivalTimeExactSolution) {
         this.earliestArrivalTimeExactSolution = earliestArrivalTimeExactSolution;
+    }
+
+    public void setCountOriginStopsConsideredSHSolution(int countOriginStopsConsideredSHSolution) {
         this.countOriginStopsConsideredSHSolution = countOriginStopsConsideredSHSolution;
+    }
+
+    public void setCountDestinationStopsConsideredSHSolution(int countDestinationStopsConsideredSHSolution) {
         this.countDestinationStopsConsideredSHSolution = countDestinationStopsConsideredSHSolution;
+    }
+
+    public void setTimeElapsedQueryProcessingSHSolution(long timeElapsedQueryProcessingSHSolution) {
         this.timeElapsedQueryProcessingSHSolution = timeElapsedQueryProcessingSHSolution;
+    }
+
+    public void setOriginStopIdSHSolution(int originStopIdSHSolution) {
         this.originStopIdSHSolution = originStopIdSHSolution;
+    }
+
+    public void setOriginStopNameSHSolution(String originStopNameSHSolution) {
         this.originStopNameSHSolution = originStopNameSHSolution;
+    }
+
+    public void setDestinationStopIdSHSolution(int destinationStopIdSHSolution) {
         this.destinationStopIdSHSolution = destinationStopIdSHSolution;
+    }
+
+    public void setDestinationStopNameSHSolution(String destinationStopNameSHSolution) {
         this.destinationStopNameSHSolution = destinationStopNameSHSolution;
+    }
+
+    public void setTravelTimeOriginToOriginStopSHSolution(double travelTimeOriginToOriginStopSHSolution) {
         this.travelTimeOriginToOriginStopSHSolution = travelTimeOriginToOriginStopSHSolution;
+    }
+
+    public void setTravelTimeOriginStopToDestinationStopSHSolution(double travelTimeOriginStopToDestinationStopSHSolution) {
         this.travelTimeOriginStopToDestinationStopSHSolution = travelTimeOriginStopToDestinationStopSHSolution;
+    }
+
+    public void setTravelTimeDestinationStopToDestinationSHSolution(double travelTimeDestinationStopToDestinationSHSolution) {
         this.travelTimeDestinationStopToDestinationSHSolution = travelTimeDestinationStopToDestinationSHSolution;
+    }
+
+    public void setTotalTravelTimeSHSolution(double totalTravelTimeSHSolution) {
         this.totalTravelTimeSHSolution = totalTravelTimeSHSolution;
+    }
+
+    public void setEarliestArrivalTimeSHSolution(String earliestArrivalTimeSHSolution) {
         this.earliestArrivalTimeSHSolution = earliestArrivalTimeSHSolution;
+    }
+
+    public void setAccuracyMarkerSHSolution(boolean accuracyMarkerSHSolution) {
         this.accuracyMarkerSHSolution = accuracyMarkerSHSolution;
+    }
+
+    public void setCountOriginStopsConsideredSFSolution(int countOriginStopsConsideredSFSolution) {
         this.countOriginStopsConsideredSFSolution = countOriginStopsConsideredSFSolution;
+    }
+
+    public void setCountDestinationStopsConsideredSFSolution(int countDestinationStopsConsideredSFSolution) {
         this.countDestinationStopsConsideredSFSolution = countDestinationStopsConsideredSFSolution;
+    }
+
+    public void setTimeElapsedQueryProcessingSFSolution(long timeElapsedQueryProcessingSFSolution) {
         this.timeElapsedQueryProcessingSFSolution = timeElapsedQueryProcessingSFSolution;
+    }
+
+    public void setOriginStopIdSFSolution(int originStopIdSFSolution) {
         this.originStopIdSFSolution = originStopIdSFSolution;
+    }
+
+    public void setOriginStopNameSFSolution(String originStopNameSFSolution) {
         this.originStopNameSFSolution = originStopNameSFSolution;
+    }
+
+    public void setDestinationStopIdSFSolution(int destinationStopIdSFSolution) {
         this.destinationStopIdSFSolution = destinationStopIdSFSolution;
+    }
+
+    public void setDestinationStopNameSFSolution(String destinationStopNameSFSolution) {
         this.destinationStopNameSFSolution = destinationStopNameSFSolution;
+    }
+
+    public void setTravelTimeOriginToOriginStopSFSolution(double travelTimeOriginToOriginStopSFSolution) {
         this.travelTimeOriginToOriginStopSFSolution = travelTimeOriginToOriginStopSFSolution;
+    }
+
+    public void setTravelTimeOriginStopToDestinationStopSFSolution
+            (double travelTimeOriginStopToDestinationStopSFSolution) {
         this.travelTimeOriginStopToDestinationStopSFSolution = travelTimeOriginStopToDestinationStopSFSolution;
+    }
+
+    public void setTravelTimeDestinationStopToDestinationSFSolution
+            (double travelTimeDestinationStopToDestinationSFSolution) {
         this.travelTimeDestinationStopToDestinationSFSolution = travelTimeDestinationStopToDestinationSFSolution;
+    }
+
+    public void setTotalTravelTimeSFSolution(double totalTravelTimeSFSolution) {
         this.totalTravelTimeSFSolution = totalTravelTimeSFSolution;
+    }
+
+    public void setEarliestArrivalTimeSFSolution(String earliestArrivalTimeSFSolution) {
         this.earliestArrivalTimeSFSolution = earliestArrivalTimeSFSolution;
+    }
+
+    public void setAccuracyMarkerSFSolution(boolean accuracyMarkerSFSolution) {
         this.accuracyMarkerSFSolution = accuracyMarkerSFSolution;
     }
 
-    public MultiModalQueryResponses() {
-
-    }
-
+    // Set up getters :)
     public double getOriginPointLongitude() {
         return originPointLongitude;
     }

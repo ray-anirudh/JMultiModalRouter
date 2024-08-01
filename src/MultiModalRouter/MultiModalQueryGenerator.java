@@ -95,7 +95,7 @@ public class MultiModalQueryGenerator {
                 i++;
             }
         }
-
+        System.out.println("Multi-modal queries generated");
         return this.multiModalQueries;
     }
 }

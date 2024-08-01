@@ -34,6 +34,7 @@ public class KDTreeForNodes {
 
     public void buildNodeBasedKDTree(Node[] nodes) {
         this.kDTreeRootNode = buildKDTreeForNodes(nodes, 0);
+        System.out.println("KD-Tree created for nodes");
     }
 
     private KDTreeNode nearestNeighbourSearchForNodes(double sourceLongitude, double sourceLatitude,
