@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="google.maps.services" level="project" />
     <orderEntry type="library" exported="" name="slf4j.simple" level="project" />
+    <orderEntry type="library" name="slf4j.integration" level="project" />
   </component>
 </module>

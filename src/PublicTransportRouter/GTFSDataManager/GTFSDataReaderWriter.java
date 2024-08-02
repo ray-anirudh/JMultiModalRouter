@@ -769,7 +769,7 @@ public class GTFSDataReaderWriter {
     // Index finder by column name strings
     private int findIndexInArray(String columnHeaderName, @NotNull String[] headerArray) {
         int columnPosition = -1;
-        for (int i = 0; i <= headerArray.length; i++) {
+        for (int i = 0; i < headerArray.length; i++) {
             if (headerArray[i].equalsIgnoreCase(columnHeaderName)) {
                 columnPosition = i;
             }
