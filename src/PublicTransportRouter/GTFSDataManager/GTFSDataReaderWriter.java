@@ -3,8 +3,11 @@ package src.PublicTransportRouter.GTFSDataManager;
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
 import com.google.maps.DirectionsApi;
+import com.google.maps.errors.ApiException;
+import com.google.maps.errors.ZeroResultsException;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.LatLng;
 import com.google.maps.model.TravelMode;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +38,7 @@ public class GTFSDataReaderWriter {
 
     // Initialize GMaps API context with a valid API key
     private static final GeoApiContext GOOGLE_GEO_API_CONTEXT = new GeoApiContext.Builder().
-            apiKey("Your Google API Key").build();
+            apiKey("").build();
 
     // Set the constants
     private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
@@ -323,15 +326,6 @@ public class GTFSDataReaderWriter {
                 tripIdDirectionTwo = tripIdDirectionOne;    // Handling loop routes
             }
 
-            /* Debugging code
-            System.out.println("Trip ID direction one: " + tripIdDirectionOne + "\n" +
-                    "Trip size direction one: " + tripWiseStopTimeMaps.get(tripIdDirectionOne).size() + "\n" +
-                    "Trip ID direction two: " + tripIdDirectionTwo + "\n" +
-                    "Trip size direction two: " + tripWiseStopTimeMaps.get(tripIdDirectionTwo).size() + "\n" +
-                    "Maximum size of pertinent route: " + this.routes.get(stopTimeEntry.getKey()).getNumberStops() +
-                    "\n");
-            */
-
             LinkedHashMap<Integer, Integer> directionOneStopSequenceMap = new LinkedHashMap<>();
             for (HashMap.Entry<Integer, StopTimeTriplet> directionOneStopTimeEntry : tripWiseStopTimeMaps.
                     get(tripIdDirectionOne).entrySet()) {
@@ -348,6 +342,15 @@ public class GTFSDataReaderWriter {
 
             this.routeStops.get(stopTimeEntry.getKey()).getDirectionWiseStopMaps().put(1, directionOneStopSequenceMap);
             this.routeStops.get(stopTimeEntry.getKey()).getDirectionWiseStopMaps().put(2, directionTwoStopSequenceMap);
+
+            /* Debugging statements:
+            System.out.println("Trip ID direction one: " + tripIdDirectionOne + "\n" +
+                    "Trip size direction one: " + tripWiseStopTimeMaps.get(tripIdDirectionOne).size() + "\n" +
+                    "Trip ID direction two: " + tripIdDirectionTwo + "\n" +
+                    "Trip size direction two: " + tripWiseStopTimeMaps.get(tripIdDirectionTwo).size() + "\n" +
+                    "Maximum size of pertinent route: " + this.routes.get(stopTimeEntry.getKey()).getNumberStops() +
+                    "\n");
+            */
         }
         System.out.println("Route stops' hashmap built");
     }
@@ -390,10 +393,14 @@ public class GTFSDataReaderWriter {
                         }
                     }
 
-                    System.out.println(stopName + stopType + stopTripCount + stopLatitude + stopLongitude);    // todo debugger
-
-                    Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLatitude, stopLongitude);
+                    Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLongitude, stopLatitude);
                     this.stops.replace(stopId, stop);
+
+                    /* Debugging statements:
+                    System.out.println("Stop name: " + stopName + "\n" +
+                            "Stop Latitude: " + stopLatitude + "\n" +
+                            "Stop Longitude: " + stopLongitude + "\n");
+                    */
                 }
             }
             System.out.println("Stops' data read from " + gtfsStopsFilePath);
@@ -454,8 +461,17 @@ public class GTFSDataReaderWriter {
                     avoid transfers at the very same stop; transfers are recorded in minutes
                     */
                     if (fromStopId != toStopId) {
-                        stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialDistanceM /
-                                (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
+                        double interStopAerialWalkingTimeMin = interStopAerialDistanceM /
+                                (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE);
+                        stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialWalkingTimeMin);
+
+                        /* Debugging statements:
+                        System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " +
+                                fromStopId + "\n" +
+                                "To stop: " + this.stops.get(toStopId).getStopName() + " " + toStopId + "\n" +
+                                "Inter-stop aerial distance: " + interStopAerialDistanceM + "\n" +
+                                "Inter-stop aerial walking time: " + interStopAerialWalkingTimeMin + "\n");
+                        */
                     }
                 }
             }
@@ -480,8 +496,17 @@ public class GTFSDataReaderWriter {
                         toStopLongitude, toStopLatitude);
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    stopSpecificTransferMap.replace(toStopId, interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_MPS *
-                            SECONDS_IN_MINUTE));
+                    double interStopWalkingTimeMin = interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_MPS *
+                            SECONDS_IN_MINUTE);
+                    stopSpecificTransferMap.replace(toStopId, interStopWalkingTimeMin);
+
+                    /* Debugging statements:
+                    System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " + fromStopId +
+                    "\n" +
+                            "To stop: " + this.stops.get(toStopId).getStopName() + " " + toStopId + "\n" +
+                            "Inter-stop walking distance: " + interStopWalkingDistanceM + "\n" +
+                            "Inter-stop walking time: " + interStopWalkingTimeMin + "\n");
+                    */
                 } else {
                     stopSpecificTransferMap.remove(toStopId);
                 }
@@ -778,15 +803,15 @@ public class GTFSDataReaderWriter {
         try {
             // GMaps Directions API for accurate transfer distance determination
             DirectionsResult result = DirectionsApi.newRequest(GOOGLE_GEO_API_CONTEXT)
-                    .origin(new com.google.maps.model.LatLng(fromStopLatitude, fromStopLongitude))
-                    .destination(new com.google.maps.model.LatLng(toStopLatitude, toStopLongitude))
+                    .origin(new LatLng(fromStopLatitude, fromStopLongitude))
+                    .destination(new LatLng(toStopLatitude, toStopLongitude))
                     .mode(TravelMode.WALKING)
                     .await();
 
             // Extract and return walking distance from the result
             return result.routes[0].legs[0].distance.inMeters;
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace();     // High count of stack traces slows down program
             return -1;
         }
     }
