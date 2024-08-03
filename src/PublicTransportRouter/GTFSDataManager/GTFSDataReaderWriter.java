@@ -312,12 +312,25 @@ public class GTFSDataReaderWriter {
             for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripConsideredForDirectionTwo :
                     tripWiseStopTimeMaps.entrySet()) {
                 if ((tripConsideredForDirectionTwo.getValue().size() == this.routes.get(stopTimeEntry.getKey()).
-                        getNumberStops()) && (!Objects.equals(tripConsideredForDirectionTwo.getValue().keySet().
-                        iterator().next(), tripWiseStopTimeMaps.get(tripIdDirectionOne).keySet().iterator().next()))) {
+                        getNumberStops()) && (!tripConsideredForDirectionTwo.getValue().keySet().toArray()[0].
+                        equals(tripWiseStopTimeMaps.get(tripIdDirectionOne).keySet().toArray()[0]))) {
                     tripIdDirectionTwo = tripConsideredForDirectionTwo.getKey();
                     break;
                 }
             }
+
+            if (tripIdDirectionTwo == -1) {
+                tripIdDirectionTwo = tripIdDirectionOne;    // Handling loop routes
+            }
+
+            /* Debugging code
+            System.out.println("Trip ID direction one: " + tripIdDirectionOne + "\n" +
+                    "Trip size direction one: " + tripWiseStopTimeMaps.get(tripIdDirectionOne).size() + "\n" +
+                    "Trip ID direction two: " + tripIdDirectionTwo + "\n" +
+                    "Trip size direction two: " + tripWiseStopTimeMaps.get(tripIdDirectionTwo).size() + "\n" +
+                    "Maximum size of pertinent route: " + this.routes.get(stopTimeEntry.getKey()).getNumberStops() +
+                    "\n");
+            */
 
             LinkedHashMap<Integer, Integer> directionOneStopSequenceMap = new LinkedHashMap<>();
             for (HashMap.Entry<Integer, StopTimeTriplet> directionOneStopTimeEntry : tripWiseStopTimeMaps.
@@ -353,19 +366,31 @@ public class GTFSDataReaderWriter {
             int stopLatitudeIndex = findIndexInArray("stop_lat", stopsHeaderArray);
             int stopLongitudeIndex = findIndexInArray("stop_lon", stopsHeaderArray);
 
-            // Read body and process data
+            // Read body and process data; do not avoid parent stations, as they might be visited by transit vehicles
             while ((newline = gtfsStopsReader.readLine()) != null) {
+                int commasInStopRecord = countCommasInString(newline);
+                final int COMMAS_NORMAL_STOP_RECORD = 5;
+                int indexAdder = commasInStopRecord - COMMAS_NORMAL_STOP_RECORD;
+
                 String[] stopDataRecord = newline.split(",");
-                int stopId = Integer.parseInt(stopDataRecord[stopIdIndex]);
+                int stopId = Integer.parseInt(stopDataRecord[stopIdIndex + indexAdder]);
 
                 if (this.stops.containsKey(stopId)) {
-                    String stopName = stopDataRecord[stopNameIndex].substring(0, 1).equalsIgnoreCase("\"") ?
-                            stopDataRecord[stopNameIndex].substring(1, stopDataRecord[stopNameIndex].length() - 1) :
-                            stopDataRecord[stopNameIndex];
                     int stopType = -1;
                     int stopTripCount = 0;
-                    double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex]);
-                    double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex]);
+                    double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex + indexAdder]);
+                    double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex + indexAdder]);
+                    String stopName = "";
+
+                    if (indexAdder == 0) {
+                        stopName = stopDataRecord[stopNameIndex + indexAdder];
+                    } else {
+                        for (int i = 0; i <= indexAdder; i++) {
+                            stopName += stopDataRecord[i].replace("\"", "") + " ";
+                        }
+                    }
+
+                    System.out.println(stopName + stopType + stopTripCount + stopLatitude + stopLongitude);    // todo debugger
 
                     Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLatitude, stopLongitude);
                     this.stops.replace(stopId, stop);
@@ -775,6 +800,17 @@ public class GTFSDataReaderWriter {
             }
         }
         return columnPosition;
+    }
+
+    // Comma counter in a string array
+    private int countCommasInString(String string) {
+        int commaCount = 0;
+        for(int i = 0; i < string.length(); i++) {
+            if (string.substring(i, i+1).equalsIgnoreCase(",")) {
+                commaCount++;
+            }
+        }
+        return commaCount;
     }
 
     // Getters of transit timetable data for RAPTOR queries
