@@ -3,8 +3,6 @@ package src.PublicTransportRouter.GTFSDataManager;
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
 import com.google.maps.DirectionsApi;
-import com.google.maps.errors.ApiException;
-import com.google.maps.errors.ZeroResultsException;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.LatLng;
@@ -518,15 +516,24 @@ public class GTFSDataReaderWriter {
 
     // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
     public void makeTransfersTransitive() {
-        for (int fromStopId : this.transfers.keySet()) {
-            for (int intermediateStopId : this.transfers.get(fromStopId).getTransferMap().keySet()) {
-                for (int toStopId : new ArrayList<>(this.transfers.get(intermediateStopId).getTransferMap().keySet())) {
+        ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
+        for (int fromStopId : fromStopIds) {
+
+            ArrayList<Integer> intermediateStopIds = new ArrayList<>(this.transfers.get(fromStopId).getTransferMap().
+                    keySet());
+            for (int intermediateStopId : intermediateStopIds) {
+
+                ArrayList<Integer> toStopIds = new ArrayList<>(this.transfers.get(intermediateStopId).getTransferMap().
+                        keySet());
+                for (int toStopId : toStopIds) {
+
                     if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
                         double interStopWalkingDistanceM = calculateWalkingDistance(
                                 this.stops.get(fromStopId).getStopLongitude(),
                                 this.stops.get(fromStopId).getStopLatitude(),
                                 this.stops.get(toStopId).getStopLongitude(),
                                 this.stops.get(toStopId).getStopLatitude());
+
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
                                     (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
@@ -561,28 +568,34 @@ public class GTFSDataReaderWriter {
         // For hashmaps "routes", "trips", "routeStops", and "stopTimes"
         for (Iterator<Integer> routeIterator = this.stopTimes.keySet().iterator(); routeIterator.hasNext(); ) {
             int routeId = routeIterator.next();
-            for (Iterator<Integer> tripIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().keySet().
-                    iterator(); tripIterator.hasNext(); ) {
+            LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = this.stopTimes.
+                    get(routeId).getTripWiseStopTimeMaps();
+
+            for (Iterator<Integer> tripIterator = this.trips.get(routeId).getTripList().iterator(); tripIterator.
+                    hasNext(); ) {
                 int tripId = tripIterator.next();
-                for (Iterator<Integer> stopIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).
+
+                for (Iterator<Integer> stopIterator = tripWiseStopTimeMaps.get(tripId).
                         keySet().iterator(); stopIterator.hasNext(); ) {
                     int stopId = stopIterator.next();
+
                     if (!this.stops.containsKey(stopId)) {
                         stopIterator.remove();
                         this.routeStops.get(routeId).getDirectionWiseStopMaps().get(1).remove(stopId);
                         this.routeStops.get(routeId).getDirectionWiseStopMaps().get(2).remove(stopId);
                     }
                 }
-                if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).isEmpty()) {
+                if (tripWiseStopTimeMaps.get(tripId).isEmpty()) {
                     tripIterator.remove();
-                    this.trips.get(routeId).getTripList().remove(tripId);
+                    this.stopTimes.get(routeId).getTripWiseStopTimeMaps().remove(tripId);
                 }
             }
-            if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().isEmpty()) {
+            if (tripWiseStopTimeMaps.isEmpty()) {
                 routeIterator.remove();
                 this.trips.remove(routeId);
                 this.routes.remove(routeId);
                 this.routeStops.remove(routeId);
+                // Debugging advice: Try printing sizes of different maps for comparison and consistency checks
             }
         }
         System.out.println("Data external to study area deleted");
@@ -790,7 +803,7 @@ public class GTFSDataReaderWriter {
 
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check the \"transfers\" hashmap.");
-        }
+        };
     }
 
     /**
@@ -811,8 +824,8 @@ public class GTFSDataReaderWriter {
             // Extract and return walking distance from the result
             return result.routes[0].legs[0].distance.inMeters;
         } catch (Exception e) {
-            e.printStackTrace();     // High count of stack traces slows down program
-            return -1;
+            e.printStackTrace();     // High volumes of stack traces slow down program execution
+            return -1;  // Default exception case return value is -1
         }
     }
 
