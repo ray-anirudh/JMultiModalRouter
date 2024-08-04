@@ -6,7 +6,11 @@ public class Node {    // Node IDs are present in the relevant hashmap, as well
     private long nodeId;
     private double nodeLongitude;
     private double nodeLatitude;
-    private ArrayList<Long> linkIdList;
+    private final ArrayList<Long> linkIdList;
+
+    public Node(ArrayList<Long> linkIdList) {
+        this.linkIdList = linkIdList;
+    }
 
     public double equiRectangularDistanceTo(double otherPointLongitude, double otherPointLatitude) {
         final int EARTH_RADIUS_M = 6_371_000;

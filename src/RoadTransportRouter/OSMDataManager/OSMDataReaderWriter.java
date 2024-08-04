@@ -105,8 +105,10 @@ public class OSMDataReaderWriter {
                                 Link link = new Link(firstNodeId, secondNodeId, linkType);
 
                                 this.links.put(linkId, link);
-                                this.nodes.put(firstNodeId, new Node());
-                                this.nodes.put(secondNodeId, new Node());
+                                ArrayList<Long> firstNodeLinkIdList = new ArrayList<>();
+                                ArrayList<Long> secondNodeLinkIdList = new ArrayList<>();
+                                this.nodes.put(firstNodeId, new Node(firstNodeLinkIdList));
+                                this.nodes.put(secondNodeId, new Node(secondNodeLinkIdList));
                             }
                         }
                     }
@@ -338,7 +340,7 @@ public class OSMDataReaderWriter {
     // Index finder based on presence of certain alphabets in an array element
     private int findIndexInArray(String characterSequenceToFind, @NotNull String[] headerArray) {
         int columnPosition = -1;
-        for (int i = 0; i <= headerArray.length; i++) {
+        for (int i = 0; i < headerArray.length; i++) {
             if (headerArray[i].contains(characterSequenceToFind)) {
                 columnPosition = i;
             }

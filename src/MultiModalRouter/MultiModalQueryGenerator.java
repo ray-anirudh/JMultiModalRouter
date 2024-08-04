@@ -1,7 +1,13 @@
 package src.MultiModalRouter;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
+
+import org.apache.commons.math3.special.Erf;
 
 public class MultiModalQueryGenerator {
     private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
@@ -11,17 +17,19 @@ public class MultiModalQueryGenerator {
     private static final Random RANDOM = new Random();
     private final LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
+    // Generate queries to pass into the multi-modal router
     LinkedHashMap<Integer, MultiModalQuery> generateQueries(int numberOfQueries) {
         for (int i = 1; i <= numberOfQueries; ) {
             // Generating longitudes and latitudes of origin and destination points as per multi-variate Gaussian logic
             double originLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX - STUDY_AREA_LONGITUDE_MIN) *
-                    RANDOM.nextGaussian());
+                    (RANDOM.nextGaussian(0.5, 0.16)));
+            // Arguments are specified to generate OD pairs within study area
             double originLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN) *
-                    RANDOM.nextGaussian());
+                    (RANDOM.nextGaussian(0.5, 0.16)));;
             double destinationLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX -
-                    STUDY_AREA_LONGITUDE_MIN) * RANDOM.nextGaussian());
+                    STUDY_AREA_LONGITUDE_MIN) * (RANDOM.nextGaussian(0.5, 0.16)));;
             double destinationLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN)
-                    * RANDOM.nextGaussian());
+                    * (RANDOM.nextGaussian(0.5, 0.16)));;
 
             final int EARTH_RADIUS_KM = 6_371;
             double longitudeDifference = Math.toRadians(destinationLongitude - originLongitude);
@@ -97,5 +105,34 @@ public class MultiModalQueryGenerator {
         }
         System.out.println("Multi-modal queries generated");
         return this.multiModalQueries;
+    }
+
+    // Write a "multiModalQueries.txt" file
+    void writeMultiModalQueries(String multiModalQueriesFilePath) {
+        try {
+            // Writer for "multiModalQueries.txt"
+            BufferedWriter multiModalQueriesWriter = new BufferedWriter(new FileWriter(multiModalQueriesFilePath));
+
+            // Set up header array
+            multiModalQueriesWriter.write("query_id,origin_longitude,origin_latitude,destination_longitude," +
+                    "destination_latitude\n");
+
+            // Write body based on "nodes" hashmap
+            for (HashMap.Entry<Integer, MultiModalQuery> multiModalQueryEntry : this.multiModalQueries.entrySet()) {
+                int queryId = multiModalQueryEntry.getKey();
+                double originLongitude = multiModalQueryEntry.getValue().getOriginLongitude();
+                double originLatitude = multiModalQueryEntry.getValue().getOriginLatitude();
+                double destinationLongitude = multiModalQueryEntry.getValue().getDestinationLongitude();
+                double destinationLatitude = multiModalQueryEntry.getValue().getDestinationLatitude();
+
+                multiModalQueriesWriter.write(queryId + "," + originLongitude + "," + originLatitude + "," +
+                            destinationLongitude + "," + destinationLatitude + "\n");
+                }
+            System.out.println("Multi-modal queries' data written to " + multiModalQueriesFilePath);
+
+        } catch (IOException iOE) {
+            System.out.println("Input-output exception. Please check the \"multiModalQueries\" hashmap.");
+            iOE.printStackTrace();
+        }
     }
 }

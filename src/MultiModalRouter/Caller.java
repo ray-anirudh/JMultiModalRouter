@@ -23,7 +23,7 @@ public class Caller {
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2; // Translates to 1.4 m/s
     private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 3_000;
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 30_000;
     private static final int GTFS_BUS_ROUTE_TYPE_ID = 3;
     // Parameter for stop-hierarchy heuristic
     private static final int MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_STOPS = 135;
@@ -79,17 +79,21 @@ public class Caller {
         long kDEndTime = System.nanoTime();
         long kDTreesBuildDuration = kDEndTime - kDStartTime;
 
-        // Load all multi-modal queries using the generator
+        // Load and write all multi-modal queries using the generator
         long queryGenStartTime = System.nanoTime();
+        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
         MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
         LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
                 generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
+        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
         long queryGenEndTime = System.nanoTime();
         long queryGenerationDuration = queryGenEndTime - queryGenStartTime;
 
         // Initialize counters, maps, accuracy counters, and timekeepers
         long queriesProcessingStartTime = System.nanoTime();
         LinkedHashMap<Integer, MultiModalQueryResponses> multiModalQueriesResponses = new LinkedHashMap<>();
+        int nonNullExactResponseCounter = 0;
         int sHHeuristicCorrectOutputCounter = 0;
         int sFHeuristicCorrectOutputCounter = 0;
 
@@ -121,6 +125,12 @@ public class Caller {
             double originNodeLatitude = originNode.getNodeLatitude();
             double destinationNodeLongitude = destinationNode.getNodeLongitude();
             double destinationNodeLatitude = destinationNode.getNodeLatitude();
+            System.out.println(originNodeId);
+            System.out.println(originNodeLatitude);
+            System.out.println(originNodeLongitude);
+            System.out.println(destinationNodeId);
+            System.out.println(destinationNodeLatitude);
+            System.out.println(destinationNodeLongitude);
 
             multiModalQueryResponses.setNearestOriginNodeId(originNodeId);
             multiModalQueryResponses.setNearestDestinationNodeId(destinationNodeId);
@@ -131,14 +141,22 @@ public class Caller {
             double costDestinationNodeToDestination = destinationNode.
                     equiRectangularDistanceTo(destinationPointLongitude, destinationPointLatitude) /
                     AVERAGE_WALKING_SPEED_M_PER_MIN;
+            System.out.println(costOriginToOriginNode);
+            System.out.println(costDestinationNodeToDestination);
 
             // Set up nearest neighbor stop lists, and execute routing algorithms within such stop lists
             // Stop lists containing all types of transit stops in a node's vicinity
             long exactQueryProcessingStartTime = System.nanoTime();
+            System.out.println("Stops array size: " + stops.size());
+            System.out.println("Stops KD array size: " + kDTreeForStops);
             ArrayList<Stop> originNodeStops = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
                     originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
             ArrayList<Stop> destinationNodeStops = kDTreeForStops.findStopsWithinDoughnut(destinationNodeLongitude,
                     destinationNodeLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
+            System.out.println(originNodeStops.size());
+            System.out.println(destinationNodeStops.size());
+            System.out.println(originNodeStops.get(0).getStopId());
+            System.out.println(originNodeStops.get(0).getStopName());
 
             if ((!originNodeStops.isEmpty()) && (!destinationNodeStops.isEmpty())) {
                 // Create arraylists of travel times from stops to origin and destination
@@ -153,6 +171,7 @@ public class Caller {
                         destinationNodeStops, travelTimesOriginToOriginStops, travelTimesDestinationStopsToDestination,
                         multiModalQueryResponses, routeStops, stopTimes, stops, stopRoutes, transfers);
             }
+
             long exactQueryProcessingEndTime = System.nanoTime();
             multiModalQueryResponses.setTimeElapsedQueryProcessingExactSolution(exactQueryProcessingEndTime -
                     exactQueryProcessingStartTime);
@@ -233,29 +252,96 @@ public class Caller {
             multiModalQueryResponses.setTimeElapsedQueryProcessingSFSolution(sFQueryProcessingEndTime -
                     sFQueryProcessingStartTime);
 
-            if ((multiModalQueryResponses.getOriginStopNameExactSolution().equalsIgnoreCase(multiModalQueryResponses.
-                    getOriginStopNameSHSolution())) && (multiModalQueryResponses.getDestinationStopNameExactSolution().
-                    equalsIgnoreCase(multiModalQueryResponses.getDestinationStopNameSHSolution())) &&
-                    ((int) (multiModalQueryResponses.getTotalTravelTimeExactSolution()) ==
-                            (int) (multiModalQueryResponses.getTotalTravelTimeSHSolution()))) {
-                multiModalQueryResponses.setAccuracyMarkerSHSolution(true);
-                sHHeuristicCorrectOutputCounter++;
-            }
+            /* Debugging statements:
+            System.out.println(
+                    multiModalQueryResponses.getOriginPointLongitude() + "\n" +
+                            multiModalQueryResponses.getOriginPointLatitude() + "\n" +
+                            multiModalQueryResponses.getDestinationPointLongitude() + "\n" +
+                            multiModalQueryResponses.getDestinationPointLatitude() + "\n" +
+                            multiModalQueryResponses.getDepartureTimeOriginPointInt() + "\n" +
+                            multiModalQueryResponses.getNearestOriginNodeId() + "\n" +
+                            multiModalQueryResponses.getNearestDestinationNodeId() + "\n" +
 
-            if ((multiModalQueryResponses.getOriginStopNameExactSolution().equalsIgnoreCase(multiModalQueryResponses.
-                    getOriginStopNameSFSolution())) && (multiModalQueryResponses.getDestinationStopNameExactSolution().
-                    equalsIgnoreCase(multiModalQueryResponses.getDestinationStopNameSFSolution())) &&
-                    ((int) (multiModalQueryResponses.getTotalTravelTimeExactSolution()) ==
-                            (int) (multiModalQueryResponses.getTotalTravelTimeSFSolution()))) {
-                multiModalQueryResponses.setAccuracyMarkerSFSolution(true);
-                sFHeuristicCorrectOutputCounter++;
-            }
+                            multiModalQueryResponses.getCountOriginStopsConsideredExactSolution() + "\n" +
+                            multiModalQueryResponses.getCountDestinationStopsConsideredExactSolution() + "\n" +
+                            multiModalQueryResponses.getTimeElapsedQueryProcessingExactSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopIdExactSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopNameExactSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopIdExactSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopNameExactSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginToOriginStopExactSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginStopToDestinationStopExactSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeDestinationStopToDestinationExactSolution() + "\n" +
+                            multiModalQueryResponses.getTotalTravelTimeExactSolution() + "\n" +
+                            multiModalQueryResponses.getEarliestArrivalTimeExactSolution() + "\n" +
 
-            multiModalQueriesResponses.put(multiModalQueryEntry.getKey(), multiModalQueryResponses);
+                            multiModalQueryResponses.getCountOriginStopsConsideredSHSolution() + "\n" +
+                            multiModalQueryResponses.getCountDestinationStopsConsideredSHSolution() + "\n" +
+                            multiModalQueryResponses.getTimeElapsedQueryProcessingSHSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopIdSHSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopNameSHSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopIdSHSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopNameSHSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginToOriginStopSHSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginStopToDestinationStopSHSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeDestinationStopToDestinationSHSolution() + "\n" +
+                            multiModalQueryResponses.getTotalTravelTimeSHSolution() + "\n" +
+                            multiModalQueryResponses.getEarliestArrivalTimeSHSolution() + "\n" +
+                            multiModalQueryResponses.isAccuracyMarkerSHSolution() + "\n" +
+
+                            multiModalQueryResponses.getCountOriginStopsConsideredSFSolution() + "\n" +
+                            multiModalQueryResponses.getCountDestinationStopsConsideredSFSolution() + "\n" +
+                            multiModalQueryResponses.getTimeElapsedQueryProcessingSFSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopIdSFSolution() + "\n" +
+                            multiModalQueryResponses.getOriginStopNameSFSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopIdSFSolution() + "\n" +
+                            multiModalQueryResponses.getDestinationStopNameSFSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginToOriginStopSFSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeOriginStopToDestinationStopSFSolution() + "\n" +
+                            multiModalQueryResponses.getTravelTimeDestinationStopToDestinationSFSolution() + "\n" +
+                            multiModalQueryResponses.getTotalTravelTimeSFSolution() + "\n" +
+                            multiModalQueryResponses.getEarliestArrivalTimeSFSolution() + "\n" +
+                            multiModalQueryResponses.isAccuracyMarkerSFSolution()
+            );
+            */
+
+            // todo nest below-two blocks in larger blocks that check whether we get outputs from exact solution
+            //  checks or not (sometimes we may get no route at all in the first place), and then count such cases
+            //  for reducing from accuracy percentage denominator, and also handle cases wherein SF and SH
+            //  ideal paths may not exist
+
+            // todo real logic flaw debugging begins here, since you ran through the path finders super fast, but to
+            //  get there you need non null responses, and also a basic distance checker between OD pairs
+            if ((multiModalQueryResponses.getOriginStopNameExactSolution() != null) && (multiModalQueryResponses.   // todo debug
+                    getDestinationStopNameExactSolution() != null)) {
+                nonNullExactResponseCounter++;
+                if ((multiModalQueryResponses.getOriginStopNameExactSolution().equalsIgnoreCase(multiModalQueryResponses.
+                        getOriginStopNameSHSolution())) && (multiModalQueryResponses.getDestinationStopNameExactSolution().
+                        equalsIgnoreCase(multiModalQueryResponses.getDestinationStopNameSHSolution())) &&
+                        ((int) (multiModalQueryResponses.getTotalTravelTimeExactSolution()) ==
+                                (int) (multiModalQueryResponses.getTotalTravelTimeSHSolution()))) {
+                    multiModalQueryResponses.setAccuracyMarkerSHSolution(true);
+                    sHHeuristicCorrectOutputCounter++;
+                }
+
+                if ((multiModalQueryResponses.getOriginStopNameExactSolution().equalsIgnoreCase(multiModalQueryResponses.
+                        getOriginStopNameSFSolution())) && (multiModalQueryResponses.getDestinationStopNameExactSolution().
+                        equalsIgnoreCase(multiModalQueryResponses.getDestinationStopNameSFSolution())) &&
+                        ((int) (multiModalQueryResponses.getTotalTravelTimeExactSolution()) ==
+                                (int) (multiModalQueryResponses.getTotalTravelTimeSFSolution()))) {
+                    multiModalQueryResponses.setAccuracyMarkerSFSolution(true);
+                    sFHeuristicCorrectOutputCounter++;
+                }
+
+                multiModalQueriesResponses.put(multiModalQueryEntry.getKey(), multiModalQueryResponses);
+            }
         }
-
         long queriesProcessingEndTime = System.nanoTime();
         long queriesProcessingDuration = queriesProcessingEndTime - queriesProcessingStartTime;
+
+        System.out.println("Non null exact response count: " + nonNullExactResponseCounter + "\n" +
+                "SH Count: " + sHHeuristicCorrectOutputCounter + "\n" +
+                "SF Count: " + sFHeuristicCorrectOutputCounter);
 
         // Print preprocessing and querying costs and heuristic-performance outputs
         System.out.println("Times elapsed (in nanoseconds) for:" + "\n" +
@@ -267,9 +353,9 @@ public class Caller {
                 "\n" +
                 "Performance evaluation (in %) of each heuristic:" + "\n" +
                 "1. Accuracy of stop hierarchy heuristic: " +
-                (sHHeuristicCorrectOutputCounter / multiModalQueries.size()) + "%" + "\n" +
+                (sHHeuristicCorrectOutputCounter / nonNullExactResponseCounter) + "%" + "\n" +
                 "2. Accuracy of stop frequency heuristic: " +
-                (sFHeuristicCorrectOutputCounter / multiModalQueries.size()) + "%" + "\n");
+                (sFHeuristicCorrectOutputCounter / nonNullExactResponseCounter) + "%" + "\n");
 
         // Write out file documenting router responses to multi-modal queries
         String multiModalQueriesResponsesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +

@@ -438,7 +438,7 @@ public class GTFSDataReaderWriter {
                 this.transfers.remove(stopId);
             }
         }
-        System.out.println("Stop-wise routes' hashmap padded with route IDs, and stop types and trip counts ascribed.");
+        System.out.println("Stop-wise routes' hashmap padded with route IDs, and stop types and trip counts ascribed");
     }
 
     // Build the "transfers" hashmap, ignoring pairs of distant stops
@@ -741,11 +741,11 @@ public class GTFSDataReaderWriter {
                 String stopName = stopEntry.getValue().getStopName();
                 int locationType = stopEntry.getValue().getStopType();
                 int stopTripCount = stopEntry.getValue().getStopTripCount();
-                double stopLatitude = stopEntry.getValue().getStopLatitude();
                 double stopLongitude = stopEntry.getValue().getStopLongitude();
+                double stopLatitude = stopEntry.getValue().getStopLatitude();
 
                 raptorStopsWriter.write(stopId + "," + stopName + "," + locationType + "," + stopTripCount + "," +
-                        stopLatitude + "," + stopLongitude + "\n");
+                        stopLongitude + "," + stopLatitude + "\n");
             }
             System.out.println("Stops' data written to " + raptorStopsFilePath);
 
@@ -803,7 +803,7 @@ public class GTFSDataReaderWriter {
 
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check the \"transfers\" hashmap.");
-        };
+        }
     }
 
     /**
@@ -824,8 +824,8 @@ public class GTFSDataReaderWriter {
             // Extract and return walking distance from the result
             return result.routes[0].legs[0].distance.inMeters;
         } catch (Exception e) {
-            e.printStackTrace();     // High volumes of stack traces slow down program execution
-            return -1;  // Default exception case return value is -1
+            // e.printStackTrace();     // todo High volumes of stack traces slow down program execution
+            return 2;  // todo Default exception case return value is -1
         }
     }
 
