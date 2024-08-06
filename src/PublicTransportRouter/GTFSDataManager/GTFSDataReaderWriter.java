@@ -40,10 +40,9 @@ public class GTFSDataReaderWriter {
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
     private static final int MAXIMUM_TRANSFER_DISTANCE_M = 300;    // (Gritsch, 2024) and (Tischner, 2018)
-    private static final double AVERAGE_WALKING_SPEED_M_PER_SEC = 1.4D;   // (Gritsch, 2024)
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 84D;   // (Gritsch, 2024)
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
-    private static final int SECONDS_IN_MINUTE = 60;
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
     private static final String OSM_OPL_EXTRACT_FILE_PATH = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
@@ -77,6 +76,13 @@ public class GTFSDataReaderWriter {
     needed to reach them
     */
     private final LinkedHashMap<Integer, Transfer> transfers = new LinkedHashMap<>();
+
+    // Setting up Dijkstra-relevant objects for transfer cost calculations
+    private static final DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
+    private static final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
+    private final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+    private final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
+    private static final KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
 
     /**
      * BEHAVIOUR DEFINITIONS
@@ -461,7 +467,7 @@ public class GTFSDataReaderWriter {
                     */
                     if (fromStopId != toStopId) {
                         double interStopAerialWalkingTimeMin = interStopAerialDistanceM /
-                                (AVERAGE_WALKING_SPEED_M_PER_SEC * SECONDS_IN_MINUTE);
+                                AVERAGE_WALKING_SPEED_M_PER_MIN;
                         stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialWalkingTimeMin);
 
                         /* Debugging statements:
@@ -481,14 +487,8 @@ public class GTFSDataReaderWriter {
 
     // Filter out unrealistic "transfers" based on transfer distances
     public void filterTransfersHashMap() {
-        DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-        OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        getDijkstraMaps(osmDataReaderWriterForDijkstra);
-        LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-        LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
-        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-
-        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
+        getDijkstraMaps();
+        Node[] nodesForNNSearches = this.nodes.values().toArray(new Node[0]);
         kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
@@ -507,61 +507,10 @@ public class GTFSDataReaderWriter {
                 double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
                         toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPath(nearestNodeFromStop.getNodeId(),
-                        nearestNodeToStop.getNodeId(), nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                        nearestNodeToStop.getNodeId(), this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    double interStopWalkingTimeMin = interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_M_PER_SEC *
-                            SECONDS_IN_MINUTE);
-                    stopSpecificTransferMap.replace(toStopId, interStopWalkingTimeMin);
-
-                    /* Debugging statements:
-                    System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " + fromStopId +
-                    "\n" +
-                            "To stop: " + this.stops.get(toStopId).getStopName() + " " + toStopId + "\n" +
-                            "Inter-stop walking distance: " + interStopWalkingDistanceM + "\n" +
-                            "Inter-stop walking time: " + interStopWalkingTimeMin + "\n");
-                    */
-                } else {
-                    stopSpecificTransferMap.remove(toStopId);
-                }
-            }
-        }
-        System.out.println("Unrealistic transfers based on walking distances filtered out");
-    }
-
-    // Filter out unrealistic "transfers" based on transfer distances
-    public void filterTransfersHashMap2() {
-        DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-        OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        getDijkstraMaps(osmDataReaderWriterForDijkstra);
-        LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-        LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
-        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-
-        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
-        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
-
-        ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
-        for (int fromStopId : fromStopIds) {
-            LinkedHashMap<Integer, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
-            double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
-            double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
-            Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
-
-            ArrayList<Integer> toStopIds = new ArrayList<>(stopSpecificTransferMap.keySet());
-            for (int toStopId : toStopIds) {
-                double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
-                double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
-                Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
-
-                double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
-                        fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
-                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPath(nearestNodeFromStop.getNodeId(),
-                        nearestNodeToStop.getNodeId(), nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
-
-                if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    double interStopWalkingTimeMin = interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_M_PER_SEC *
-                            SECONDS_IN_MINUTE);
+                    double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
                     stopSpecificTransferMap.replace(toStopId, interStopWalkingTimeMin);
 
                     /* Debugging statements:
@@ -581,14 +530,8 @@ public class GTFSDataReaderWriter {
 
     // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
     public void makeTransfersTransitive() {
-        DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-        OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        getDijkstraMaps(osmDataReaderWriterForDijkstra);
-        LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-        LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
-        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-
-        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
+        getDijkstraMaps();
+        Node[] nodesForNNSearches = this.nodes.values().toArray(new Node[0]);
         kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
@@ -609,14 +552,15 @@ public class GTFSDataReaderWriter {
                     Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
 
                     if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
-                        double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
-                                fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
-                                toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPath(nearestNodeFromStop.getNodeId(),
-                                nearestNodeToStop.getNodeId(), nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                        double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(
+                                fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
+                                        toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
+                                findShortestDrivingPath(nearestNodeFromStop.getNodeId(), nearestNodeToStop.getNodeId(),
+                                        this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    (AVERAGE_WALKING_SPEED_M_PER_SEC * SECONDS_IN_MINUTE));
+                                    AVERAGE_WALKING_SPEED_M_PER_MIN);
                         } else {
                             // Penalize unrealistic transfers
                             final double ARBITRARY_HIGH_TRANSFER_COST = 1_000_000D;
@@ -913,11 +857,13 @@ public class GTFSDataReaderWriter {
     }
 
     // Get Dijkstra-relevant datasets ready
-    private static void getDijkstraMaps(@NotNull OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
-        osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(GTFSDataReaderWriter.OSM_OPL_EXTRACT_FILE_PATH);
-        osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(GTFSDataReaderWriter.OSM_OPL_EXTRACT_FILE_PATH);
-        osmDataReaderWriterForDijkstra.associateLinksWithNode();
-        osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
+    private static void getDijkstraMaps() {
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(GTFSDataReaderWriter.
+                OSM_OPL_EXTRACT_FILE_PATH);
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(GTFSDataReaderWriter.
+                OSM_OPL_EXTRACT_FILE_PATH);
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.associateLinksWithNode();
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
     }
 
     // Getters of transit timetable data for RAPTOR queries
