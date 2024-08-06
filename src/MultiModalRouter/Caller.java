@@ -1,4 +1,8 @@
 package src.MultiModalRouter;
+// GTFS: General Transit Feed Specification
+// RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
+// OSM: OpenStreetMap
+// OPL: Object-Per-Line (format)
 
 import org.jetbrains.annotations.NotNull;
 
@@ -14,46 +18,28 @@ import src.RoadTransportRouter.RoutingAlgorithm.DijkstraBasedRouter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 public class Caller {
-    private static final int NUMBER_MULTI_MODAL_QUERIES = 10_000;
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2; // Translates to 1.4 m/s
-    private static final double MAXIMUM_WALKING_DISTANCE_M = 800;
+    private static final int NUMBER_MULTI_MODAL_QUERIES = 100_000;
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;     // Translates to 1.4 m/s
+    private static final double MAXIMUM_WALKING_DISTANCE_M = 1_500;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 30_000;
+    private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
+    // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 10_000;
     private static final int GTFS_BUS_ROUTE_TYPE_ID = 3;
     // Parameter for stop-hierarchy heuristic
-    private static final int MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_STOPS = 135;
-    // Parameter for stop-frequency heuristic
+    private static final int MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_ORIGIN_STOPS = 135;     // todo manage mate
+    private static final int MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_DESTINATION_STOPS = 135;    // todo manage mate
+    // Parameters for stop-frequency heuristic
     private static final int MINUTES_PER_HOUR = 60;
     private static final int MINUTES_PER_DAY = 1440;
+    private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
 
     public static void main(String[] args) {
-        // GTFS data reader-writer instantiation to read, write, and store data
-        long gtfsStartTime = System.nanoTime();
-        GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
-        String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
-                "Data/GTFSDataMunich/Downloaded/AGGTFSData";
-        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/RAPTORMaps";
-        getRAPTORMaps(gtfsFolderPath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
-
-        // Get all data for RAPTOR execution
-        LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRAPTOR.getRoutes();
-        LinkedHashMap<Integer, RouteStop> routeStops = gtfsDataReaderWriterForRAPTOR.getRouteStops();
-        LinkedHashMap<Integer, Trip> trips = gtfsDataReaderWriterForRAPTOR.getTrips();
-        LinkedHashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRAPTOR.getStopTimes();
-        LinkedHashMap<Integer, Stop> stops = gtfsDataReaderWriterForRAPTOR.getStops();
-        Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
-        LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRAPTOR.getStopRoutes();
-        LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRAPTOR.getTransfers();
-        long gtfsEndTime = System.nanoTime();
-        long gtfsDataProcessingDuration = gtfsEndTime - gtfsStartTime;
-
-        // OSM data reader-writer instantiation to read, write, and store data
+        /** OSM data reader-writer instantiation to read, write, and store data
+        */
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
         String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester" +
@@ -68,16 +54,65 @@ public class Caller {
         LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
         Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
         long osmEndTime = System.nanoTime();
-        long osmDataProcessingDuration = osmEndTime - osmStartTime;
+        double osmDataProcessingDuration = (double) (osmEndTime - osmStartTime);
 
-        // Build KD-Trees for snapping to RAPTOR-relevant transit stops and Dijkstra-relevant network nodes
-        long kDStartTime = System.nanoTime();
-        KDTreeForStops kDTreeForStops = new KDTreeForStops();
-        kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
+        // Set up the KD-Tree for nearest node searches
+        long kDNodeStartTime = System.nanoTime();
         KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
         kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
-        long kDEndTime = System.nanoTime();
-        long kDTreesBuildDuration = kDEndTime - kDStartTime;
+        long kDNodeEndTime = System.nanoTime();
+
+        System.out.println("\n" +
+                "Characteristics of parsed OSM data:" + "\n" +
+                "Number of nodes: " + nodes.size() + "\n" +
+                "Number of links: " + links.size() + "\n" +
+                "OSM-OPL data processed in " + String.format("%.2f",
+                osmDataProcessingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+
+        /** GTFS data reader-writer instantiation to read, write, and store data
+        */
+        long gtfsStartTime = System.nanoTime();
+        GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
+        String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
+                "Data/GTFSDataMunich/Downloaded/AGGTFSData";
+        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/RAPTORMaps";
+        getRAPTORMaps(gtfsFolderPath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
+
+        // Get all data for RAPTOR execution
+        LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRAPTOR.getRoutes();
+        LinkedHashMap<Integer, Trip> trips = gtfsDataReaderWriterForRAPTOR.getTrips();
+        LinkedHashMap<Integer, RouteStop> routeStops = gtfsDataReaderWriterForRAPTOR.getRouteStops();
+        LinkedHashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRAPTOR.getStopTimes();
+        LinkedHashMap<Integer, Stop> stops = gtfsDataReaderWriterForRAPTOR.getStops();
+        Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
+        LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRAPTOR.getStopRoutes();
+        LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRAPTOR.getTransfers();
+        long gtfsEndTime = System.nanoTime();
+        double gtfsDataProcessingDuration = (double) (gtfsEndTime - gtfsStartTime);
+
+        // Set up the KD-Tree for nearest stop searches
+        long kDStopStartTime = System.nanoTime();
+        KDTreeForStops kDTreeForStops = new KDTreeForStops();
+        kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
+        long kDStopEndTime = System.nanoTime();
+
+        System.out.println("\n" +
+                "Characteristics of parsed GTFS data:" + "\n" +
+                "Number of routes: " + routes.size() + "\n" +
+                "Number of trips: " + trips.size() + "\n" +
+                "Number of routeStop objects: "  + routeStops.size() + "\n" +
+                "Number of stopTime objects: "  + stopTimes.size() + "\n" +
+                "Number of stops: "  + stops.size() + "\n" +
+                "Number of stopRoute objects: "  + stopRoutes.size() + "\n" +
+                "Number of transfers: "  + transfers.size() + "\n" +
+                "GTFS data processed in " + String.format("%.2f", gtfsDataProcessingDuration / NANOSECONDS_PER_MINUTE)
+                + " minutes.");
+
+        double kDTreesBuildDuration = (double) ((kDStopEndTime - kDStopStartTime) + (kDNodeEndTime - kDNodeStartTime));
+        System.out.println("\n" +
+                "KD-Trees for searching nearest nodes and stops built in " + String.format("%.2f",
+                kDTreesBuildDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
 
         // Load and write all multi-modal queries using the generator
         long queryGenStartTime = System.nanoTime();
@@ -125,12 +160,6 @@ public class Caller {
             double originNodeLatitude = originNode.getNodeLatitude();
             double destinationNodeLongitude = destinationNode.getNodeLongitude();
             double destinationNodeLatitude = destinationNode.getNodeLatitude();
-            System.out.println(originNodeId);
-            System.out.println(originNodeLatitude);
-            System.out.println(originNodeLongitude);
-            System.out.println(destinationNodeId);
-            System.out.println(destinationNodeLatitude);
-            System.out.println(destinationNodeLongitude);
 
             multiModalQueryResponses.setNearestOriginNodeId(originNodeId);
             multiModalQueryResponses.setNearestDestinationNodeId(destinationNodeId);
@@ -141,30 +170,54 @@ public class Caller {
             double costDestinationNodeToDestination = destinationNode.
                     equiRectangularDistanceTo(destinationPointLongitude, destinationPointLatitude) /
                     AVERAGE_WALKING_SPEED_M_PER_MIN;
-            System.out.println(costOriginToOriginNode);
-            System.out.println(costDestinationNodeToDestination);
 
             // Set up nearest neighbor stop lists, and execute routing algorithms within such stop lists
             // Stop lists containing all types of transit stops in a node's vicinity
             long exactQueryProcessingStartTime = System.nanoTime();
-            System.out.println("Stops array size: " + stops.size());
-            System.out.println("Stops KD array size: " + kDTreeForStops);
             ArrayList<Stop> originNodeStops = kDTreeForStops.findStopsWithinDoughnut(originNodeLongitude,
-                    originNodeLatitude, MAXIMUM_WALKING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
+                    originNodeLatitude, MINIMUM_DRIVING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);    // todo change argument
             ArrayList<Stop> destinationNodeStops = kDTreeForStops.findStopsWithinDoughnut(destinationNodeLongitude,
-                    destinationNodeLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);
-            System.out.println(originNodeStops.size());
-            System.out.println(destinationNodeStops.size());
-            System.out.println(originNodeStops.get(0).getStopId());
-            System.out.println(originNodeStops.get(0).getStopName());
+                    destinationNodeLatitude, 0, MAXIMUM_WALKING_DISTANCE_M);    // todo change argument
 
-            if ((!originNodeStops.isEmpty()) && (!destinationNodeStops.isEmpty())) {
+            // Filtering unique stops near the origin node
+            HashSet<String> uniqueOriginStops = new HashSet<>();
+            Iterator<Stop> originStopIterator = originNodeStops.iterator();
+            while (originStopIterator.hasNext()) {
+                Stop originStop = originStopIterator.next();
+                String stopKey = originStop.getStopName() + "-" + originStop.getStopType();
+                if (uniqueOriginStops.contains(stopKey)) {
+                    originStopIterator.remove();
+                } else {
+                    uniqueOriginStops.add(stopKey);
+                }
+            }
+
+            // Filtering unique stops near the destination node
+            Set<String> uniqueDestinationStops = new HashSet<>();
+            Iterator<Stop> destinationStopIterator = destinationNodeStops.iterator();
+            while (destinationStopIterator.hasNext()) {
+                Stop destinationStop = destinationStopIterator.next();
+                String stopKey = destinationStop.getStopName() + "-" + destinationStop.getStopType();
+                if (uniqueDestinationStops.contains(stopKey)) {
+                    destinationStopIterator.remove();
+                } else {
+                    uniqueDestinationStops.add(stopKey);
+                }
+            }
+
+            if ((originNodeStops.isEmpty()) || (destinationNodeStops.isEmpty())) {
+                continue;
+            } else {
                 // Create arraylists of travel times from stops to origin and destination
                 ArrayList<Double> travelTimesOriginToOriginStops = findTravelTimesFromOriginToOriginStops(originNodeId,
                         costOriginToOriginNode, kDTreeForNodes, originNodeStops, nodes, links);
+                System.out.println("Travel times origin to origin vicinity stops: " +
+                        travelTimesOriginToOriginStops);  // todo debug
                 ArrayList<Double> travelTimesDestinationStopsToDestination =
                         findTravelTimesFromDestinationStopsToDestination(destinationNodeId,
                                 costDestinationNodeToDestination, kDTreeForNodes, destinationNodeStops, nodes, links);
+                System.out.println("Travel times destination vicinity stops to destination: " +
+                        travelTimesDestinationStopsToDestination);  // todo debug
 
                 // Execute RAPTOR runs (arrival times at each stop are defined within the method call)
                 determineLeastTotalTravelTimeExactRAPTOR(originPointDepartureTime, originNodeStops,
@@ -215,17 +268,18 @@ public class Caller {
 
             // Stop lists containing transit stops serving a certain volume of trips (stop frequency (SF) heuristic)
             long sFQueryProcessingStartTime = System.nanoTime();
+            System.out.println("Looking at SH cases");
             if ((!originNodeStops.isEmpty()) && (!destinationNodeStops.isEmpty())) {
                 ArrayList<Stop> originNodeHighFrequencyStops = new ArrayList<>();
                 for (Stop stop : originNodeStops) {
-                    if (stop.getStopTripCount() >= MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_STOPS) {
+                    if (stop.getStopTripCount() >= MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_ORIGIN_STOPS) {
                         originNodeHighFrequencyStops.add(stop);
                     }
                 }
 
                 ArrayList<Stop> destinationNodeHighFrequencyStops = new ArrayList<>();
                 for (Stop stop : destinationNodeStops) {
-                    if (stop.getStopTripCount() >= MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_STOPS) {
+                    if (stop.getStopTripCount() >= MINIMUM_TRIPS_SERVED_BY_HIGH_FREQUENCY_DESTINATION_STOPS) {
                         destinationNodeHighFrequencyStops.add(stop);
                     }
                 }
@@ -345,8 +399,8 @@ public class Caller {
 
         // Print preprocessing and querying costs and heuristic-performance outputs
         System.out.println("Times elapsed (in nanoseconds) for:" + "\n" +
-                "1. Preprocessing GTFS data: " + gtfsDataProcessingDuration + "\n" +
-                "2. Preprocessing OSM-OPL data: " + osmDataProcessingDuration + "\n" +
+                "1. Processing GTFS data: " + gtfsDataProcessingDuration + "\n" +
+                "2. Processing OSM-OPL data: " + osmDataProcessingDuration + "\n" +
                 "3. Building KD Trees for Stops and Nodes: " + kDTreesBuildDuration + "\n" +
                 "4. Generating " + multiModalQueries.size() + " queries: " + queryGenerationDuration + "\n" +
                 "5. Processing " + multiModalQueries.size() + " queries: " + queriesProcessingDuration + "\n" +
@@ -420,7 +474,7 @@ public class Caller {
 
         // Read and manage data for Dijkstra operations
         osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(osmOplExtractFilePath);
-        osmDataReaderWriterForDijkstra.removeCircularLinks();
+        // osmDataReaderWriterForDijkstra.removeCircularLinks();    // This step is optional
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
@@ -448,7 +502,7 @@ public class Caller {
                     AVERAGE_WALKING_SPEED_M_PER_MIN;
 
             DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-            double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(originNodeId,
+            double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(originNodeId,   // todo this might be super inefficient, instantiate one dijkstra and throw it everywhere
                     nearestNodeOfOriginStop.getNodeId(), nodes, links);
 
             travelTimesOriginToOriginStops.add(costOriginToOriginNode + dijkstraTravelTime +
@@ -472,7 +526,7 @@ public class Caller {
                     getStopLongitude(), stopNearDestinationNode.getStopLatitude());
             double costDestinationStopToNearestNode = nearestNodeOfDestinationStop.equiRectangularDistanceTo(
                     stopNearDestinationNode.getStopLongitude(), stopNearDestinationNode.getStopLatitude()) /
-                    AVERAGE_WALKING_SPEED_M_PER_MIN;
+                    AVERAGE_WALKING_SPEED_M_PER_MIN;    // todo leading to laughable values, sort this comedy
 
             DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
             double dijkstraTravelTime = dijkstraBasedRouter.findShortestDrivingPath(destinationNodeId,
@@ -498,6 +552,7 @@ public class Caller {
                                                          LinkedHashMap<Integer, StopRoute> stopRoutes,
                                                          LinkedHashMap<Integer, Transfer> transfers) {
 
+        System.out.println("Exact raptor running");
         double leastTotalTravelTime = Double.MAX_VALUE;
         int originStopIndexLeastTotalTravelTimeExact = -1;
         int destinationStopIndexLeastTotalTravelTimeExact = -1;
@@ -508,17 +563,21 @@ public class Caller {
                 int originStopId = originStopList.get(originStopCounter).getStopId();
                 int destinationStopId = destinationStopList.get(destinationStopCounter).getStopId();
 
+                System.out.println("Touched a raptor");
                 double totalTravelTimeForStopPair = runRAPTOR(originPointDepartureTime, originStopId, destinationStopId,
                         travelTimesOriginToOriginStops.get(originStopCounter),
                         travelTimesDestinationStopsToDestination.get(destinationStopCounter),
                         routeStops, stopTimes, stops, stopRoutes, transfers);
+                System.out.println("Outta raptor");
 
-                if (totalTravelTimeForStopPair != -1) {
+                if ((totalTravelTimeForStopPair != -1) && (totalTravelTimeForStopPair >= 0)) {
                     if (totalTravelTimeForStopPair < leastTotalTravelTime) {
                         leastTotalTravelTime = totalTravelTimeForStopPair;
                         originStopIndexLeastTotalTravelTimeExact = originStopCounter;
                         destinationStopIndexLeastTotalTravelTimeExact = destinationStopCounter;
                     }
+                    System.out.println("Travel time for stop pair: " + totalTravelTimeForStopPair);
+                    System.out.println("Least total travel time: " + leastTotalTravelTime);
                 }
             }
         }

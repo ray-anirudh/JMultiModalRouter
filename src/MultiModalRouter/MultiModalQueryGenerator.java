@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
-import org.apache.commons.math3.special.Erf;
-
 public class MultiModalQueryGenerator {
+    private static final double MUNICH_LATITUDE_MIN = 48.0617;
+    private static final double MUNICH_LATITUDE_MAX = 48.2481;
+    private static final double MUNICH_LONGITUDE_MIN = 11.4436;
+    private static final double MUNICH_LONGITUDE_MAX = 11.7226;
     private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
@@ -21,15 +23,15 @@ public class MultiModalQueryGenerator {
     LinkedHashMap<Integer, MultiModalQuery> generateQueries(int numberOfQueries) {
         for (int i = 1; i <= numberOfQueries; ) {
             // Generating longitudes and latitudes of origin and destination points as per multi-variate Gaussian logic
+            // Arguments are specified to generate OD pairs within Munich and its environs
             double originLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX - STUDY_AREA_LONGITUDE_MIN) *
                     (RANDOM.nextGaussian(0.5, 0.16)));
-            // Arguments are specified to generate OD pairs within study area
             double originLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN) *
-                    (RANDOM.nextGaussian(0.5, 0.16)));;
-            double destinationLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX -
-                    STUDY_AREA_LONGITUDE_MIN) * (RANDOM.nextGaussian(0.5, 0.16)));;
-            double destinationLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN)
-                    * (RANDOM.nextGaussian(0.5, 0.16)));;
+                    (RANDOM.nextGaussian(0.5, 0.16)));
+            double destinationLongitude = MUNICH_LONGITUDE_MIN + ((MUNICH_LONGITUDE_MAX - MUNICH_LONGITUDE_MIN) *
+                    (RANDOM.nextGaussian(0.5, 0.16)));
+            double destinationLatitude = MUNICH_LATITUDE_MIN + ((MUNICH_LATITUDE_MAX - MUNICH_LATITUDE_MIN) *
+                    (RANDOM.nextGaussian(0.5, 0.16)));
 
             final int EARTH_RADIUS_KM = 6_371;
             double longitudeDifference = Math.toRadians(destinationLongitude - originLongitude);
@@ -37,7 +39,7 @@ public class MultiModalQueryGenerator {
             double x = longitudeDifference * Math.cos(Math.toRadians((originLatitude + destinationLatitude) / 2));
             double aerialDistanceKm = EARTH_RADIUS_KM * Math.sqrt(x * x + latitudeDifference * latitudeDifference);
 
-            if (aerialDistanceKm >= 5) {
+            if ((aerialDistanceKm >= 9) && (aerialDistanceKm <= 50)) {
                 // Generating desired departure time for the trip
                 double hourRandomizer = RANDOM.nextDouble() * 100;
                 double minuteRandomizer = RANDOM.nextDouble();
@@ -95,7 +97,6 @@ public class MultiModalQueryGenerator {
                 }
 
                 int departureTime = (int) (hourOfDay * MINUTES_PER_HOUR + minuteRandomizer * MINUTES_PER_HOUR);
-
                 MultiModalQuery multiModalQuery = new MultiModalQuery(originLongitude, originLatitude, departureTime,
                         destinationLongitude, destinationLatitude);
                 this.multiModalQueries.put(i, multiModalQuery);

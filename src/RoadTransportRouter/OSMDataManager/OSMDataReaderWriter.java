@@ -14,7 +14,7 @@ public class OSMDataReaderWriter {
      */
 
     /* Array to limit the way types (classes) parsed out of the OSM-OPL extract
-    Refer to: https://wiki.openstreetmap.org/wiki/Key:highway) for more details
+    Refer to: https://wiki.openstreetmap.org/wiki/Key:highway for more details
     */
     private static final String[] LINK_TYPE_ARRAY = {
             "bridleway",
@@ -196,7 +196,9 @@ public class OSMDataReaderWriter {
 
             if (this.nodes.containsKey(firstNodeId)) {
                 this.nodes.get(firstNodeId).getLinkIdList().add(linkId);
-            } else if (this.nodes.containsKey(secondNodeId)) {
+            }
+
+            if (this.nodes.containsKey(secondNodeId)) {
                 this.nodes.get(secondNodeId).getLinkIdList().add(linkId);
             }
         }
@@ -221,9 +223,9 @@ public class OSMDataReaderWriter {
     // Contract nodes and build shortcuts (implemented only for two-link nodes, but also possible for more-link nodes)
     public void contractNodesAndBuildShortcuts() {
         boolean nodesWithTwoLinksExist = true;
-
         while (nodesWithTwoLinksExist) {
             ArrayList<HashMap.Entry<Long, Node>> nodeEntryList = new ArrayList<>(this.nodes.entrySet());
+
             for (HashMap.Entry<Long, Node> nodeEntry : nodeEntryList) {
                 if (nodeEntry.getValue().getLinkIdList().size() == 2) {
                     long commonNodeId = nodeEntry.getKey();
@@ -235,27 +237,39 @@ public class OSMDataReaderWriter {
                         nodesConsideredForContraction.add(this.links.get(associatedLinkId).getSecondNodeId());
                     }
                     nodesConsideredForContraction.removeIf(nodeId -> nodeId.equals(commonNodeId));
-
-                    long firstNoncommonNodeId = nodesConsideredForContraction.get(0);
-                    long secondNoncommonNodeId = nodesConsideredForContraction.get(1);
-                    Node firstUncommonNode = this.nodes.get(firstNoncommonNodeId);
-                    Node secondUncommonNode = this.nodes.get(secondNoncommonNodeId);
+                    long firstOtherNodeId = nodesConsideredForContraction.get(0);
+                    long secondOtherNodeId = nodesConsideredForContraction.get(1);
+                    Node firstOtherNode = this.nodes.get(firstOtherNodeId);
+                    Node secondOtherNode = this.nodes.get(secondOtherNodeId);
 
                     long firstLinkId = commonNode.getLinkIdList().get(0);
                     long secondLinkId = commonNode.getLinkIdList().get(1);
 
-                    Link shortcutLink = new Link(firstNoncommonNodeId, secondNoncommonNodeId, this.links.
+                    Link shortcutLink = new Link(firstOtherNodeId, secondOtherNodeId, this.links.
                             get(firstLinkId).getLinkType());
                     shortcutLink.setLinkTravelTimeMin(this.links.get(firstLinkId).getLinkTravelTimeMin() + this.links.
                             get(secondLinkId).getLinkTravelTimeMin());
                     long shortcutLinkId = firstLinkId + 1;
 
-                    firstUncommonNode.getLinkIdList().remove(firstLinkId);
-                    firstUncommonNode.getLinkIdList().remove(secondLinkId);
-                    secondUncommonNode.getLinkIdList().remove(firstLinkId);
-                    secondUncommonNode.getLinkIdList().remove(secondLinkId);
-                    firstUncommonNode.getLinkIdList().add(shortcutLinkId);
-                    secondUncommonNode.getLinkIdList().add(shortcutLinkId);
+                    /* Debugging statements:
+                    System.out.println("Common node ID: " + commonNodeId + "\n" +
+                            "First other node ID: " + firstOtherNodeId + "\n" +
+                            "Second other node ID: " + secondOtherNodeId + "\n" +
+                            "First link ID: " + firstLinkId + "\n" +
+                            "First link ID nodes: " + this.links.get(firstLinkId).getFirstNodeId() + " and " +
+                            this.links.get(firstLinkId).getSecondNodeId() + "\n" +
+                            "Second link ID: " + secondLinkId + "\n" +
+                            "Second link ID nodes: " + this.links.get(secondLinkId).getFirstNodeId() + " and " +
+                            this.links.get(secondLinkId).getSecondNodeId() + "\n" +
+                            "Shortcut link ID: " + shortcutLinkId);
+                    */
+
+                    firstOtherNode.getLinkIdList().removeIf(linkId -> linkId.equals(firstLinkId));
+                    firstOtherNode.getLinkIdList().removeIf(linkId -> linkId.equals(secondLinkId));
+                    secondOtherNode.getLinkIdList().removeIf(linkId -> linkId.equals(firstLinkId));
+                    secondOtherNode.getLinkIdList().removeIf(linkId -> linkId.equals(secondLinkId));
+                    firstOtherNode.getLinkIdList().add(shortcutLinkId);
+                    secondOtherNode.getLinkIdList().add(shortcutLinkId);
 
                     this.links.remove(firstLinkId);
                     this.links.remove(secondLinkId);
