@@ -11,10 +11,45 @@ import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
 import java.util.LinkedHashMap;
 
 public class Tester {
+    private static final int NUMBER_MULTI_MODAL_QUERIES = 1;
     private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
 
     public static void main(String[] args) {
-        // GTFS data reader-writer instantiation to read, write, and store data
+        /**
+         * OSM data reader-writer instantiation to read, write, and store data
+         */
+        long osmStartTime = System.nanoTime();
+        OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
+        String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester" +
+                "/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
+                "BBBikeOSMExtract.opl";
+        String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/DijkstraMaps";
+        getDijkstraMaps(osmOplExtractFilePath, dijkstraFolderPath, osmDataReaderWriterForDijkstra);
+
+        // Get all data for Dijkstra algorithm's execution
+        LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
+        LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
+        long osmEndTime = System.nanoTime();
+        double osmDataProcessingDuration = (double) (osmEndTime - osmStartTime);
+
+        // Set up the KD-Tree for nearest node searches
+        long kDNodeStartTime = System.nanoTime();
+        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
+        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+        long kDNodeEndTime = System.nanoTime();
+
+        System.out.println("\n" +
+                "Characteristics of parsed OSM data:" + "\n" +
+                "Number of nodes: " + nodes.size() + "\n" +
+                "Number of links: " + links.size() + "\n" +
+                "OSM-OPL data processed in " + String.format("%.2f",
+                osmDataProcessingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+
+        /**
+         * GTFS data reader-writer instantiation to read, write, and store data
+         */
         long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
         String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
@@ -34,6 +69,13 @@ public class Tester {
         LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRAPTOR.getTransfers();
         long gtfsEndTime = System.nanoTime();
         double gtfsDataProcessingDuration = (double) (gtfsEndTime - gtfsStartTime);
+
+        // Set up the KD-Tree for nearest stop searches
+        long kDStopStartTime = System.nanoTime();
+        KDTreeForStops kDTreeForStops = new KDTreeForStops();
+        kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
+        long kDStopEndTime = System.nanoTime();
+
         System.out.println("\n" +
                 "Characteristics of parsed GTFS data:" + "\n" +
                 "Number of routes: " + routes.size() + "\n" +
@@ -46,43 +88,29 @@ public class Tester {
                 "GTFS data processed in " + String.format("%.2f", gtfsDataProcessingDuration / NANOSECONDS_PER_MINUTE)
                 + " minutes.");
 
-        // OSM data reader-writer instantiation to read, write, and store data
-        long osmStartTime = System.nanoTime();
-        OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester" +
-                "/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
-                "BBBikeOSMExtract.opl";
-        String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/DijkstraMaps";
-        getDijkstraMaps(osmOplExtractFilePath, dijkstraFolderPath, osmDataReaderWriterForDijkstra);
-
-        // Get all data for Dijkstra algorithm's execution
-        LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
-        LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-        long osmEndTime = System.nanoTime();
-        double osmDataProcessingDuration = (double) (osmEndTime - osmStartTime);
-        System.out.println("\n" +
-                "Characteristics of parsed OSM data:" + "\n" +
-                "Number of nodes: " + nodes.size() + "\n" +
-                "Number of links: " + links.size() + "\n" +
-                "OSM-OPL data processed in " + String.format("%.2f",
-                osmDataProcessingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
-
-        // Build KD-Trees for snapping to RAPTOR-relevant transit stops and Dijkstra-relevant network nodes
-        long kDStartTime = System.nanoTime();
-        KDTreeForStops kDTreeForStops = new KDTreeForStops();
-        kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
-        KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
-        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
-        long kDEndTime = System.nanoTime();
-        double kDTreesBuildDuration = (double) (kDEndTime - kDStartTime);
+        double kDTreesBuildDuration = (double) ((kDStopEndTime - kDStopStartTime) + (kDNodeEndTime - kDNodeStartTime));
         System.out.println("\n" +
                 "KD-Trees for searching nearest nodes and stops built in " + String.format("%.2f",
                 kDTreesBuildDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
 
+        // Load and write all multi-modal queries using the generator
+        long queryGenStartTime = System.nanoTime();
+        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
+        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
+        LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
+                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
+        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
+        long queryGenEndTime = System.nanoTime();
 
-        System.exit(1);
+        double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
+        System.out.println("\n" +
+                "Multi-modal queries for the JavaMultiModalRouter created in " + String.format("%.2f",
+                queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+
+        // Test the aforementioned algorithms
+        // Todo fix the query generator class' internals
+
     }
 
     // Initialize RAPTOR-relevant datasets
@@ -142,7 +170,6 @@ public class Tester {
 
         // Read and manage data for Dijkstra operations
         osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(osmOplExtractFilePath);
-        // osmDataReaderWriterForDijkstra.removeCircularLinks();    // This step is optional
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();

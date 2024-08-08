@@ -38,8 +38,9 @@ public class Caller {
     private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
 
     public static void main(String[] args) {
-        /** OSM data reader-writer instantiation to read, write, and store data
-        */
+        /**
+         * OSM data reader-writer instantiation to read, write, and store data
+         */
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
         String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester" +
@@ -69,8 +70,9 @@ public class Caller {
                 "OSM-OPL data processed in " + String.format("%.2f",
                 osmDataProcessingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
 
-        /** GTFS data reader-writer instantiation to read, write, and store data
-        */
+        /**
+         * GTFS data reader-writer instantiation to read, write, and store data
+         */
         long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
         String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
@@ -113,6 +115,7 @@ public class Caller {
         System.out.println("\n" +
                 "KD-Trees for searching nearest nodes and stops built in " + String.format("%.2f",
                 kDTreesBuildDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+        System.exit(1);
 
         // Load and write all multi-modal queries using the generator
         long queryGenStartTime = System.nanoTime();
@@ -123,7 +126,11 @@ public class Caller {
                 generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
         multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
         long queryGenEndTime = System.nanoTime();
-        long queryGenerationDuration = queryGenEndTime - queryGenStartTime;
+
+        double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
+        System.out.println("\n" +
+                "Multi-modal queries for the JavaMultiModalRouter created in " + String.format("%.2f",
+                queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
 
         // Initialize counters, maps, accuracy counters, and timekeepers
         long queriesProcessingStartTime = System.nanoTime();
