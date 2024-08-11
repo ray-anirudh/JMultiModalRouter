@@ -15,10 +15,10 @@ public class DijkstraBasedRouter {
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
 
-    public double findShortestDrivingPath(long originNodeId,
-                                          long destinationNodeId,
-                                          LinkedHashMap<Long, Node> nodes,
-                                          LinkedHashMap<Long, Link> links) {
+    public double findShortestDrivingPathCostMin(long originNodeId,
+                                                 long destinationNodeId,
+                                                 LinkedHashMap<Long, Node> nodes,
+                                                 LinkedHashMap<Long, Link> links) {
         double travelTimeMin;
 
         // Initialize variables and collections for iterations

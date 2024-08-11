@@ -506,7 +506,7 @@ public class GTFSDataReaderWriter {
 
                 double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
-                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPath(nearestNodeFromStop.getNodeId(),
+                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(),
                         nearestNodeToStop.getNodeId(), this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
@@ -555,7 +555,7 @@ public class GTFSDataReaderWriter {
                         double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(
                                 fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
                                         toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
-                                findShortestDrivingPath(nearestNodeFromStop.getNodeId(), nearestNodeToStop.getNodeId(),
+                                findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.getNodeId(),
                                         this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {

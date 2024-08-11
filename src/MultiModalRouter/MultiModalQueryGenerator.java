@@ -1,4 +1,5 @@
 package src.MultiModalRouter;
+// ODM: On-demand Mobility
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -17,13 +18,13 @@ public class MultiModalQueryGenerator {
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
     private static final Random RANDOM = new Random();
-    private final LinkedHashMap<Integer, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
+    private final LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
     // Generate queries to pass into the multi-modal router
-    LinkedHashMap<Integer, MultiModalQuery> generateQueries(int numberOfQueries) {
-        for (int i = 1; i <= numberOfQueries; ) {
+    LinkedHashMap<Long, MultiModalQuery> generateQueries(long numberOfQueries) {
+        for (long queryCount = 1; queryCount <= numberOfQueries; ) {
             // Generating longitudes and latitudes of origin and destination points as per multi-variate Gaussian logic
-            // Arguments are specified to generate OD pairs within Munich and its environs
+            // Arguments are specified to generate destinations within Munich and origins within its environs
             double originLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX - STUDY_AREA_LONGITUDE_MIN) *
                     (RANDOM.nextGaussian(0.5, 0.16)));
             double originLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN) *
@@ -33,13 +34,17 @@ public class MultiModalQueryGenerator {
             double destinationLatitude = MUNICH_LATITUDE_MIN + ((MUNICH_LATITUDE_MAX - MUNICH_LATITUDE_MIN) *
                     (RANDOM.nextGaussian(0.5, 0.16)));
 
+            // Calculate ballpark trip lengths
             final int EARTH_RADIUS_KM = 6_371;
+            final double TRIP_LENGTH_FACTOR = 1.4;
             double longitudeDifference = Math.toRadians(destinationLongitude - originLongitude);
             double latitudeDifference = Math.toRadians(destinationLatitude - originLatitude);
             double x = longitudeDifference * Math.cos(Math.toRadians((originLatitude + destinationLatitude) / 2));
-            double aerialDistanceKm = EARTH_RADIUS_KM * Math.sqrt(x * x + latitudeDifference * latitudeDifference);
+            double tripLengthKm = EARTH_RADIUS_KM * Math.sqrt(x * x + latitudeDifference * latitudeDifference) *
+                    TRIP_LENGTH_FACTOR;
 
-            if ((aerialDistanceKm >= 9) && (aerialDistanceKm <= 50)) {
+            // Use trips (origin-destination pairs) that are long enough to be ODM-transit-walk trips
+            if (tripLengthKm >= 9) {
                 // Generating desired departure time for the trip
                 double hourRandomizer = RANDOM.nextDouble() * 100;
                 double minuteRandomizer = RANDOM.nextDouble();
@@ -99,16 +104,14 @@ public class MultiModalQueryGenerator {
                 int departureTime = (int) (hourOfDay * MINUTES_PER_HOUR + minuteRandomizer * MINUTES_PER_HOUR);
                 MultiModalQuery multiModalQuery = new MultiModalQuery(originLongitude, originLatitude, departureTime,
                         destinationLongitude, destinationLatitude);
-                this.multiModalQueries.put(i, multiModalQuery);
-
-                i++;
+                this.multiModalQueries.put(queryCount++, multiModalQuery);
             }
         }
         System.out.println("Multi-modal queries generated");
         return this.multiModalQueries;
     }
 
-    // Write a "multiModalQueries.txt" file
+    // Write out multimodal queries to a file
     void writeMultiModalQueries(String multiModalQueriesFilePath) {
         try {
             // Writer for "multiModalQueries.txt"
@@ -116,18 +119,19 @@ public class MultiModalQueryGenerator {
 
             // Set up header array
             multiModalQueriesWriter.write("query_id,origin_longitude,origin_latitude,destination_longitude," +
-                    "destination_latitude\n");
+                    "destination_latitude,departure_time\n");
 
-            // Write body based on "nodes" hashmap
-            for (HashMap.Entry<Integer, MultiModalQuery> multiModalQueryEntry : this.multiModalQueries.entrySet()) {
-                int queryId = multiModalQueryEntry.getKey();
+            // Write body based on "multiModalQueries" hashmap
+            for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : this.multiModalQueries.entrySet()) {
+                long queryId = multiModalQueryEntry.getKey();
                 double originLongitude = multiModalQueryEntry.getValue().getOriginLongitude();
                 double originLatitude = multiModalQueryEntry.getValue().getOriginLatitude();
                 double destinationLongitude = multiModalQueryEntry.getValue().getDestinationLongitude();
                 double destinationLatitude = multiModalQueryEntry.getValue().getDestinationLatitude();
+                int departureTime = multiModalQueryEntry.getValue().getDepartureTime();
 
                 multiModalQueriesWriter.write(queryId + "," + originLongitude + "," + originLatitude + "," +
-                            destinationLongitude + "," + destinationLatitude + "\n");
+                            destinationLongitude + "," + destinationLatitude + "," + departureTime + "\n");
                 }
             System.out.println("Multi-modal queries' data written to " + multiModalQueriesFilePath);
 

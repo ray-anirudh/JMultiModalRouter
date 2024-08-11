@@ -32,6 +32,7 @@ public class KDTreeForNodes {
         return node;
     }
 
+    // Build a KD-Tree to find the nearest node
     public void buildNodeBasedKDTree(Node[] nodes) {
         this.kDTreeRootNode = buildKDTreeForNodes(nodes, 0);
         System.out.println("KD-Tree created for nodes");
@@ -75,7 +76,7 @@ public class KDTreeForNodes {
 
     // Find the nearest node to a source point from amongst a set of nodes
     public Node findNearestNode(double sourceLongitude, double sourceLatitude) {
-        if (kDTreeRootNode == null) {
+        if (this.kDTreeRootNode == null) {
             throw new IllegalStateException("Node-based KD-Tree is empty.");
         }
 

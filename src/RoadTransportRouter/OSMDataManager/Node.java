@@ -18,8 +18,7 @@ public class Node {    // Node IDs are present in the relevant hashmap, as well
         double latitudeDifference = Math.toRadians(this.nodeLatitude - otherPointLatitude);
 
         double x = longitudeDifference * Math.cos(Math.toRadians((this.nodeLatitude + otherPointLatitude) / 2));
-        double y = latitudeDifference;
-        return EARTH_RADIUS_M * (Math.sqrt(x * x + y * y));
+        return EARTH_RADIUS_M * (Math.sqrt(x * x + latitudeDifference * latitudeDifference));
     }
 
     void setNodeId(long nodeId) {
