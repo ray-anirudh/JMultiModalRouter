@@ -217,19 +217,6 @@ public class Tester {
                 }
             }
 
-            // Filtering unique stops near the destination node
-            Set<String> uniqueDestinationStops = new HashSet<>();
-            Iterator<Stop> destinationStopIterator = destinationNodeStops.iterator();
-            while (destinationStopIterator.hasNext()) {
-                Stop destinationStop = destinationStopIterator.next();
-                String stopKey = destinationStop.getStopName() + "-" + destinationStop.getStopType();
-                if (uniqueDestinationStops.contains(stopKey)) {
-                    destinationStopIterator.remove();
-                } else {
-                    uniqueDestinationStops.add(stopKey);
-                }
-            }
-
             if ((originNodeStops.isEmpty()) || (destinationNodeStops.isEmpty())) {
                 continue;
             } else {

@@ -1,8 +1,6 @@
 package src.MultiModalRouter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +18,7 @@ public class Caller {
     private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 12_000;
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 10_000;
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;     // Translates to 1.4 m/s
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
@@ -127,7 +125,7 @@ public class Caller {
                 queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
 
         /**
-         * Execute one query on JMultiModalRouter structure
+         * Execute few queries on the JMultiModalRouter architecture
          */
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
             long queriesSolvingStartTime = System.nanoTime();
@@ -141,11 +139,26 @@ public class Caller {
 
             // For origin node, get the nearest stops in a doughnut-search space and elucidate travel to each stop
             Node nodeNearOrigin = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
-            System.out.println("Origin Node: " + nodeNearOrigin.getNodeId());
-            ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(nodeNearOrigin.getNodeLongitude(),
-                    nodeNearOrigin.getNodeLatitude(), MINIMUM_DRIVING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
+            ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(nodeNearOrigin.
+                            getNodeLongitude(), nodeNearOrigin.getNodeLatitude(), MINIMUM_DRIVING_DISTANCE_M,
+                    MAXIMUM_DRIVING_DISTANCE_M);
+
             if ((stopsNearOriginNode == null) || (stopsNearOriginNode.size() == 0)) {
+                System.out.println("Skipping");
                 continue;
+            }
+
+            // Filtering in unique stops near the origin node
+            HashSet<String> uniqueOriginStops = new HashSet<>();
+            Iterator<Stop> originStopIterator = stopsNearOriginNode.iterator();
+            while (originStopIterator.hasNext()) {
+                Stop originStop = originStopIterator.next();
+                String stopKey = originStop.getStopName() + "-" + originStop.getStopType();
+                if (uniqueOriginStops.contains(stopKey)) {
+                    originStopIterator.remove();
+                } else {
+                    uniqueOriginStops.add(stopKey);
+                }
             }
 
             ArrayList<Node> nodesNearOriginStops = new ArrayList<>();
@@ -157,18 +170,13 @@ public class Caller {
                 travelTimesOriginToOriginStops.add(((nodeNearOrigin.equiRectangularDistanceTo(originPointLongitude,
                         originPointLatitude) + nodeNearOriginStop.equiRectangularDistanceTo(stopNearOriginNode.
                         getStopLongitude(), stopNearOriginNode.getStopLatitude())) / AVERAGE_WALKING_SPEED_M_PER_MIN) +
-                        (dijkstraBasedRouter.findShortestDrivingPathCostMin(nodeNearOrigin.getNodeId(), nodeNearOriginStop.
-                                getNodeId(), nodes, links)));     // todo review this foolishness
+                        (dijkstraBasedRouter.findShortestDrivingPathCostMin(nodeNearOrigin.getNodeId(),
+                                nodeNearOriginStop.getNodeId(), nodes, links)));
             }
-            System.out.println("Travel times origin to origin stops: " + travelTimesOriginToOriginStops);
-            System.out.println("Count origin stops: " + stopsNearOriginNode.size());
-            System.out.println("Numbers of travel times origin to origin stops: " + travelTimesOriginToOriginStops.size());
-            System.out.println("A stop near origin node: " + stopsNearOriginNode.get(0).getStopName());
-
 
             // For destination point, get the nearest transit stop and elucidate travel between destination and stop
-            Node nodeNearDestination = kDTreeForNodes.findNearestNode(destinationPointLongitude, destinationPointLatitude);
-            System.out.println("Dest Node: " + nodeNearDestination.getNodeId());
+            Node nodeNearDestination = kDTreeForNodes.findNearestNode(destinationPointLongitude,
+                    destinationPointLatitude);
             Stop stopNearestToDestinationNode = kDTreeForStops.findNearestStop(nodeNearDestination.getNodeLongitude(),
                     nodeNearDestination.getNodeLatitude());
             Node nodeNearDestinationStop = kDTreeForNodes.findNearestNode(stopNearestToDestinationNode.getStopLongitude(),
