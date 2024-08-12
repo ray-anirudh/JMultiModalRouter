@@ -179,21 +179,21 @@ public class Caller {
                     destinationPointLatitude);
             Stop stopNearestToDestinationNode = kDTreeForStops.findNearestStop(nodeNearDestination.getNodeLongitude(),
                     nodeNearDestination.getNodeLatitude());
-            Node nodeNearDestinationStop = kDTreeForNodes.findNearestNode(stopNearestToDestinationNode.getStopLongitude(),
-                    stopNearestToDestinationNode.getStopLatitude());
+            Node nodeNearDestinationStop = kDTreeForNodes.findNearestNode(stopNearestToDestinationNode.
+                            getStopLongitude(), stopNearestToDestinationNode.getStopLatitude());
             double travelTimeDestinationToDestinationStop = ((nodeNearDestination.equiRectangularDistanceTo(
                     destinationPointLongitude, destinationPointLatitude) + nodeNearDestinationStop.
-                    equiRectangularDistanceTo(stopNearestToDestinationNode.getStopLongitude(), stopNearestToDestinationNode.
-                            getStopLatitude())) + (dijkstraBasedRouter.findShortestDrivingPathCostMin(
-                    nodeNearDestinationStop.getNodeId(), nodeNearDestination.getNodeId(), nodes, links) *
-                    AVERAGE_DRIVING_SPEED_M_PER_MIN)) / AVERAGE_WALKING_SPEED_M_PER_MIN;
-            System.out.println("Stop near destination node: " + stopNearestToDestinationNode.getStopName());
-            System.out.println("Travel time destination stop to destination: " + travelTimeDestinationToDestinationStop);
+                    equiRectangularDistanceTo(stopNearestToDestinationNode.getStopLongitude(),
+                            stopNearestToDestinationNode.getStopLatitude())) + (dijkstraBasedRouter.
+                    findShortestDrivingPathCostMin(nodeNearDestinationStop.getNodeId(), nodeNearDestination.getNodeId(),
+                            nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN)) / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
             long queriesSolvingEndTime = System.nanoTime();
             double queriesSolvingDuration = (double) (queriesSolvingEndTime - queriesSolvingStartTime);
-            System.out.println("Queries solved in: " + (queriesSolvingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+            System.out.println(stopsNearOriginNode.size() + " queries solved in: " + (queriesSolvingDuration /
+                    NANOSECONDS_PER_MINUTE) + " minutes.");
         }
+
         // Find nodes close to origin and destination stops
         // ArrayList<Node> nodesNear
         System.exit(1);
