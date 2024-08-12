@@ -6,7 +6,11 @@ public class Node {    // Node IDs are present in the relevant hashmap, as well
     private long nodeId;
     private double nodeLongitude;
     private double nodeLatitude;
-    private ArrayList<Long> linkIdList;
+    private final ArrayList<Long> linkIdList;
+
+    public Node(ArrayList<Long> linkIdList) {
+        this.linkIdList = linkIdList;
+    }
 
     public double equiRectangularDistanceTo(double otherPointLongitude, double otherPointLatitude) {
         final int EARTH_RADIUS_M = 6_371_000;
@@ -14,8 +18,7 @@ public class Node {    // Node IDs are present in the relevant hashmap, as well
         double latitudeDifference = Math.toRadians(this.nodeLatitude - otherPointLatitude);
 
         double x = longitudeDifference * Math.cos(Math.toRadians((this.nodeLatitude + otherPointLatitude) / 2));
-        double y = latitudeDifference;
-        return EARTH_RADIUS_M * (Math.sqrt(x * x + y * y));
+        return EARTH_RADIUS_M * (Math.sqrt(x * x + latitudeDifference * latitudeDifference));
     }
 
     void setNodeId(long nodeId) {

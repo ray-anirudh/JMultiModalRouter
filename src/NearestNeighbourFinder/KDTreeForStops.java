@@ -1,6 +1,7 @@
 package src.NearestNeighbourFinder;
 
 import src.PublicTransportRouter.GTFSDataManager.Stop;
+import src.RoadTransportRouter.OSMDataManager.Node;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ public class KDTreeForStops {
         return stop;
     }
 
+    // Build a KD-Tree to find all stops in a certain vicinity
     public void buildStopBasedKDTree(Stop[] stops) {
         this.kDTreeRootStop = buildKDTreeForStops(stops, 0);
         System.out.println("KD-Tree created for stops");
@@ -83,5 +85,52 @@ public class KDTreeForStops {
         doughnutSearchForStops(sourceLongitude, sourceLatitude, nearbyStops, this.kDTreeRootStop, innerRadius,
                 outerRadius, 0);
         return nearbyStops;
+    }
+
+    private KDTreeStop nearestNeighbourSearchForStops(double sourceLongitude, double sourceLatitude,
+                                                      KDTreeStop kDTreeStop, KDTreeStop bestKDTreeStop, int depth) {
+        if (kDTreeStop == null) {
+            return bestKDTreeStop;
+        }
+
+        double distance = kDTreeStop.getStop().equiRectangularDistanceTo(sourceLongitude, sourceLatitude);
+        double bestDistance = bestKDTreeStop.getStop().equiRectangularDistanceTo(sourceLongitude, sourceLatitude);
+
+        if (distance < bestDistance) {
+            bestKDTreeStop = kDTreeStop;
+        }
+
+        int axis = depth % 2;
+        KDTreeStop nextKDTreeStop = ((axis == 0) ? (sourceLatitude < kDTreeStop.getStop().getStopLatitude()) :
+                (sourceLongitude < kDTreeStop.getStop().getStopLongitude())) ? kDTreeStop.getLeft() :
+                kDTreeStop.getRight();
+        KDTreeStop otherKDTreeStop = (nextKDTreeStop == kDTreeStop.getLeft()) ? kDTreeStop.getRight() :
+                kDTreeStop.getLeft();
+
+        bestKDTreeStop = nearestNeighbourSearchForStops(sourceLongitude, sourceLatitude, nextKDTreeStop, bestKDTreeStop,
+                depth + 1);
+
+        double axisDistance = (axis == 0) ?
+                Math.abs(kDTreeStop.getStop().getStopLatitude() - sourceLatitude) * 111_320 :
+                Math.abs(kDTreeStop.getStop().getStopLongitude() - sourceLongitude) * 111_320 *
+                        Math.cos(Math.toRadians(kDTreeStop.getStop().getStopLatitude()));
+
+        // Search goes in the direction of the other stop if the next stop is deemed to be a suboptimal option
+        if (axisDistance < bestDistance) {
+            bestKDTreeStop = nearestNeighbourSearchForStops(sourceLongitude, sourceLatitude, otherKDTreeStop,
+                    bestKDTreeStop, depth + 1);
+        }
+        return bestKDTreeStop;
+    }
+
+    // Find the nearest stop to a source point from amongst a set of stops
+    public Stop findNearestStop(double sourceLongitude, double sourceLatitude) {
+        if (this.kDTreeRootStop == null) {
+            throw new IllegalStateException("Stop-based KD-Tree is empty.");
+        }
+
+        KDTreeStop bestKDTreeStop = nearestNeighbourSearchForStops(sourceLongitude, sourceLatitude, this.kDTreeRootStop,
+                this.kDTreeRootStop, 0);
+        return bestKDTreeStop.getStop();
     }
 }

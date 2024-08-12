@@ -20,7 +20,7 @@ public class Stop {
     }
 
     Stop() {
-        this(0, null, 0, 0, 0D, 0D);
+        this(0, "", 0, 0, 0D, 0D);
     }
 
     public double equiRectangularDistanceTo(double otherLongitude, double otherLatitude) {

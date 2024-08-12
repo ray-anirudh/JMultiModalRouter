@@ -286,18 +286,35 @@ public class RAPTOR {
                                  LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                          tripLegWiseEarliestArrivalTimeMap) {
 
+        ArrayList<Integer> newMarkedStops = new ArrayList<>();
         for (int markedStopId : markedStops) {
             for (HashMap.Entry<Integer, Double> transferEntry : transfers.get(markedStopId).getTransferMap().
                     entrySet()) {
 
-                double earliestArrivalTime = Math.min(summaryEarliestArrivalTimeMap.get(transferEntry.getKey()),
-                        summaryEarliestArrivalTimeMap.get(markedStopId) + transferEntry.getValue());
-                tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(transferEntry.getKey(),
-                        earliestArrivalTime);
-                summaryEarliestArrivalTimeMap.replace(transferEntry.getKey(), earliestArrivalTime);
+                if ((summaryEarliestArrivalTimeMap.get(transferEntry.getKey()) != null) &&
+                (summaryEarliestArrivalTimeMap.get(markedStopId) != null)) {
+                    double earliestArrivalTime = Math.min(summaryEarliestArrivalTimeMap.get(transferEntry.getKey()),
+                            summaryEarliestArrivalTimeMap.get(markedStopId) + transferEntry.getValue());
+                    tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(transferEntry.getKey(),
+                            earliestArrivalTime);
+                    summaryEarliestArrivalTimeMap.replace(transferEntry.getKey(), earliestArrivalTime);
 
-                markedStops.add(transferEntry.getKey());
+                    newMarkedStops.add(transferEntry.getKey());
+                }
+
+                /* Debugging statements:
+                System.out.println("Marked stop ID: " + markedStopId + "\n" +
+                        "To stop ID: " + transferEntry.getKey() + "\n" +
+                        "Marked stop SEAT check: " + summaryEarliestArrivalTimeMap.containsKey(markedStopId) + "\n" +
+                        "To stop SEAT check: " + summaryEarliestArrivalTimeMap.containsKey(transferEntry.getKey()) +
+                        "\n" +
+                        "Earliest arrival time in summary map: " + summaryEarliestArrivalTimeMap.
+                        get(transferEntry.getKey()) + "\n" +
+                        "Earliest arrival time via transfer: " + summaryEarliestArrivalTimeMap.get(transferEntry.
+                        getKey()));
+                */
             }
         }
+        markedStops.addAll(newMarkedStops);
     }
 }

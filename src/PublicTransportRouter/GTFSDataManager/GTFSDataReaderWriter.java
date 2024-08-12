@@ -2,15 +2,16 @@ package src.PublicTransportRouter.GTFSDataManager;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
-import com.google.maps.DirectionsApi;
-import com.google.maps.GeoApiContext;
-import com.google.maps.model.DirectionsResult;
-import com.google.maps.model.TravelMode;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+
+import src.NearestNeighbourFinder.KDTreeForNodes;
+import src.RoadTransportRouter.OSMDataManager.Link;
+import src.RoadTransportRouter.OSMDataManager.Node;
+import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
+import src.RoadTransportRouter.RoutingAlgorithm.DijkstraBasedRouter;
 
 public class GTFSDataReaderWriter {
 
@@ -33,48 +34,55 @@ public class GTFSDataReaderWriter {
             "390"  // Nahreisezug
     };
 
-    // Initialize GMaps API context with a valid API key
-    private static final GeoApiContext GOOGLE_GEO_API_CONTEXT = new GeoApiContext.Builder().
-            apiKey("Your Google API Key").build();
-
     // Set the constants
     private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
     private static final int MAXIMUM_TRANSFER_DISTANCE_M = 300;    // (Gritsch, 2024) and (Tischner, 2018)
-    private static final double AVERAGE_WALKING_SPEED_MPS = 1.4D;   // (Gritsch, 2024)
-    private static final int SECONDS_IN_MINUTE = 60;
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 84D;   // (Gritsch, 2024)
+    private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
+    // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
+    private static final String OSM_OPL_EXTRACT_FILE_PATH = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
+            "Fourth Semester/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
+            "BBBikeOSMExtract.opl";
 
     // Initialize the RAPTOR-relevant hashmaps
-    private final LinkedHashMap<Integer, Route> routes = new LinkedHashMap<>();
     // Key for "routes" hashmap refers to "route_id"
+    private final LinkedHashMap<Integer, Route> routes = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, Trip> trips = new LinkedHashMap<>();
     /* Key for "trips" hashmap also refers to "route_id" and value refers to a list of trip IDs, which is the linkage
     between "routes.txt" and "stop_times.txt" (Gritsch, 2024)
     */
+    private final LinkedHashMap<Integer, Trip> trips = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, RouteStop> routeStops = new LinkedHashMap<>();
     /* Key for "routeStops" hashmap also refers to "route_id" and value pertains to a direction-wise sequencing of stops
     on the route
     */
+    private final LinkedHashMap<Integer, RouteStop> routeStops = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, StopTime> stopTimes = new LinkedHashMap<>();
     // Key for "stopTimes" hashmap also refers to "route_id" and value refers to a hashmap of trip-wise stop time maps
+    private final LinkedHashMap<Integer, StopTime> stopTimes = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, Stop> stops = new LinkedHashMap<>();
     // Key for "stops" hashmap refers to "stop_id"
+    private final LinkedHashMap<Integer, Stop> stops = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, StopRoute> stopRoutes = new LinkedHashMap<>();
     // Key for "stopRoutes" hashmap also refers to "stop_id" and value refers to a list of all routes serving that stop
+    private final LinkedHashMap<Integer, StopRoute> stopRoutes = new LinkedHashMap<>();
 
-    private final LinkedHashMap<Integer, Transfer> transfers = new LinkedHashMap<>();
     /* Key for "transfers" hashmap also refers to "stop_id" and value pertains to a map of reachable stops and the time
     needed to reach them
     */
+    private final LinkedHashMap<Integer, Transfer> transfers = new LinkedHashMap<>();
+
+    // Setting up Dijkstra-relevant objects for transfer cost calculations
+    private static final DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
+    private static final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
+    private final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+    private final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
+    private static final KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
 
     /**
      * BEHAVIOUR DEFINITIONS
@@ -312,11 +320,15 @@ public class GTFSDataReaderWriter {
             for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripConsideredForDirectionTwo :
                     tripWiseStopTimeMaps.entrySet()) {
                 if ((tripConsideredForDirectionTwo.getValue().size() == this.routes.get(stopTimeEntry.getKey()).
-                        getNumberStops()) && (!Objects.equals(tripConsideredForDirectionTwo.getValue().keySet().
-                        iterator().next(), tripWiseStopTimeMaps.get(tripIdDirectionOne).keySet().iterator().next()))) {
+                        getNumberStops()) && (!tripConsideredForDirectionTwo.getValue().keySet().toArray()[0].
+                        equals(tripWiseStopTimeMaps.get(tripIdDirectionOne).keySet().toArray()[0]))) {
                     tripIdDirectionTwo = tripConsideredForDirectionTwo.getKey();
                     break;
                 }
+            }
+
+            if (tripIdDirectionTwo == -1) {
+                tripIdDirectionTwo = tripIdDirectionOne;    // Handling loop routes
             }
 
             LinkedHashMap<Integer, Integer> directionOneStopSequenceMap = new LinkedHashMap<>();
@@ -335,6 +347,15 @@ public class GTFSDataReaderWriter {
 
             this.routeStops.get(stopTimeEntry.getKey()).getDirectionWiseStopMaps().put(1, directionOneStopSequenceMap);
             this.routeStops.get(stopTimeEntry.getKey()).getDirectionWiseStopMaps().put(2, directionTwoStopSequenceMap);
+
+            /* Debugging statements:
+            System.out.println("Trip ID direction one: " + tripIdDirectionOne + "\n" +
+                    "Trip size direction one: " + tripWiseStopTimeMaps.get(tripIdDirectionOne).size() + "\n" +
+                    "Trip ID direction two: " + tripIdDirectionTwo + "\n" +
+                    "Trip size direction two: " + tripWiseStopTimeMaps.get(tripIdDirectionTwo).size() + "\n" +
+                    "Maximum size of pertinent route: " + this.routes.get(stopTimeEntry.getKey()).getNumberStops() +
+                    "\n");
+            */
         }
         System.out.println("Route stops' hashmap built");
     }
@@ -353,22 +374,38 @@ public class GTFSDataReaderWriter {
             int stopLatitudeIndex = findIndexInArray("stop_lat", stopsHeaderArray);
             int stopLongitudeIndex = findIndexInArray("stop_lon", stopsHeaderArray);
 
-            // Read body and process data
+            // Read body and process data; do not avoid parent stations, as they might be visited by transit vehicles
             while ((newline = gtfsStopsReader.readLine()) != null) {
+                int commasInStopRecord = countCommasInString(newline);
+                final int COMMAS_NORMAL_STOP_RECORD = 5;
+                int indexAdder = commasInStopRecord - COMMAS_NORMAL_STOP_RECORD;
+
                 String[] stopDataRecord = newline.split(",");
-                int stopId = Integer.parseInt(stopDataRecord[stopIdIndex]);
+                int stopId = Integer.parseInt(stopDataRecord[stopIdIndex + indexAdder]);
 
                 if (this.stops.containsKey(stopId)) {
-                    String stopName = stopDataRecord[stopNameIndex].substring(0, 1).equalsIgnoreCase("\"") ?
-                            stopDataRecord[stopNameIndex].substring(1, stopDataRecord[stopNameIndex].length() - 1) :
-                            stopDataRecord[stopNameIndex];
                     int stopType = -1;
                     int stopTripCount = 0;
-                    double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex]);
-                    double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex]);
+                    double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex + indexAdder]);
+                    double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex + indexAdder]);
+                    String stopName = "";
 
-                    Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLatitude, stopLongitude);
+                    if (indexAdder == 0) {
+                        stopName = stopDataRecord[stopNameIndex + indexAdder];
+                    } else {
+                        for (int i = 0; i <= indexAdder; i++) {
+                            stopName += stopDataRecord[i].replace("\"", "") + " ";
+                        }
+                    }
+
+                    Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLongitude, stopLatitude);
                     this.stops.replace(stopId, stop);
+
+                    /* Debugging statements:
+                    System.out.println("Stop name: " + stopName + "\n" +
+                            "Stop Latitude: " + stopLatitude + "\n" +
+                            "Stop Longitude: " + stopLongitude + "\n");
+                    */
                 }
             }
             System.out.println("Stops' data read from " + gtfsStopsFilePath);
@@ -408,7 +445,7 @@ public class GTFSDataReaderWriter {
                 this.transfers.remove(stopId);
             }
         }
-        System.out.println("Stop-wise routes' hashmap padded with route IDs, and stop types and trip counts ascribed.");
+        System.out.println("Stop-wise routes' hashmap padded with route IDs, and stop types and trip counts ascribed");
     }
 
     // Build the "transfers" hashmap, ignoring pairs of distant stops
@@ -429,34 +466,60 @@ public class GTFSDataReaderWriter {
                     avoid transfers at the very same stop; transfers are recorded in minutes
                     */
                     if (fromStopId != toStopId) {
-                        stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialDistanceM /
-                                (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
+                        double interStopAerialWalkingTimeMin = interStopAerialDistanceM /
+                                AVERAGE_WALKING_SPEED_M_PER_MIN;
+                        stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialWalkingTimeMin);
+
+                        /* Debugging statements:
+                        System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " +
+                                fromStopId + "\n" +
+                                "To stop: " + this.stops.get(toStopId).getStopName() + " " + toStopId + "\n" +
+                                "Inter-stop aerial distance: " + interStopAerialDistanceM + "\n" +
+                                "Inter-stop aerial walking time: " + interStopAerialWalkingTimeMin + "\n");
+                        */
                     }
                 }
             }
             this.transfers.replace(fromStopId, stopSpecificTransferMap);
         }
-        System.out.println("Transfers hashmap built (limited based on equi-rectangular distances)");
+        System.out.println("Transfers hashmap built (boundary conditions based on aerial distances)");
     }
 
-    // Filter out unrealistic "transfers" based on GMaps API calls
+    // Filter out unrealistic "transfers" based on transfer distances
     public void filterTransfersHashMap() {
+        getDijkstraMaps();
+        Node[] nodesForNNSearches = this.nodes.values().toArray(new Node[0]);
+        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
         for (int fromStopId : fromStopIds) {
             LinkedHashMap<Integer, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
+            Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
 
             ArrayList<Integer> toStopIds = new ArrayList<>(stopSpecificTransferMap.keySet());
             for (int toStopId : toStopIds) {
                 double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
                 double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
-                double interStopWalkingDistanceM = calculateWalkingDistance(fromStopLongitude, fromStopLatitude,
-                        toStopLongitude, toStopLatitude);
+                Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
+
+                double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
+                        fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
+                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(),
+                        nearestNodeToStop.getNodeId(), this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    stopSpecificTransferMap.replace(toStopId, interStopWalkingDistanceM / (AVERAGE_WALKING_SPEED_MPS *
-                            SECONDS_IN_MINUTE));
+                    double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
+                    stopSpecificTransferMap.replace(toStopId, interStopWalkingTimeMin);
+
+                    /* Debugging statements:
+                    System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " + fromStopId +
+                    "\n" +
+                            "To stop: " + this.stops.get(toStopId).getStopName() + " " + toStopId + "\n" +
+                            "Inter-stop walking distance: " + interStopWalkingDistanceM + "\n" +
+                            "Inter-stop walking time: " + interStopWalkingTimeMin + "\n");
+                    */
                 } else {
                     stopSpecificTransferMap.remove(toStopId);
                 }
@@ -465,21 +528,39 @@ public class GTFSDataReaderWriter {
         System.out.println("Unrealistic transfers based on walking distances filtered out");
     }
 
-
     // Make "transfers" hashmap transitive (consider a chain like fromStop-intermediateStop-toStop)
     public void makeTransfersTransitive() {
-        for (int fromStopId : this.transfers.keySet()) {
-            for (int intermediateStopId : this.transfers.get(fromStopId).getTransferMap().keySet()) {
-                for (int toStopId : new ArrayList<>(this.transfers.get(intermediateStopId).getTransferMap().keySet())) {
+        getDijkstraMaps();
+        Node[] nodesForNNSearches = this.nodes.values().toArray(new Node[0]);
+        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+
+        ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
+        for (int fromStopId : fromStopIds) {
+            double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
+            double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
+            Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
+
+            ArrayList<Integer> intermediateStopIds = new ArrayList<>(this.transfers.get(fromStopId).getTransferMap().
+                    keySet());
+            for (int intermediateStopId : intermediateStopIds) {
+
+                ArrayList<Integer> toStopIds = new ArrayList<>(this.transfers.get(intermediateStopId).getTransferMap().
+                        keySet());
+                for (int toStopId : toStopIds) {
+                    double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
+                    double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
+                    Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
+
                     if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
-                        double interStopWalkingDistanceM = calculateWalkingDistance(
-                                this.stops.get(fromStopId).getStopLongitude(),
-                                this.stops.get(fromStopId).getStopLatitude(),
-                                this.stops.get(toStopId).getStopLongitude(),
-                                this.stops.get(toStopId).getStopLatitude());
+                        double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(
+                                fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
+                                        toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
+                                findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.getNodeId(),
+                                        this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    (AVERAGE_WALKING_SPEED_MPS * SECONDS_IN_MINUTE));
+                                    AVERAGE_WALKING_SPEED_M_PER_MIN);
                         } else {
                             // Penalize unrealistic transfers
                             final double ARBITRARY_HIGH_TRANSFER_COST = 1_000_000D;
@@ -511,28 +592,34 @@ public class GTFSDataReaderWriter {
         // For hashmaps "routes", "trips", "routeStops", and "stopTimes"
         for (Iterator<Integer> routeIterator = this.stopTimes.keySet().iterator(); routeIterator.hasNext(); ) {
             int routeId = routeIterator.next();
-            for (Iterator<Integer> tripIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().keySet().
-                    iterator(); tripIterator.hasNext(); ) {
+            LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = this.stopTimes.
+                    get(routeId).getTripWiseStopTimeMaps();
+
+            for (Iterator<Integer> tripIterator = this.trips.get(routeId).getTripList().iterator(); tripIterator.
+                    hasNext(); ) {
                 int tripId = tripIterator.next();
-                for (Iterator<Integer> stopIterator = this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).
+
+                for (Iterator<Integer> stopIterator = tripWiseStopTimeMaps.get(tripId).
                         keySet().iterator(); stopIterator.hasNext(); ) {
                     int stopId = stopIterator.next();
+
                     if (!this.stops.containsKey(stopId)) {
                         stopIterator.remove();
                         this.routeStops.get(routeId).getDirectionWiseStopMaps().get(1).remove(stopId);
                         this.routeStops.get(routeId).getDirectionWiseStopMaps().get(2).remove(stopId);
                     }
                 }
-                if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().get(tripId).isEmpty()) {
+                if (tripWiseStopTimeMaps.get(tripId).isEmpty()) {
                     tripIterator.remove();
-                    this.trips.get(routeId).getTripList().remove(tripId);
+                    this.stopTimes.get(routeId).getTripWiseStopTimeMaps().remove(tripId);
                 }
             }
-            if (this.stopTimes.get(routeId).getTripWiseStopTimeMaps().isEmpty()) {
+            if (tripWiseStopTimeMaps.isEmpty()) {
                 routeIterator.remove();
                 this.trips.remove(routeId);
                 this.routes.remove(routeId);
                 this.routeStops.remove(routeId);
+                // Debugging advice: Try printing sizes of different maps for comparison and consistency checks
             }
         }
         System.out.println("Data external to study area deleted");
@@ -678,11 +765,11 @@ public class GTFSDataReaderWriter {
                 String stopName = stopEntry.getValue().getStopName();
                 int locationType = stopEntry.getValue().getStopType();
                 int stopTripCount = stopEntry.getValue().getStopTripCount();
-                double stopLatitude = stopEntry.getValue().getStopLatitude();
                 double stopLongitude = stopEntry.getValue().getStopLongitude();
+                double stopLatitude = stopEntry.getValue().getStopLatitude();
 
                 raptorStopsWriter.write(stopId + "," + stopName + "," + locationType + "," + stopTripCount + "," +
-                        stopLatitude + "," + stopLongitude + "\n");
+                        stopLongitude + "," + stopLatitude + "\n");
             }
             System.out.println("Stops' data written to " + raptorStopsFilePath);
 
@@ -747,25 +834,6 @@ public class GTFSDataReaderWriter {
      * All supporting methods are below
      */
 
-    // Walking distance calculator based on GMaps API
-    private double calculateWalkingDistance(double fromStopLongitude, double fromStopLatitude, double toStopLongitude,
-                                            double toStopLatitude) {
-        try {
-            // GMaps Directions API for accurate transfer distance determination
-            DirectionsResult result = DirectionsApi.newRequest(GOOGLE_GEO_API_CONTEXT)
-                    .origin(new com.google.maps.model.LatLng(fromStopLatitude, fromStopLongitude))
-                    .destination(new com.google.maps.model.LatLng(toStopLatitude, toStopLongitude))
-                    .mode(TravelMode.WALKING)
-                    .await();
-
-            // Extract and return walking distance from the result
-            return result.routes[0].legs[0].distance.inMeters;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
     // Index finder by column name strings
     private int findIndexInArray(String columnHeaderName, @NotNull String[] headerArray) {
         int columnPosition = -1;
@@ -775,6 +843,27 @@ public class GTFSDataReaderWriter {
             }
         }
         return columnPosition;
+    }
+
+    // Comma counter in a string array
+    private int countCommasInString(String string) {
+        int commaCount = 0;
+        for(int i = 0; i < string.length(); i++) {
+            if (string.substring(i, i+1).equalsIgnoreCase(",")) {
+                commaCount++;
+            }
+        }
+        return commaCount;
+    }
+
+    // Get Dijkstra-relevant datasets ready
+    private static void getDijkstraMaps() {
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(GTFSDataReaderWriter.
+                OSM_OPL_EXTRACT_FILE_PATH);
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(GTFSDataReaderWriter.
+                OSM_OPL_EXTRACT_FILE_PATH);
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.associateLinksWithNode();
+        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
     }
 
     // Getters of transit timetable data for RAPTOR queries
