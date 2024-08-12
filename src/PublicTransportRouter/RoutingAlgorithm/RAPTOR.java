@@ -171,6 +171,7 @@ public class RAPTOR {
 
         for (HashMap.Entry<Integer, Integer> routeServingMarkedStop : routesServingMarkedStops.entrySet()) {
 
+            long timeStart = System.nanoTime();
             // Get parameters of the route-stop pair
             String routeIdStr = String.valueOf(routeServingMarkedStop.getKey());
             int routeId = Integer.parseInt(routeIdStr.substring(0, routeIdStr.length() - 3));
@@ -198,6 +199,8 @@ public class RAPTOR {
 
                     while (tripIterator.hasNext()) {
                         int previousArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
+                        System.out.println("Stop sequence: " + stopTimeTripletEntry.getValue().getStopSequence());
+                        System.out.println("Arrival time: " + previousArrivalTime);
 
                         stopTimeTripletEntry = tripIterator.next();
                         int currentStopId = stopTimeTripletEntry.getKey();
@@ -238,6 +241,9 @@ public class RAPTOR {
                     }
                 }
             }
+            long timeEnd = System.nanoTime();
+            System.out.println("This run took " + ((timeEnd - timeStart) / 60_000_000_000L) +
+                    " minutes. Starting next stop-route run.");
         }
     }
 

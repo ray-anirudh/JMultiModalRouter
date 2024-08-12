@@ -1,5 +1,6 @@
 package src.MultiModalRouter;
 
+// todo incorporate this in caller for Machine Learning purposes
 public class MultiModalQueryResponses {
     // Attributes common to all cases
     private double originPointLongitude;
