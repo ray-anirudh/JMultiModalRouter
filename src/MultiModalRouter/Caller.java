@@ -109,7 +109,7 @@ public class Caller {
         DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
         RAPTOR rAPTOR = new RAPTOR();
 
-        // Load and write all multi-modal queries using the generator
+        // Load all multi-modal queries using the generator, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
         String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
                 "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
@@ -120,6 +120,7 @@ public class Caller {
         long queryGenEndTime = System.nanoTime();
 
         double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
+        LinkedHashMap<Long, MultiModalQueryResponses> multiModalQueryResponses = new LinkedHashMap<>();
         System.out.println("\n" +
                 "Multi-modal queries for JavaMultiModalRouter created in " + String.format("%.3f",
                 queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
@@ -137,6 +138,10 @@ public class Caller {
             double destinationPointLatitude = multiModalQuery.getDestinationLatitude();
             int originPointDepartureTime = multiModalQuery.getDepartureTime();
 
+            /**
+             * Working through to the exact solution
+             */
+            String solutionType = "Exact";
             // For origin node, get the nearest stops in a doughnut-search space and elucidate travel to each stop
             Node nodeNearOrigin = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
             ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(nodeNearOrigin.
@@ -161,19 +166,6 @@ public class Caller {
                 }
             }
 
-            ArrayList<Node> nodesNearOriginStops = new ArrayList<>();
-            ArrayList<Double> travelTimesOriginToOriginStops = new ArrayList<>();
-            for (Stop stopNearOriginNode : stopsNearOriginNode) {
-                Node nodeNearOriginStop = kDTreeForNodes.findNearestNode(stopNearOriginNode.getStopLongitude(),
-                        stopNearOriginNode.getStopLatitude());
-                nodesNearOriginStops.add(nodeNearOriginStop);
-                travelTimesOriginToOriginStops.add(((nodeNearOrigin.equiRectangularDistanceTo(originPointLongitude,
-                        originPointLatitude) + nodeNearOriginStop.equiRectangularDistanceTo(stopNearOriginNode.
-                        getStopLongitude(), stopNearOriginNode.getStopLatitude())) / AVERAGE_WALKING_SPEED_M_PER_MIN) +
-                        (dijkstraBasedRouter.findShortestDrivingPathCostMin(nodeNearOrigin.getNodeId(),
-                                nodeNearOriginStop.getNodeId(), nodes, links)));
-            }
-
             // For destination point, get the nearest transit stop and elucidate travel between destination and stop
             Node nodeNearDestination = kDTreeForNodes.findNearestNode(destinationPointLongitude,
                     destinationPointLatitude);
@@ -192,6 +184,12 @@ public class Caller {
             double queriesSolvingDuration = (double) (queriesSolvingEndTime - queriesSolvingStartTime);
             System.out.println(stopsNearOriginNode.size() + " queries solved in: " + (queriesSolvingDuration /
                     NANOSECONDS_PER_MINUTE) + " minutes.");
+            double leastTotalTravelTime = runRAPTORAndDijkstra(solutionType, originPointLongitude, originPointLatitude,
+                    destinationPointLongitude, destinationPointLatitude, originPointDepartureTime, rAPTOR,
+                    dijkstraBasedRouter, nodes, links, nodeNearOrigin, nodeNearDestination, kDTreeForNodes,
+                    stopsNearOriginNode, stopNearestToDestinationNode, routeStops, stopTimes, stops, stopRoutes,
+                    transfers);
+            System.out.println("Least total travel time is: " + leastTotalTravelTime);
         }
 
         // Find nodes close to origin and destination stops
@@ -201,11 +199,73 @@ public class Caller {
     }
 
 
-    // private ArrayList<Integer>
+    // Run RAPTOR and Dijkstra algorithms, and output the fastest travel time todo add multimodalqueryresponses here
+    private static double runRAPTORAndDijkstra(String solutionType,
+                                        double originPointLongitude, double originPointLatitude,
+                                        double destinationPointLongitude, double destinationPointLatitude,
+                                        int originPointDepartureTime,
+                                        RAPTOR rAPTOR, DijkstraBasedRouter dijkstraBasedRouter,
+                                        LinkedHashMap<Long, Node> nodes, LinkedHashMap<Long, Link> links,
+                                        Node nodeNearOrigin, Node nodeNearDestination,
+                                        KDTreeForNodes kDTreeForNodes,
+                                        ArrayList<Stop> stopsNearOriginNode, Stop stopNearestToDestinationNode,
+                                        LinkedHashMap<Integer, RouteStop> routeStops,
+                                        LinkedHashMap<Integer, StopTime> stopTimes,
+                                        @NotNull LinkedHashMap<Integer, Stop> stops,
+                                        LinkedHashMap<Integer, StopRoute> stopRoutes,
+                                        LinkedHashMap<Integer, Transfer> transfers) {
+        double leastTotalTravelTime = Double.MAX_VALUE;
 
+        // Node travel times from origin point to stops in its vicinity
+        ArrayList<Double> travelTimesOriginToOriginStops = new ArrayList<>();
+        for (Stop stopNearOriginNode : stopsNearOriginNode) {
+            Node nodeNearOriginStop = kDTreeForNodes.findNearestNode(stopNearOriginNode.getStopLongitude(),
+                    stopNearOriginNode.getStopLatitude());
+            travelTimesOriginToOriginStops.add(((nodeNearOrigin.equiRectangularDistanceTo(originPointLongitude,
+                    originPointLatitude) + nodeNearOriginStop.equiRectangularDistanceTo(stopNearOriginNode.
+                    getStopLongitude(), stopNearOriginNode.getStopLatitude())) / AVERAGE_WALKING_SPEED_M_PER_MIN) +
+                    (dijkstraBasedRouter.findShortestDrivingPathCostMin(nodeNearOrigin.getNodeId(),
+                            nodeNearOriginStop.getNodeId(), nodes, links)));
+        }
 
+        // Node travel time from destination stop to destination point
+        Node nodeNearDestinationStop = kDTreeForNodes.findNearestNode(stopNearestToDestinationNode.
+                getStopLongitude(), stopNearestToDestinationNode.getStopLatitude());
+        double travelTimeDestinationToDestinationStop = ((nodeNearDestination.equiRectangularDistanceTo(
+                destinationPointLongitude, destinationPointLatitude) + nodeNearDestinationStop.
+                equiRectangularDistanceTo(stopNearestToDestinationNode.getStopLongitude(),
+                        stopNearestToDestinationNode.getStopLatitude())) + (dijkstraBasedRouter.
+                findShortestDrivingPathCostMin(nodeNearDestinationStop.getNodeId(), nodeNearDestination.getNodeId(),
+                        nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN)) / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
+        // Note travel times between origin and destination stops, and report fastest leg-wise travel time combination
+        for (int i = 0; i <= stopsNearOriginNode.size(); i++) {
+            System.out.println("Number of stops: " + stopsNearOriginNode.size());
+            long raptorTimeStart = System.nanoTime();
+            double travelTimeOriginStopToDestinationStop = rAPTOR.findShortestTransitPath(stopsNearOriginNode.get(i).
+                    getStopId(), stopNearestToDestinationNode.getStopId(), (originPointDepartureTime +
+                    travelTimesOriginToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes, transfers).
+                    getTravelTimeMinutes();
+            double totalTravelTime = travelTimesOriginToOriginStops.get(i) + travelTimeOriginStopToDestinationStop +
+                    travelTimeDestinationToDestinationStop;
+            long raptortimeend = System.nanoTime();
+            System.out.println("RAPTOR says " + totalTravelTime + " minutes");
 
+            if (totalTravelTime < leastTotalTravelTime) {
+                leastTotalTravelTime = totalTravelTime;
+            }
+        }
+
+        if (solutionType.equalsIgnoreCase("Exact")) {   // todo build
+
+        } else if (solutionType.equalsIgnoreCase("SH")) {
+
+        } else if (solutionType.equalsIgnoreCase("TV")) {
+
+        }
+
+        return leastTotalTravelTime;
+    }
 
     // Get RAPTOR-relevant datasets ready
     private static void getRAPTORMaps(String gtfsFolderPath,

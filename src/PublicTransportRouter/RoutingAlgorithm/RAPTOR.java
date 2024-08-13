@@ -6,10 +6,8 @@ import src.PublicTransportRouter.GTFSDataManager.*;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 
 public class RAPTOR {
     private static final int MINUTES_IN_DAY = 1440;
@@ -169,6 +167,7 @@ public class RAPTOR {
                                    LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                            tripLegWiseEarliestArrivalTimeMap) {
 
+        long timeStart = System.nanoTime();
         for (HashMap.Entry<Integer, Integer> routeServingMarkedStop : routesServingMarkedStops.entrySet()) {
 
             // Get parameters of the route-stop pair
@@ -182,21 +181,49 @@ public class RAPTOR {
             // Determine the pertinent trip
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
                     get(routeId).getTripWiseStopTimeMaps();
-            int tripIdForTraversal = findEarliestTripIdForTraversal(stopId, tripWiseStopTimeMaps,
-                    summaryEarliestArrivalTimeMap);
+            int[] timeWraparoundSwitch = {0};    // 0 for false, 1 for true
+            int tripIdForTraversal = findEarliestTripIdForTraversal(stopId, timeWraparoundSwitch,
+                    tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
 
             LinkedHashMap<Integer, StopTimeTriplet> tripBeingTraversed = tripWiseStopTimeMaps.get(tripIdForTraversal);
             if (tripBeingTraversed == null) {
                 continue;
             }
-            Iterator<HashMap.Entry<Integer, StopTimeTriplet>> tripIterator = tripBeingTraversed.entrySet().iterator();
+            ListIterator<HashMap.Entry<Integer, StopTimeTriplet>> tripIterator = new ArrayList<>(tripBeingTraversed.
+                    entrySet()).listIterator();
 
             // Traverse trip
             while (tripIterator.hasNext()) {
                 HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
+                System.out.println("Potential stick point 111, at stopTimeTriplet of " + stopTimeTripletEntry.getValue().
+                        getStopSequence() + " and " + stopTimeTripletEntry.getValue().getArrivalTime() + " minutes.");
+                System.out.println("Trip ID being traversed though stop is not found " + tripIdForTraversal);
                 if (stopTimeTripletEntry.getKey().equals(stopId)) {
+                    double arrivalTimeAtMarkedStop = summaryEarliestArrivalTimeMap.get(stopId);
+                    if (timeWraparoundSwitch[0] == 0) {
+                        arrivalTimeAtMarkedStop = stopTimeTripletEntry.getValue().getArrivalTime();
+                    } else if (timeWraparoundSwitch[0] == 1) {
+                        arrivalTimeAtMarkedStop = stopTimeTripletEntry.getValue().getArrivalTime() + MINUTES_IN_DAY;
+                        timeWraparoundSwitch[0] = 0;
+                    }
+
+                    if (arrivalTimeAtMarkedStop < Math.min(summaryEarliestArrivalTimeMap.get(stopId),
+                            summaryEarliestArrivalTimeMap.get(destinationStopId))) {
+                        // Update trip-wise (and thereby, trip-specific) earliest arrival time map
+                        tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(stopId,
+                                (double) arrivalTimeAtMarkedStop);
+                        // Update summary earliest arrival time map
+                        summaryEarliestArrivalTimeMap.replace(stopId, (double) arrivalTimeAtMarkedStop);
+                        // Update list of marked stops
+                        markedStops.add(stopId);
+                        System.out.println("Updated the zeroth stop.");
+                    }
 
                     while (tripIterator.hasNext()) {
+                        System.out.println("Potential stick point 222, at stopTimeTriplet of " + stopTimeTripletEntry.
+                                getValue().getStopSequence() + " and " + stopTimeTripletEntry.getValue().
+                                getArrivalTime() + " minutes.");
+                        System.out.println("Trip ID being traversed and stop is found for trip ID : " + tripIdForTraversal);
                         int previousArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime();
 
                         stopTimeTripletEntry = tripIterator.next();
@@ -218,6 +245,8 @@ public class RAPTOR {
                             summaryEarliestArrivalTimeMap.replace(currentStopId, (double) currentArrivalTime);
                             // Update list of marked stops
                             markedStops.add(currentStopId);
+                            System.out.println("Potential stick point 333, at stopTimeTriplet of " + stopTimeTripletEntry.getValue().
+                                    getStopSequence() + " and " + stopTimeTripletEntry.getValue().getArrivalTime() + " minutes.");
                         }
 
                         /* Check to see if an earlier trip can be found at the concerned stop (check does not apply to
@@ -226,11 +255,24 @@ public class RAPTOR {
                         */
                         if (tripLegNumber > 1) {
                             if (summaryEarliestArrivalTimeMap.get(currentStopId) < currentArrivalTime) {
+                                System.out.println("Potential stick point 444, at stopTimeTriplet of " + stopTimeTripletEntry.getValue().
+                                        getStopSequence() + " and " + stopTimeTripletEntry.getValue().getArrivalTime() + " minutes.");
 
                                 int revisedTripIdForTraversal = findEarliestTripIdForTraversal(currentStopId,
-                                        tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
-                                tripIterator = tripWiseStopTimeMaps.get(revisedTripIdForTraversal).entrySet().
-                                        iterator();
+                                        timeWraparoundSwitch, tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
+                                if (revisedTripIdForTraversal == tripIdForTraversal) {
+                                    continue;
+                                }
+
+                                System.out.println("Potential stick point 555, at stopTimeTriplet of " + stopTimeTripletEntry.getValue().
+                                        getStopSequence() + " and " + stopTimeTripletEntry.getValue().getArrivalTime() + " minutes.");
+                                System.out.println("Revised trip ID: " + revisedTripIdForTraversal);
+                                LinkedHashMap<Integer, StopTimeTriplet> revisedTripForTraversal =
+                                        tripWiseStopTimeMaps.get(revisedTripIdForTraversal);
+                                if (revisedTripForTraversal == null) {
+                                    continue;
+                                }
+                                tripIterator = new ArrayList<>(revisedTripForTraversal.entrySet()).listIterator();
                                 stopId = currentStopId;
                                 break;
                             }
@@ -239,10 +281,13 @@ public class RAPTOR {
                 }
             }
         }
-    }
+    long timeEnd = System.nanoTime();
+        System.out.println("This run took "+((timeEnd -timeStart)/60_000_000_000L)+
+            " minutes. Starting next stop-route run. We are on dest stop ID "+ destinationStopId);
+}
 
     // Determine the earliest possible trip that can be taken from a stop along a route
-    private int findEarliestTripIdForTraversal(int stopId,
+    private int findEarliestTripIdForTraversal(int stopId, int[] timeWraparoundSwitch,
                                                @NotNull LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>>
                                                        tripWiseStopTimeMaps,
                                                LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap) {
@@ -250,11 +295,13 @@ public class RAPTOR {
         for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                 tripWiseStopTimeMaps.entrySet()) {
 
+            System.out.println("Stick point 666");
             StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
             if (stopTimeTriplet != null) {
                 if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY) >= (summaryEarliestArrivalTimeMap.get(stopId)
                         % MINUTES_IN_DAY)) {
                     tripIdForTraversal = tripSpecificStopTimeMap.getKey();
+                    timeWraparoundSwitch[0] = 0;
                     break;
                 }
             }
@@ -264,12 +311,12 @@ public class RAPTOR {
         if (tripIdForTraversal == -1) {
             for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                     tripWiseStopTimeMaps.entrySet()) {
-
                 StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
                 if (stopTimeTriplet != null) {
                     if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY + MINUTES_IN_DAY) >=
                             (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY)) {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
+                        timeWraparoundSwitch[0] = 1;
                         break;
                     }
                 }
@@ -291,8 +338,9 @@ public class RAPTOR {
             for (HashMap.Entry<Integer, Double> transferEntry : transfers.get(markedStopId).getTransferMap().
                     entrySet()) {
 
+                System.out.println("Stick point 888");
                 if ((summaryEarliestArrivalTimeMap.get(transferEntry.getKey()) != null) &&
-                (summaryEarliestArrivalTimeMap.get(markedStopId) != null)) {
+                        (summaryEarliestArrivalTimeMap.get(markedStopId) != null)) {
                     double earliestArrivalTime = Math.min(summaryEarliestArrivalTimeMap.get(transferEntry.getKey()),
                             summaryEarliestArrivalTimeMap.get(markedStopId) + transferEntry.getValue());
                     tripLegWiseEarliestArrivalTimeMap.get(tripLegNumber).replace(transferEntry.getKey(),
