@@ -208,13 +208,13 @@ public class GTFSDataReaderWriter {
                     // Midnight time wraparound errors exist in GTFS data
                     String arrivalTimeHourString = stopTimeDataRecord[arrivalTimeIndex].substring(0, 2);
                     String arrivalTimeMinuteString = stopTimeDataRecord[arrivalTimeIndex].substring(3, 5);
-                    int arrivalTimeMinutes = (Integer.parseInt(arrivalTimeHourString) * MINUTES_IN_HOUR +
-                            Integer.parseInt(arrivalTimeMinuteString)) % MINUTES_IN_DAY;
+                    double arrivalTimeMinutes = (Double.parseDouble(arrivalTimeHourString) * MINUTES_IN_HOUR +
+                            Double.parseDouble(arrivalTimeMinuteString)) % MINUTES_IN_DAY;
 
                     String departureTimeHourString = stopTimeDataRecord[departureTimeIndex].substring(0, 2);
                     String departureTimeMinuteString = stopTimeDataRecord[departureTimeIndex].substring(3, 5);
-                    int departureTimeMinutes = (Integer.parseInt(departureTimeHourString) * MINUTES_IN_HOUR +
-                            Integer.parseInt(departureTimeMinuteString)) % MINUTES_IN_DAY;
+                    double departureTimeMinutes = (Double.parseDouble(departureTimeHourString) * MINUTES_IN_HOUR +
+                            Double.parseDouble(departureTimeMinuteString)) % MINUTES_IN_DAY;
 
                     StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
@@ -283,6 +283,7 @@ public class GTFSDataReaderWriter {
             this.stopTimes.replace(routeId, sortedStopTime);
         }
         System.out.println("Stop times' data sorted (route-specific trips ranked) using first stop's departure time");
+        // System.out.println(this.stopTimes);  // Debugging statement
     }
 
     // Complete the "routes" hashmap
@@ -732,9 +733,9 @@ public class GTFSDataReaderWriter {
                             entrySet()) {
                         int stopId = stopTimeTriplet.getKey();
                         int stopSequence = stopTimeTriplet.getValue().getStopSequence();
-                        String arrivalTime = (stopTimeTriplet.getValue().getArrivalTime() % MINUTES_IN_DAY) /
-                                MINUTES_IN_HOUR + ":" + (stopTimeTriplet.getValue().getArrivalTime() % MINUTES_IN_DAY) %
-                                MINUTES_IN_HOUR;
+                        String arrivalTime = ((int) ((stopTimeTriplet.getValue().getArrivalTime() % MINUTES_IN_DAY) /
+                                MINUTES_IN_HOUR)) + ":" + ((int) (stopTimeTriplet.getValue().getArrivalTime() %
+                                MINUTES_IN_DAY) % MINUTES_IN_HOUR);
                         String departureTime = (stopTimeTriplet.getValue().getDepartureTime() % MINUTES_IN_DAY) /
                                 MINUTES_IN_HOUR + ":" + (stopTimeTriplet.getValue().getDepartureTime() %
                                 MINUTES_IN_DAY) % MINUTES_IN_HOUR;

@@ -1,19 +1,19 @@
 package src.PublicTransportRouter.RoutingAlgorithm;
 
 public class TransitQueryResponse {
-    private int earliestArrivalTimeMinutes;
-    private int travelTimeMinutes;
+    private double earliestArrivalTimeMinutes;
+    private double travelTimeMinutes;
 
-    TransitQueryResponse(int earliestArrivalTimeMinutes, int travelTimeMinutes) {
+    TransitQueryResponse(double earliestArrivalTimeMinutes, double travelTimeMinutes) {
         this.earliestArrivalTimeMinutes = earliestArrivalTimeMinutes;
         this.travelTimeMinutes = travelTimeMinutes;
     }
 
-    public int getEarliestArrivalTimeMinutes() {
+    public double getEarliestArrivalTimeMinutes() {
         return this.earliestArrivalTimeMinutes;
     }
 
-    public int getTravelTimeMinutes() {
+    public double getTravelTimeMinutes() {
         return this.travelTimeMinutes;
     }
 }

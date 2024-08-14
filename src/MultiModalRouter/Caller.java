@@ -327,7 +327,7 @@ public class Caller {
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
-        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional
+        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional; see post-thesis
 
         // Write out data used for the Dijkstra algorithm
         osmDataReaderWriterForDijkstra.writeDijkstraLinks(dijkstraLinksFilePath);
