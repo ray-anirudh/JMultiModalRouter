@@ -270,6 +270,7 @@ public class RAPTOR {
                                 LinkedHashMap<Integer, StopTimeTriplet> revisedTripForTraversal =
                                         tripWiseStopTimeMaps.get(revisedTripIdForTraversal);
                                 if (revisedTripForTraversal == null) {
+                                    System.out.println("The new trip we ended up with is empty!!!");
                                     continue;
                                 }
                                 tripIterator = new ArrayList<>(revisedTripForTraversal.entrySet()).listIterator();
@@ -280,6 +281,7 @@ public class RAPTOR {
                     }
                 }
             }
+            Toolkit.getDefaultToolkit().beep();
         }
     long timeEnd = System.nanoTime();
         System.out.println("This run took "+((timeEnd -timeStart)/60_000_000_000L)+
@@ -311,6 +313,8 @@ public class RAPTOR {
         if (tripIdForTraversal == -1) {
             for (HashMap.Entry<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripSpecificStopTimeMap :
                     tripWiseStopTimeMaps.entrySet()) {
+
+                System.out.println("Stick point 777");
                 StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
                 if (stopTimeTriplet != null) {
                     if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY + MINUTES_IN_DAY) >=

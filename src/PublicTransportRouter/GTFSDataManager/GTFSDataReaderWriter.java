@@ -506,8 +506,9 @@ public class GTFSDataReaderWriter {
 
                 double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
-                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(),
-                        nearestNodeToStop.getNodeId(), this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.
+                                getNodeId(), nearestNodeToStop.getNodeId(), this.nodes, this.links) *
+                        AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                     double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
@@ -555,8 +556,8 @@ public class GTFSDataReaderWriter {
                         double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(
                                 fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
                                         toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
-                                findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.getNodeId(),
-                                        this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                                findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.
+                                                getNodeId(), this.nodes, this.links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
 
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
