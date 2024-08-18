@@ -4,6 +4,7 @@ package src.PublicTransportRouter.GTFSDataManager;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 
@@ -39,8 +40,8 @@ public class GTFSDataReaderWriter {
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
-    private static final int MAXIMUM_TRANSFER_DISTANCE_M = 300;    // (Gritsch, 2024) and (Tischner, 2018)
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 84D;   // (Gritsch, 2024)
+    private static final int MAXIMUM_TRANSFER_DISTANCE_M = 350;    // (Gritsch, 2024) and (Tischner, 2018)
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;   // (Gritsch, 2024)
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
     private static final int MINUTES_IN_HOUR = 60;
@@ -280,7 +281,7 @@ public class GTFSDataReaderWriter {
             StopTime sortedStopTime = new StopTime(sortedTripWiseStopTimeMaps);
 
             // Replace the old StopTime instance with the new sorted one
-            this.stopTimes.replace(routeId, sortedStopTime);
+            this.stopTimes.put(routeId, sortedStopTime);
         }
         System.out.println("Stop times' data sorted (route-specific trips ranked) using first stop's departure time");
         // System.out.println(this.stopTimes);  // Debugging statement
@@ -400,7 +401,7 @@ public class GTFSDataReaderWriter {
                     }
 
                     Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLongitude, stopLatitude);
-                    this.stops.replace(stopId, stop);
+                    this.stops.put(stopId, stop);
 
                     /* Debugging statements:
                     System.out.println("Stop name: " + stopName + "\n" +
@@ -438,7 +439,7 @@ public class GTFSDataReaderWriter {
                     stop.setStopTripCount(stop.getStopTripCount() + routeTripCount);
                 }
             }
-            this.stopRoutes.replace(stopId, stopSpecificRouteList);
+            this.stopRoutes.put(stopId, stopSpecificRouteList);
 
             if (this.stopRoutes.get(stopId).getRouteList().isEmpty()) {
                 this.stops.remove(stopId);
@@ -481,7 +482,7 @@ public class GTFSDataReaderWriter {
                     }
                 }
             }
-            this.transfers.replace(fromStopId, stopSpecificTransferMap);
+            this.transfers.put(fromStopId, stopSpecificTransferMap);
         }
         System.out.println("Transfers hashmap built (boundary conditions based on aerial distances)");
     }
@@ -513,7 +514,7 @@ public class GTFSDataReaderWriter {
 
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                     double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
-                    stopSpecificTransferMap.replace(toStopId, interStopWalkingTimeMin);
+                    stopSpecificTransferMap.put(toStopId, interStopWalkingTimeMin);
 
                     /* Debugging statements:
                     System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " + fromStopId +
@@ -565,8 +566,7 @@ public class GTFSDataReaderWriter {
                                     AVERAGE_WALKING_SPEED_M_PER_MIN);
                         } else {
                             // Penalize unrealistic transfers
-                            final double ARBITRARY_HIGH_TRANSFER_COST = 1_000_000D;
-                            this.transfers.get(fromStopId).getTransferMap().put(toStopId, ARBITRARY_HIGH_TRANSFER_COST);
+                            this.transfers.get(fromStopId).getTransferMap().remove(toStopId);
                         }
                     }
                 }
@@ -736,9 +736,9 @@ public class GTFSDataReaderWriter {
                         String arrivalTime = ((int) ((stopTimeTriplet.getValue().getArrivalTime() % MINUTES_IN_DAY) /
                                 MINUTES_IN_HOUR)) + ":" + ((int) (stopTimeTriplet.getValue().getArrivalTime() %
                                 MINUTES_IN_DAY) % MINUTES_IN_HOUR);
-                        String departureTime = (stopTimeTriplet.getValue().getDepartureTime() % MINUTES_IN_DAY) /
-                                MINUTES_IN_HOUR + ":" + (stopTimeTriplet.getValue().getDepartureTime() %
-                                MINUTES_IN_DAY) % MINUTES_IN_HOUR;
+                        String departureTime = ((int) ((stopTimeTriplet.getValue().getDepartureTime() % MINUTES_IN_DAY)
+                                / MINUTES_IN_HOUR)) + ":" + ((int) (stopTimeTriplet.getValue().getDepartureTime() %
+                                MINUTES_IN_DAY) % MINUTES_IN_HOUR);
 
                         raptorStopTimesWriter.write(routeId + "," + tripId + "," + stopSequence + "," + stopId +
                                 "," + arrivalTime + "," + departureTime + "\n");
