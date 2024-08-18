@@ -193,38 +193,39 @@ public class RAPTOR {
             // Traverse trip
             while (tripIterator.hasNext()) {
                 HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
+                System.out.println("STT Entry: " + stopTimeTripletEntry.getKey() + " ," + stopTimeTripletEntry.getValue().getArrivalTime());
                 if (stopTimeTripletEntry.getKey() == stopId) {
-//                    double previousArrivalTime = -1;    // Initialization to Double.MAX_VALUE was not helpful
+
+                    double previousArrivalTime = -1;
 //                    if (tripIterator.hasPrevious()) {
-//                        tripIterator.previous();    // Executing the first previous stop-finding operation
-//
-//                        boolean hasSecondPrevious = tripIterator.hasPrevious();
-//                        if (hasSecondPrevious) {
+//                        stopTimeTripletEntry = tripIterator.previous();
+//                        boolean hasAnotherPrevious = tripIterator.hasPrevious();
+//                        if (hasAnotherPrevious) {
 //                            stopTimeTripletEntry = tripIterator.previous();
-//                            // Executing the second previous stop-finding operation
 //                        }
-//                        previousArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime() + (dayCounter[0] *
-//                                MINUTES_IN_DAY);
-//                        if (hasSecondPrevious) {
+//
+//                        int previousStopId = stopTimeTripletEntry.getKey();
+//                        previousArrivalTime = (summaryEarliestArrivalTimeMap.get(previousStopId) != Double.MAX_VALUE) ?
+//                                stopTimeTripletEntry.getValue().getArrivalTime() : -1;  // todo how to find the first previous arrival time
+//
+//                        if (hasAnotherPrevious) {
 //                            tripIterator.next();
-//                            // Traverse an extra element forward only if we went an extra one backward
 //                        }
+//                        stopTimeTripletEntry = tripIterator.next();
 //                    }
+
                     boolean visitableNextStop;
                     do {
-                        // todo review all code from top to bottom, this entire class must get GTFS parser respect
+                        // todo review all code from top to bottom, this entire class must get GTFS parser-level respect
                         int currentStopId = stopTimeTripletEntry.getKey();
-                        double previousArrivalTime = (summaryEarliestArrivalTimeMap.get(currentStopId) !=
-                                Double.MAX_VALUE) ? summaryEarliestArrivalTimeMap.get(currentStopId) : -1;
-                        double previousArrivalTimeWithinMinutesOfDay = (previousArrivalTime != -1) ?
-                                previousArrivalTime % MINUTES_IN_DAY : -1;
                         double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime() + (dayCounter[0] *
                                 MINUTES_IN_DAY);    // Last expression is to address temporal wraparound
-                        double currentArrivalTimeWithinMinutesOfDay = currentArrivalTime % MINUTES_IN_DAY;
+                        System.out.println(currentArrivalTime + " " + previousArrivalTime);
 
-                        if (currentArrivalTimeWithinMinutesOfDay < previousArrivalTimeWithinMinutesOfDay) {
+                        if (currentArrivalTime < previousArrivalTime) {
                             dayCounter[0]++;
                             currentArrivalTime += MINUTES_IN_DAY;    // To address temporal wraparound
+                            System.out.println("Current arrival time: " + currentArrivalTime);
                         }
 
                         if (currentArrivalTime < Math.min(summaryEarliestArrivalTimeMap.get(currentStopId),
@@ -238,10 +239,13 @@ public class RAPTOR {
                             markedStops.add(currentStopId);
                         }
 
-                        /* Check to see if an earlier trip can be found at the concerned stop (check does not apply to
-                        first trip leg, as it is certain that no earlier trips could be caught at any of the iterated
-                        over stops)
-                        */
+                        visitableNextStop = tripIterator.hasNext();
+                        if (visitableNextStop) {
+                            stopTimeTripletEntry = tripIterator.next();
+                            previousArrivalTime = currentArrivalTime;
+                        }
+
+                        // Check to see if an earlier trip can be found at the concerned stop
                         if (summaryEarliestArrivalTimeMap.get(currentStopId) < currentArrivalTime) {
                             int revisedTripIdForTraversal = findEarliestTripIdForTraversal(currentStopId, dayCounter,
                                     tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
@@ -254,11 +258,6 @@ public class RAPTOR {
                                 stopId = currentStopId;
                                 break;
                             }
-                        }
-
-                        visitableNextStop = tripIterator.hasNext();
-                        if (visitableNextStop) {
-                            stopTimeTripletEntry = tripIterator.next();
                         }
                     } while (visitableNextStop);
                 }
@@ -276,7 +275,8 @@ public class RAPTOR {
                 tripWiseStopTimeMaps.entrySet()) {
             StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
             if (stopTimeTriplet != null) {
-                if ((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY) >= (summaryEarliestArrivalTimeMap.get(stopId)
+                // Deep analysis was needed to switch out departure times with arrival times
+                if ((stopTimeTriplet.getArrivalTime() % MINUTES_IN_DAY) >= (summaryEarliestArrivalTimeMap.get(stopId)
                         % MINUTES_IN_DAY)) {
                     tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                     break;
@@ -290,7 +290,8 @@ public class RAPTOR {
                     tripWiseStopTimeMaps.entrySet()) {
                 StopTimeTriplet stopTimeTriplet = tripSpecificStopTimeMap.getValue().get(stopId);
                 if (stopTimeTriplet != null) {
-                    if (((stopTimeTriplet.getDepartureTime() % MINUTES_IN_DAY) + MINUTES_IN_DAY) >=
+                    // Deep analysis was needed to switch out departure times with arrival times
+                    if (((stopTimeTriplet.getArrivalTime() % MINUTES_IN_DAY) + MINUTES_IN_DAY) >=
                             (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY)) {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                         dayCounter[0]++;
