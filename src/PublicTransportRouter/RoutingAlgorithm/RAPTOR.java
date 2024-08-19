@@ -22,6 +22,7 @@ public class RAPTOR {
                                                         LinkedHashMap<Integer, StopRoute> stopRoutes,
                                                         LinkedHashMap<Integer, Transfer> transfers) {
 
+        long queryStartTime = System.nanoTime();
         // Initialize earliest arrival time output
         TransitQueryResponse transitQueryResponse = new TransitQueryResponse(-1, -1);
 
@@ -61,6 +62,10 @@ public class RAPTOR {
             lookAtFootpaths(tripLegNumber, markedStops, transfers, summaryEarliestArrivalTimeMap,
                     tripLegWiseEarliestArrivalTimeMap);
 
+            // Handle fall-throughs as with stop ID "570936"
+            handleFirstLegExits(tripLegNumber, originStopId, markedStops, transfers, summaryEarliestArrivalTimeMap,
+                    tripLegWiseEarliestArrivalTimeMap);
+
             tripLegNumber += 1;
         }
         System.out.println(summaryEarliestArrivalTimeMap);
@@ -93,6 +98,8 @@ public class RAPTOR {
         System.out.println((transitQueryResponse.getTravelTimeMinutes() == Double.MAX_VALUE));
         System.out.println((transitQueryResponse.getTravelTimeMinutes() == Double.POSITIVE_INFINITY));
         System.out.println((transitQueryResponse.getTravelTimeMinutes()));
+        long queryEndTime = System.nanoTime();
+        System.out.println("QPT: " + (queryEndTime - queryStartTime) / 1000000000L + " seconds.");
         System.exit(1);
         return transitQueryResponse;
     }
@@ -180,8 +187,9 @@ public class RAPTOR {
             // Determine the pertinent trip
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
                     get(routeId).getTripWiseStopTimeMaps();
-            int tripIdForTraversal = findEarliestTripIdForTraversal(stopId, dayCounter, tripWiseStopTimeMaps,
-                    summaryEarliestArrivalTimeMap);
+            int tripIdForRedundancyCheck = -1;
+            int tripIdForTraversal = findEarliestTripIdForTraversal(stopId, dayCounter, tripIdForRedundancyCheck,
+                    tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
 
             LinkedHashMap<Integer, StopTimeTriplet> tripBeingTraversed = tripWiseStopTimeMaps.get(tripIdForTraversal);
             if ((tripBeingTraversed == null) || (tripBeingTraversed.isEmpty())) {
@@ -248,7 +256,7 @@ public class RAPTOR {
                         // Check to see if an earlier trip can be found at the concerned stop
                         if (summaryEarliestArrivalTimeMap.get(currentStopId) < currentArrivalTime) {
                             int revisedTripIdForTraversal = findEarliestTripIdForTraversal(currentStopId, dayCounter,
-                                    tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
+                                    tripIdForTraversal, tripWiseStopTimeMaps, summaryEarliestArrivalTimeMap);
                             LinkedHashMap<Integer, StopTimeTriplet> revisedTripForTraversal = tripWiseStopTimeMaps.
                                     get(revisedTripIdForTraversal);
                             if ((revisedTripIdForTraversal != tripIdForTraversal) && (revisedTripForTraversal != null)
@@ -266,7 +274,7 @@ public class RAPTOR {
     }
 
     // Determine the earliest possible trip that can be taken from a stop along a route
-    private int findEarliestTripIdForTraversal(int stopId, int[] dayCounter,
+    private int findEarliestTripIdForTraversal(int stopId, int[] dayCounter, int tripIdForRedundancyCheck,
                                                @NotNull LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>>
                                                        tripWiseStopTimeMaps,
                                                LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap) {
@@ -294,7 +302,9 @@ public class RAPTOR {
                     if (((stopTimeTriplet.getArrivalTime() % MINUTES_IN_DAY) + MINUTES_IN_DAY) >=
                             (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY)) {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
-                        dayCounter[0]++;
+                        if (tripIdForTraversal != tripIdForRedundancyCheck) {
+                            dayCounter[0]++;    // todo does this even work?
+                        }
                         break;
                     }
                 }
@@ -304,8 +314,8 @@ public class RAPTOR {
     }
 
     // Look at footpaths to update arrival times
-    private void lookAtFootpaths(int tripLegNumber,
-                                 @NotNull ArrayList<Integer> markedStops,
+    private static void lookAtFootpaths(int tripLegNumber,
+                                 ArrayList<Integer> markedStops,
                                  LinkedHashMap<Integer, Transfer> transfers,
                                  LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap,
                                  LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
@@ -341,5 +351,30 @@ public class RAPTOR {
             }
         }
         markedStops.addAll(newMarkedStops);
+    }
+
+    // Handle potential exits from the first leg of traversals (not the zeroth leg, as it concerns only the origin stop)
+    private static void handleFirstLegExits(int tripLegNumber,
+                                            int originStopId,
+                                            ArrayList<Integer> markedStops,
+                                            LinkedHashMap<Integer, Transfer> transfers,
+                                            LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap,
+                                            LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
+                                                    tripLegWiseEarliestArrivalTimeMap) {
+        int nonUpdatedStopCounter = 0;
+        if ((tripLegNumber == 1) && (markedStops.isEmpty())) {
+            for (double earliestArrivalTimeValue : summaryEarliestArrivalTimeMap.values()) {
+                if (earliestArrivalTimeValue == Double.MAX_VALUE) {
+                    nonUpdatedStopCounter++;
+                }
+            }
+        }
+
+        if (nonUpdatedStopCounter == (summaryEarliestArrivalTimeMap.size() - 1)) {
+            markedStops.add(originStopId);
+            lookAtFootpaths(tripLegNumber, markedStops, transfers, summaryEarliestArrivalTimeMap,
+                    tripLegWiseEarliestArrivalTimeMap);
+            markedStops.remove(0);
+        }
     }
 }
