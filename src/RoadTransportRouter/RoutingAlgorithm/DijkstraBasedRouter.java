@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 public class DijkstraBasedRouter {
-    private final double DRIVING_VS_AERIAL_DISTANCE_FACTOR = 1.45;
+    private final double ROAD_VS_AERIAL_DISTANCE_FACTOR = 1.45;
     /* Refer to: https://link.springer.com/chapter/10.1007/978-3-030-12381-9_12 or
     https://ctl.mit.edu/pub/workingpaper/quantifying-impact-urban-road-networks-efficiency-local-trips for more details
     */
@@ -53,7 +53,7 @@ public class DijkstraBasedRouter {
             } else {
                 travelTimeMin = (nodes.get(originNodeId).equiRectangularDistanceTo(nodes.get(destinationNodeId).
                         getNodeLongitude(), nodes.get(destinationNodeId).getNodeLatitude()) *
-                        DRIVING_VS_AERIAL_DISTANCE_FACTOR) / AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                        ROAD_VS_AERIAL_DISTANCE_FACTOR) / AVERAGE_DRIVING_SPEED_M_PER_MIN;
                 return travelTimeMin;
             }
 

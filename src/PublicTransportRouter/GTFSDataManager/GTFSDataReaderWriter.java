@@ -2,11 +2,10 @@ package src.PublicTransportRouter.GTFSDataManager;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 import java.io.*;
 import java.util.*;
+
+import org.jetbrains.annotations.NotNull;
 
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.RoadTransportRouter.OSMDataManager.Link;
