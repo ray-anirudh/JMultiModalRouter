@@ -217,7 +217,15 @@ public class OSMDataReaderWriter {
 
             link.setLinkTravelTimeMin(linkLengthM / AVERAGE_DRIVING_SPEED_M_PER_MIN);
         }
-        System.out.println("Link-wise travel times (in minutes) calculated");
+
+        ArrayList<HashMap.Entry<Long, Link>> linksList = new ArrayList<>(this.links.entrySet());
+        for (HashMap.Entry<Long, Link> linkEntry : linksList) {
+            Link link = linkEntry.getValue();
+            if ((link.getLinkTravelTimeMin() == 0) || (link.getLinkType() == null)) {
+                this.links.remove(linkEntry.getKey());
+            }
+        }
+        System.out.println("Link-wise travel times (in minutes) calculated, and zero-cost links deleted");
     }
 
     // Contract nodes and build shortcuts (implemented only for two-link nodes, but also possible for more-link nodes)

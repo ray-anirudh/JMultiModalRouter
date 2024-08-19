@@ -1,5 +1,6 @@
 package src.MultiModalRouter;
 
+import java.awt.*;
 import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
 import src.RoadTransportRouter.RoutingAlgorithm.DijkstraBasedRouter;
 
 public class Caller {
+    // TODO fix raptor for now
     private static final long NUMBER_MULTI_MODAL_QUERIES = 100;
     private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
@@ -195,7 +197,6 @@ public class Caller {
         // Find nodes close to origin and destination stops
         // ArrayList<Node> nodesNear
         System.exit(1);
-
     }
 
 
@@ -239,21 +240,35 @@ public class Caller {
                         nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN)) / AVERAGE_WALKING_SPEED_M_PER_MIN;
 
         // Note travel times between origin and destination stops, and report fastest leg-wise travel time combination
-        for (int i = 0; i <= stopsNearOriginNode.size(); i++) {
+        for (int i = 0; i < stopsNearOriginNode.size(); i++) {
+            Toolkit.getDefaultToolkit().beep();
             System.out.println("Number of stops: " + stopsNearOriginNode.size());
+            System.out.println("Departure time: " + originPointDepartureTime);
             long raptorTimeStart = System.nanoTime();
             double travelTimeOriginStopToDestinationStop = rAPTOR.findShortestTransitPath(stopsNearOriginNode.get(i).
                     getStopId(), stopNearestToDestinationNode.getStopId(), (originPointDepartureTime +
                     travelTimesOriginToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes, transfers).
                     getTravelTimeMinutes();
+            double arrivalTime = rAPTOR.findShortestTransitPath(stopsNearOriginNode.get(i).
+                    getStopId(), stopNearestToDestinationNode.getStopId(), (originPointDepartureTime +
+                    travelTimesOriginToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes, transfers).
+                    getEarliestArrivalTimeMinutes();
+            travelTimeOriginStopToDestinationStop = (travelTimeOriginStopToDestinationStop == -1) ? 0 :
+            travelTimeOriginStopToDestinationStop;  // todo see how to handle -1 outputs from RAPTOR
             double totalTravelTime = travelTimesOriginToOriginStops.get(i) + travelTimeOriginStopToDestinationStop +
                     travelTimeDestinationToDestinationStop;
             long raptortimeend = System.nanoTime();
             System.out.println("RAPTOR says " + totalTravelTime + " minutes");
+            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
+            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
+            System.out.println("RAPTOR says " + travelTimesOriginToOriginStops.get(i) + " minutes for its origin to origin stop");
+            System.out.println("RAPTOR says " + travelTimeDestinationToDestinationStop + " minutes for its dest stop to dest");
 
             if (totalTravelTime < leastTotalTravelTime) {
                 leastTotalTravelTime = totalTravelTime;
             }
+
+            System.out.println("Least total trav time: " + leastTotalTravelTime);
         }
 
         if (solutionType.equalsIgnoreCase("Exact")) {   // todo build
@@ -298,10 +313,10 @@ public class Caller {
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStops(gtfsStopsFilePath);
         gtfsDataReaderWriterForRAPTOR.padStopRoutes();
         gtfsDataReaderWriterForRAPTOR.buildTransfersHashMap();
-        gtfsDataReaderWriterForRAPTOR.filterTransfersHashMap();
+        // todo fix back gtfsDataReaderWriterForRAPTOR.filterTransfersHashMap();
 
         // Limit dataset to study area and ensure transitivity of transfers
-        gtfsDataReaderWriterForRAPTOR.makeTransfersTransitive();
+        // todo fix back gtfsDataReaderWriterForRAPTOR.makeTransfersTransitive();
         gtfsDataReaderWriterForRAPTOR.filterHashMapsOnLatLong();
 
         // Write out data used for RAPTOR
@@ -327,7 +342,7 @@ public class Caller {
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
-        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional
+        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional; see post-thesis
 
         // Write out data used for the Dijkstra algorithm
         osmDataReaderWriterForDijkstra.writeDijkstraLinks(dijkstraLinksFilePath);

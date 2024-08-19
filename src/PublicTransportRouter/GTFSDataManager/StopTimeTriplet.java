@@ -2,10 +2,10 @@ package src.PublicTransportRouter.GTFSDataManager;
 
 public class StopTimeTriplet {
     private int stopSequence;
-    private int arrivalTime;
-    private int departureTime;
+    private double arrivalTime;
+    private double departureTime;
 
-    StopTimeTriplet(int stopSequence, int arrivalTime, int departureTime) {
+    StopTimeTriplet(int stopSequence, double arrivalTime, double departureTime) {
         this.stopSequence = stopSequence;
         this.arrivalTime = arrivalTime;
         this.departureTime = departureTime;
@@ -14,10 +14,10 @@ public class StopTimeTriplet {
     public int getStopSequence() {
         return this.stopSequence;
     }
-    public int getArrivalTime() {
+    public double getArrivalTime() {
         return this.arrivalTime;
     }
-    public int getDepartureTime() {
+    public double getDepartureTime() {
         return this.departureTime;
     }
 }
