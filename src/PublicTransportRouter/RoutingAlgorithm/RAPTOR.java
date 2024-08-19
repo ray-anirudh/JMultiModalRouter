@@ -205,26 +205,8 @@ public class RAPTOR {
                 if (stopTimeTripletEntry.getKey() == stopId) {
 
                     double previousArrivalTime = -1;
-//                    if (tripIterator.hasPrevious()) {
-//                        stopTimeTripletEntry = tripIterator.previous();
-//                        boolean hasAnotherPrevious = tripIterator.hasPrevious();
-//                        if (hasAnotherPrevious) {
-//                            stopTimeTripletEntry = tripIterator.previous();
-//                        }
-//
-//                        int previousStopId = stopTimeTripletEntry.getKey();
-//                        previousArrivalTime = (summaryEarliestArrivalTimeMap.get(previousStopId) != Double.MAX_VALUE) ?
-//                                stopTimeTripletEntry.getValue().getArrivalTime() : -1;  // todo how to find the first previous arrival time
-//
-//                        if (hasAnotherPrevious) {
-//                            tripIterator.next();
-//                        }
-//                        stopTimeTripletEntry = tripIterator.next();
-//                    }
-
                     boolean visitableNextStop;
                     do {
-                        // todo review all code from top to bottom, this entire class must get GTFS parser-level respect
                         int currentStopId = stopTimeTripletEntry.getKey();
                         double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime() + (dayCounter[0] *
                                 MINUTES_IN_DAY);    // Last expression is to address temporal wraparound
@@ -303,7 +285,7 @@ public class RAPTOR {
                             (summaryEarliestArrivalTimeMap.get(stopId) % MINUTES_IN_DAY)) {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                         if (tripIdForTraversal != tripIdForRedundancyCheck) {
-                            dayCounter[0]++;    // todo does this even work?
+                            dayCounter[0]++;
                         }
                         break;
                     }
