@@ -5,8 +5,6 @@ package src.PublicTransportRouter.GTFSDataManager;
 import java.io.*;
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
-
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.RoadTransportRouter.OSMDataManager.Link;
 import src.RoadTransportRouter.OSMDataManager.Node;
@@ -40,6 +38,7 @@ public class GTFSDataReaderWriter {
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
     private static final int MAXIMUM_TRANSFER_DISTANCE_M = 350;    // (Gritsch, 2024) and (Tischner, 2018)
+    // TODO: Manage the maximum transfer distance value
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;   // (Gritsch, 2024)
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
@@ -836,7 +835,7 @@ public class GTFSDataReaderWriter {
      */
 
     // Index finder by column name strings
-    private int findIndexInArray(String columnHeaderName, @NotNull String[] headerArray) {
+    private int findIndexInArray(String columnHeaderName, String[] headerArray) {
         int columnPosition = -1;
         for (int i = 0; i < headerArray.length; i++) {
             if (headerArray[i].equalsIgnoreCase(columnHeaderName)) {

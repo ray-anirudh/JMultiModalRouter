@@ -1,4 +1,5 @@
 package src.MultiModalRouter;
+// todo check travel times against what google maps says and against GTFS stop IDs
 
 import java.awt.*;
 import java.util.*;
@@ -111,21 +112,36 @@ public class Caller {
         DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
         RAPTOR rAPTOR = new RAPTOR();
 
-        // Load all multi-modal queries using the generator, and instantiate the responses map
+        // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
+        // Consideration of Travel Behaviour chair-simulated trips for Munich and its environs
         String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
-        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
-        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
-                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
-        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
+                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
+        MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
+        multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
+        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
+
+//        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
+//        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+//                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
+//        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
+//        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
+//                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
+//        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
         long queryGenEndTime = System.nanoTime();
 
         double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
         LinkedHashMap<Long, MultiModalQueryResponses> multiModalQueryResponses = new LinkedHashMap<>();
         System.out.println("\n" +
-                "Multi-modal queries for JavaMultiModalRouter created in " + String.format("%.3f",
-                queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+                multiModalQueries.size() + "multi-modal queries for JavaMultiModalRouter read in " + String.format
+                ("%.3f", queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+        System.out.println("Origin stop ID: " + originStopId + ", Origin stop name: " + stops.get(originStopId).getStopName());
+        System.out.println("Destination stop ID: " + destinationStopId + ", Destination stop name: " + stops.get(destinationStopId).getStopName());
+        System.out.println("Departure time: " + departureTimeOriginStop);
+        System.out.println("Trip leg number: " + tripLegNumber);
+        System.out.println("Earliest arrival time in minutes: " + summaryEarliestArrivalTimeMap.get(destinationStopId));
+        System.out.println("Travel time in minutes: " + (summaryEarliestArrivalTimeMap.get(destinationStopId) -
+                departureTimeOriginStop) + "\n\n\n");
 
         /**
          * Execute few queries on the JMultiModalRouter architecture
@@ -258,11 +274,11 @@ public class Caller {
             double totalTravelTime = travelTimesOriginToOriginStops.get(i) + travelTimeOriginStopToDestinationStop +
                     travelTimeDestinationToDestinationStop;
             long raptortimeend = System.nanoTime();
-            System.out.println("RAPTOR says " + totalTravelTime + " minutes");
-            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
-            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
-            System.out.println("RAPTOR says " + travelTimesOriginToOriginStops.get(i) + " minutes for its origin to origin stop");
-            System.out.println("RAPTOR says " + travelTimeDestinationToDestinationStop + " minutes for its dest stop to dest");
+//            System.out.println("RAPTOR says " + totalTravelTime + " minutes");
+//            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
+//            System.out.println("RAPTOR says " + travelTimeOriginStopToDestinationStop + " minutes for its own result");
+//            System.out.println("RAPTOR says " + travelTimesOriginToOriginStops.get(i) + " minutes for its origin to origin stop");
+//            System.out.println("RAPTOR says " + travelTimeDestinationToDestinationStop + " minutes for its dest stop to dest");
 
             if (totalTravelTime < leastTotalTravelTime) {
                 leastTotalTravelTime = totalTravelTime;

@@ -2,12 +2,6 @@ package src.PublicTransportRouter.RoutingAlgorithm;
 // GTFS: General Transit Feed Specification
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 
-// todo delete all print statements when satisfied
-// todo check travel times against what google maps says and against GTFS stop IDs
-// todo develop perfect outputs
-// todo download data that Wei gave you
-// todo write a multi modal query reader
-
 import java.util.*;
 
 import src.PublicTransportRouter.GTFSDataManager.*;
@@ -64,22 +58,12 @@ public class RAPTOR {
             lookAtFootpaths(tripLegNumber, markedStops, transfers, summaryEarliestArrivalTimeMap,
                     tripLegWiseEarliestArrivalTimeMap);
 
-            // Handle fall-throughs as with stop ID "570936"
+            // Handle fall-through(s) as with stop ID "570936"
             handleFirstLegExits(tripLegNumber, originStopId, markedStops, transfers, summaryEarliestArrivalTimeMap,
                     tripLegWiseEarliestArrivalTimeMap);
 
             tripLegNumber += 1;
         }
-        // todo ignore from here...
-        System.out.println("SEAT Map: " + summaryEarliestArrivalTimeMap);
-        System.out.println("Origin stop ID: " + originStopId);
-        System.out.println("Destination stop ID: " + destinationStopId);
-        System.out.println("Departure time: " + departureTimeOriginStop);
-        System.out.println("Trip leg number: " + tripLegNumber);
-        System.out.println("Earliest arrival time in minutes: " + summaryEarliestArrivalTimeMap.get(destinationStopId));
-        System.out.println("Travel time in minutes: " + (summaryEarliestArrivalTimeMap.get(destinationStopId) -
-                departureTimeOriginStop));
-        // todo ...to here
 
         // Return query response
         double destinationStopEarliestArrivalTimeMinutes = summaryEarliestArrivalTimeMap.get(destinationStopId);
@@ -187,7 +171,10 @@ public class RAPTOR {
             // Traverse trip
             while (tripIterator.hasNext()) {
                 HashMap.Entry<Integer, StopTimeTriplet> stopTimeTripletEntry = tripIterator.next();
-                System.out.println("STT Entry: " + stopTimeTripletEntry.getKey() + " ," + stopTimeTripletEntry.getValue().getArrivalTime());
+                /* Debugging statements:
+                System.out.println("Stop-time triplet - stop ID: " + stopTimeTripletEntry.getKey() +
+                ", Stop-time triplet - arrival time at stop: " + stopTimeTripletEntry.getValue().getArrivalTime());
+                */
                 if (stopTimeTripletEntry.getKey() == stopId) {
 
                     double previousArrivalTime = -1;
@@ -196,12 +183,17 @@ public class RAPTOR {
                         int currentStopId = stopTimeTripletEntry.getKey();
                         double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime() + (dayCounter[0] *
                                 MINUTES_IN_DAY);    // Last expression is to address temporal wraparound
-                        System.out.println(currentArrivalTime + " " + previousArrivalTime);
+                        /* Debugging statements:
+                        System.out.println("Current arrival time: " + currentArrivalTime +
+                                ", Previous arrival time: " + previousArrivalTime);
+                        */
 
                         if (currentArrivalTime < previousArrivalTime) {
                             dayCounter[0]++;
                             currentArrivalTime += MINUTES_IN_DAY;    // To address temporal wraparound
-                            System.out.println("Current arrival time: " + currentArrivalTime);
+                            /* Debugging statements:
+                            System.out.println("Current arrival time after day change: " + currentArrivalTime);
+                            */
                         }
 
                         if (currentArrivalTime < Math.min(summaryEarliestArrivalTimeMap.get(currentStopId),

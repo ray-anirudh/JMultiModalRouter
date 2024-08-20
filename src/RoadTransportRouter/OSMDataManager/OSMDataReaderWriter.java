@@ -2,8 +2,6 @@ package src.RoadTransportRouter.OSMDataManager;
 // OSM: OpenStreetMap
 // OPL: Object-Per-Line (format)
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.*;
 import java.util.*;
 
@@ -360,7 +358,7 @@ public class OSMDataReaderWriter {
      */
 
     // Index finder based on presence of certain alphabets in an array element
-    private int findIndexInArray(String characterSequenceToFind, @NotNull String[] headerArray) {
+    private int findIndexInArray(String characterSequenceToFind, String[] headerArray) {
         int columnPosition = -1;
         for (int i = 0; i < headerArray.length; i++) {
             if (headerArray[i].contains(characterSequenceToFind)) {
