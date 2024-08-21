@@ -4,6 +4,7 @@ package src.MultiModalRouter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -17,14 +18,18 @@ public class MultiModalQueryGenerator {
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
+    private static final int EARTH_RADIUS_KM = 6_371;
+    private static final double TRIP_LENGTH_FACTOR = 1.4;
+    private static final double MINIMUM_TRIP_LENGTH_KM = 10;
     private static final Random RANDOM = new Random();
     private final LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
     // Generate queries to pass into the multi-modal router
     LinkedHashMap<Long, MultiModalQuery> generateQueries(long numberOfQueries) {
         for (long queryCount = 1; queryCount <= numberOfQueries; ) {
-            // Generating longitudes and latitudes of origin and destination points as per multi-variate Gaussian logic
-            // Arguments are specified to generate destinations within Munich and origins within its environs
+            /* Generating longitudes and latitudes of origin and destination points as per multi-variate Gaussian logic
+            Arguments are specified to generate destinations within Munich and origins within its environs
+            */
             double originLongitude = STUDY_AREA_LONGITUDE_MIN + ((STUDY_AREA_LONGITUDE_MAX - STUDY_AREA_LONGITUDE_MIN) *
                     (RANDOM.nextGaussian(0.5, 0.16)));
             double originLatitude = STUDY_AREA_LATITUDE_MIN + ((STUDY_AREA_LATITUDE_MAX - STUDY_AREA_LATITUDE_MIN) *
@@ -35,8 +40,6 @@ public class MultiModalQueryGenerator {
                     (RANDOM.nextGaussian(0.5, 0.16)));
 
             // Calculate ballpark trip lengths
-            final int EARTH_RADIUS_KM = 6_371;
-            final double TRIP_LENGTH_FACTOR = 1.4;
             double longitudeDifference = Math.toRadians(destinationLongitude - originLongitude);
             double latitudeDifference = Math.toRadians(destinationLatitude - originLatitude);
             double x = longitudeDifference * Math.cos(Math.toRadians((originLatitude + destinationLatitude) / 2));
@@ -44,7 +47,7 @@ public class MultiModalQueryGenerator {
                     TRIP_LENGTH_FACTOR;
 
             // Use trips (origin-destination pairs) that are long enough to be ODM-transit-walk trips
-            if (tripLengthKm >= 9) {
+            if (tripLengthKm >= MINIMUM_TRIP_LENGTH_KM) {
                 // Generating desired departure time for the trip
                 double hourRandomizer = RANDOM.nextDouble() * 100;
                 double minuteRandomizer = RANDOM.nextDouble();

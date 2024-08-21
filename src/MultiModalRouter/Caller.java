@@ -26,7 +26,7 @@ public class Caller {
     private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 10_000;
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 9_000;
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;     // Translates to 1.4 m/s
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
@@ -123,20 +123,20 @@ public class Caller {
 
         // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
-//        // Consideration of Travel Behaviour chair-simulated trips for Munich and its environs
-//        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-//                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
-//        MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
-//        multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
-//        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
-
-        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
+        // Consideration of Travel Behaviour chair-simulated trips for Munich and its environs
         String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
-        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
-        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
-                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
-        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
+                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
+        MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
+        multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
+        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
+
+//        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
+//        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+//                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
+//        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
+//        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
+//                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
+//        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
         long queryGenEndTime = System.nanoTime();
 
         double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
