@@ -33,7 +33,7 @@ public class KDTreeForStops {
         return stop;
     }
 
-    // Build a KD-Tree to find all stops in a certain vicinity
+    // Build a KD-Tree to find all stops in a certain vicinity, or the nearest possible stop
     public void buildStopBasedKDTree(Stop[] stops) {
         this.kDTreeRootStop = buildKDTreeForStops(stops, 0);
         System.out.println("KD-Tree created for stops");

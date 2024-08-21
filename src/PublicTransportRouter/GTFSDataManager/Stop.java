@@ -23,14 +23,13 @@ public class Stop {
         this(0, "", 0, 0, 0D, 0D);
     }
 
-    public double equiRectangularDistanceTo(double otherLongitude, double otherLatitude) {
+    public double equiRectangularDistanceTo(double otherPointLongitude, double otherPointLatitude) {
         final int EARTH_RADIUS_M = 6_371_000;
-        double longitudeDifference = Math.toRadians(this.stopLongitude - otherLongitude);
-        double latitudeDifference = Math.toRadians(this.stopLatitude - otherLatitude);
+        double longitudeDifference = Math.toRadians(this.stopLongitude - otherPointLongitude);
+        double latitudeDifference = Math.toRadians(this.stopLatitude - otherPointLatitude);
 
-        double x = longitudeDifference * Math.cos(Math.toRadians((this.stopLatitude + otherLatitude) / 2));
-        double y = latitudeDifference;
-        return Math.sqrt(x * x + y * y) * EARTH_RADIUS_M;
+        double x = longitudeDifference * Math.cos(Math.toRadians((this.stopLatitude + otherPointLatitude) / 2));
+        return Math.sqrt(x * x + latitudeDifference * latitudeDifference) * EARTH_RADIUS_M;
     }
 
     void setStopType(int stopType) {

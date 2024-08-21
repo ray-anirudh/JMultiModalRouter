@@ -47,11 +47,11 @@ public class OSMDataReaderWriter {
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
 
     // Initialize the Dijkstra-relevant hashmaps
-    LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();
     // Keys in "nodes" hashmap refer to node IDs, and values pertain to nodal coordinates and lists of associated links
+    LinkedHashMap<Long, Node> nodes = new LinkedHashMap<>();
 
-    LinkedHashMap<Long, Link> links = new LinkedHashMap<>();
     // Keys in "links" hashmap refer to link IDs, and values pertain to associated nodes, link types, and travel times
+    LinkedHashMap<Long, Link> links = new LinkedHashMap<>();
 
     /**
      * BEHAVIOUR DEFINITIONS
