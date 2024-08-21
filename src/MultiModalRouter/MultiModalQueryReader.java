@@ -58,12 +58,13 @@ public class MultiModalQueryReader {
                         (originLongitude > STUDY_AREA_LONGITUDE_MAX) ||
                         (originLatitude > STUDY_AREA_LATITUDE_MAX) ||
                         (destinationLongitude > STUDY_AREA_LONGITUDE_MAX) ||
-                        destinationLatitude > STUDY_AREA_LATITUDE_MAX) {
+                        (destinationLatitude > STUDY_AREA_LATITUDE_MAX)) {
+                    continue;
                 } else {
                     multiModalQueryId++;
                     MultiModalQuery multiModalQuery = new MultiModalQuery(originLongitude, originLatitude,
                             departureTime, destinationLongitude, destinationLatitude);
-                    multiModalQueries.put(multiModalQueryId, multiModalQuery);
+                    this.multiModalQueries.put(multiModalQueryId, multiModalQuery);
                 }
             }
             System.out.println("Multi-modal queries read from " + multiModalQueriesFilePath);
