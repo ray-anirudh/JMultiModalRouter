@@ -1,4 +1,5 @@
 package src.MultiModalRouter;
+// Can average transfer costs at stops also be factored in for heuristic development
 
 public class MultiModalQueryResponses {
     // Attributes common to all cases
@@ -20,7 +21,6 @@ public class MultiModalQueryResponses {
     private String originStopNameExactSolution;
     private int originStopTypeExactSolution;
     private int originStopTripVolumeExactSolution;
-    private double originStopAverageTransferCostExactSolution;
     private double travelTimeOriginToOriginStopExactSolution;
     private double travelTimeOriginStopToDestinationStopExactSolution;
     private double totalTravelTimeExactSolution;
@@ -32,7 +32,6 @@ public class MultiModalQueryResponses {
     private String originStopNameSHSolution;
     private int originStopTypeSHSolution;
     private int originStopTripVolumeSHSolution;
-    private double originStopAverageTransferCostSHSolution;
     private double travelTimeOriginToOriginStopSHSolution;
     private double travelTimeOriginStopToDestinationStopSHSolution;
     private double totalTravelTimeSHSolution;
@@ -45,7 +44,6 @@ public class MultiModalQueryResponses {
     private String originStopNameTVSolution;
     private int originStopTypeTVSolution;
     private int originStopTripVolumeTVSolution;
-    private double originStopAverageTransferCostTVSolution;
     private double travelTimeOriginToOriginStopTVSolution;
     private double travelTimeOriginStopToDestinationStopTVSolution;
     private double totalTravelTimeTVSolution;
@@ -181,14 +179,6 @@ public class MultiModalQueryResponses {
         this.originStopTripVolumeExactSolution = originStopTripVolumeExactSolution;
     }
 
-    public double getOriginStopAverageTransferCostExactSolution() {
-        return this.originStopAverageTransferCostExactSolution;
-    }
-
-    public void setOriginStopAverageTransferCostExactSolution(double originStopAverageTransferCostExactSolution) {
-        this.originStopAverageTransferCostExactSolution = originStopAverageTransferCostExactSolution;
-    }
-
     public double getTravelTimeOriginToOriginStopExactSolution() {
         return this.travelTimeOriginToOriginStopExactSolution;
     }
@@ -259,14 +249,6 @@ public class MultiModalQueryResponses {
 
     public void setOriginStopTripVolumeSHSolution(int originStopTripVolumeSHSolution) {
         this.originStopTripVolumeSHSolution = originStopTripVolumeSHSolution;
-    }
-
-    public double getOriginStopAverageTransferCostSHSolution() {
-        return this.originStopAverageTransferCostSHSolution;
-    }
-
-    public void setOriginStopAverageTransferCostSHSolution(double originStopAverageTransferCostSHSolution) {
-        this.originStopAverageTransferCostSHSolution = originStopAverageTransferCostSHSolution;
     }
 
     public double getTravelTimeOriginToOriginStopSHSolution() {
@@ -347,14 +329,6 @@ public class MultiModalQueryResponses {
 
     public void setOriginStopTripVolumeTVSolution(int originStopTripVolumeTVSolution) {
         this.originStopTripVolumeTVSolution = originStopTripVolumeTVSolution;
-    }
-
-    public double getOriginStopAverageTransferCostTVSolution() {
-        return this.originStopAverageTransferCostTVSolution;
-    }
-
-    public void setOriginStopAverageTransferCostTVSolution(double originStopAverageTransferCostTVSolution) {
-        this.originStopAverageTransferCostTVSolution = originStopAverageTransferCostTVSolution;
     }
 
     public double getTravelTimeOriginToOriginStopTVSolution() {

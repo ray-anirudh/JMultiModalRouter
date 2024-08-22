@@ -4,7 +4,6 @@ package src.PublicTransportRouter.GTFSDataManager;
 public class Stop {
     private int stopId;
     private String stopName;    // Stop IDs are also contained in the pertinent hashmap, as well
-
     private double stopLongitude;
     private double stopLatitude;
     private int stopType;
