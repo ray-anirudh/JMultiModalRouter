@@ -1,5 +1,10 @@
 package src.MultiModalRouter;
+// TUM: Technical University of Munich
+// RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
+// OSM: OpenStreetMap
+// OPL: Object-Per-Line (format)
 // todo check travel times against what google maps says and against GTFS stop IDs
+// todo incorporate this in caller for Machine Learning purposes and use this exact structure
 
 import java.awt.*;
 import java.util.*;
@@ -21,15 +26,16 @@ public class Caller {
      * ATTRIBUTE DEFINITIONS
      */
 
-// todo average wait is 6 mins for access    https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6
     private static final long NUMBER_MULTI_MODAL_QUERIES = 100;
-    private static final long NANOSECONDS_PER_MINUTE = 60_000_000_000L;
+    private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 9_000;
     private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.2;     // Translates to 1.4 m/s
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
     // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
+    private static final double AVERAGE_ODM_WAIT_TIME_MIN = 6;
+    // (Source: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6)
 
     /**
      * BEHAVIOUR DEFINITIONS
@@ -65,8 +71,8 @@ public class Caller {
                 "Characteristics of parsed OSM data:" + "\n" +
                 "Number of nodes: " + nodes.size() + "\n" +
                 "Number of links: " + links.size() + "\n" +
-                "OSM-OPL data processed in " + String.format("%.3f",
-                osmDataProcessingDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+                "OSM-OPL data processed in " + String.format("%.3f", osmDataProcessingDuration / NANOSECONDS_PER_MIN) +
+                " minutes.");
 
         /**
          * GTFS data reader-writer instantiation to read, write, and store data
@@ -106,16 +112,16 @@ public class Caller {
                 "Number of stops: " + stops.size() + "\n" +
                 "Number of stopRoute objects: " + stopRoutes.size() + "\n" +
                 "Number of transfers: " + transfers.size() + "\n" +
-                "GTFS data processed in " + String.format("%.3f", gtfsDataProcessingDuration / NANOSECONDS_PER_MINUTE)
+                "GTFS data processed in " + String.format("%.3f", gtfsDataProcessingDuration / NANOSECONDS_PER_MIN)
                 + " minutes.");
 
         double kDTreesBuildDuration = (double) ((kDStopEndTime - kDStopStartTime) + (kDNodeEndTime - kDNodeStartTime));
         System.out.println("\n" +
                 "KD-Trees for searching nearest nodes and stops built in " + String.format("%.3f",
-                kDTreesBuildDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+                kDTreesBuildDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         /**
-         * Instantiate routers and generate multi-modal queries
+         * Instantiate routers and generate/ read multi-modal queries
          */
         // Set up router instances
         DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
@@ -123,7 +129,7 @@ public class Caller {
 
         // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
-        // Consideration of Travel Behaviour chair-simulated trips for Munich and its environs
+        // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
         String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
                 "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
@@ -143,11 +149,12 @@ public class Caller {
         LinkedHashMap<Long, MultiModalQueryResponses> multiModalQueryResponses = new LinkedHashMap<>();
         System.out.println("\n" +
                 multiModalQueries.size() + " multi-modal queries for JavaMultiModalRouter read in " + String.format
-                ("%.3f", queryGenerationDuration / NANOSECONDS_PER_MINUTE) + " minutes.");
+                ("%.3f", queryGenerationDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         /**
          * Execute few queries on the JMultiModalRouter architecture
          */
+        // todo incorporate this in caller for Machine Learning purposes and use this exact structure
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
             long queriesSolvingStartTime = System.nanoTime();
             // Parse query data
@@ -203,7 +210,7 @@ public class Caller {
             long queriesSolvingEndTime = System.nanoTime();
             double queriesSolvingDuration = (double) (queriesSolvingEndTime - queriesSolvingStartTime);
             System.out.println(stopsNearOriginNode.size() + " queries solved in: " + (queriesSolvingDuration /
-                    NANOSECONDS_PER_MINUTE) + " minutes.");
+                    NANOSECONDS_PER_MIN) + " minutes.");
             double leastTotalTravelTime = runRAPTORAndDijkstra(solutionType, originPointLongitude, originPointLatitude,
                     destinationPointLongitude, destinationPointLatitude, originPointDepartureTime, rAPTOR,
                     dijkstraBasedRouter, nodes, links, nodeNearOrigin, nodeNearDestination, kDTreeForNodes,
@@ -354,7 +361,7 @@ public class Caller {
     // Get Dijkstra-relevant datasets ready
     private static void getDijkstraMaps(String osmOplExtractFilePath,
                                         String dijkstraFolderPath,
-                                        @NotNull OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
+                                        OSMDataReaderWriter osmDataReaderWriterForDijkstra) {
         // Ready filepath arguments to write
         String dijkstraLinksFilePath = dijkstraFolderPath + "/dijkstraLinks.txt";
         String dijkstraNodesFilePath = dijkstraFolderPath + "/dijkstraNodes.txt";
@@ -364,7 +371,7 @@ public class Caller {
         osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(osmOplExtractFilePath);
         osmDataReaderWriterForDijkstra.associateLinksWithNode();
         osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
-        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // This step is optional; see post-thesis
+        // osmDataReaderWriterForDijkstra.contractNodesAndBuildShortcuts();    // Assess step post-thesis
 
         // Write out data used for the Dijkstra algorithm
         osmDataReaderWriterForDijkstra.writeDijkstraLinks(dijkstraLinksFilePath);

@@ -385,6 +385,7 @@ public class GTFSDataReaderWriter {
                 if (this.stops.containsKey(stopId)) {
                     int stopType = -1;
                     int stopTripCount = 0;
+                    double averageTransferCost = 0;
                     double stopLatitude = Double.parseDouble(stopDataRecord[stopLatitudeIndex + indexAdder]);
                     double stopLongitude = Double.parseDouble(stopDataRecord[stopLongitudeIndex + indexAdder]);
                     String stopName = "";
@@ -397,7 +398,8 @@ public class GTFSDataReaderWriter {
                         }
                     }
 
-                    Stop stop = new Stop(stopId, stopName, stopType, stopTripCount, stopLongitude, stopLatitude);
+                    Stop stop = new Stop(stopId, stopName, stopLongitude, stopLatitude, stopType, stopTripCount,
+                            averageTransferCost);
                     this.stops.put(stopId, stop);
 
                     /* Debugging statements:
@@ -492,6 +494,7 @@ public class GTFSDataReaderWriter {
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
         for (int fromStopId : fromStopIds) {
+            double averageTransferCostForStop = 0;
             LinkedHashMap<Integer, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
@@ -512,7 +515,7 @@ public class GTFSDataReaderWriter {
                 if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                     double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
                     stopSpecificTransferMap.put(toStopId, interStopWalkingTimeMin);
-
+                    averageTransferCostForStop += interStopWalkingTimeMin;
                     /* Debugging statements:
                     System.out.println("From stop: " + this.stops.get(fromStopId).getStopName() + " " + fromStopId +
                     "\n" +
@@ -524,6 +527,9 @@ public class GTFSDataReaderWriter {
                     stopSpecificTransferMap.remove(toStopId);
                 }
             }
+            // Set the initial average transfer cost for the stop
+            this.stops.get(fromStopId).setAverageTransferCost(averageTransferCostForStop / stopSpecificTransferMap.
+                    size());
         }
         System.out.println("Unrealistic transfers based on walking distances filtered out");
     }
@@ -536,6 +542,8 @@ public class GTFSDataReaderWriter {
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
         for (int fromStopId : fromStopIds) {
+            double averageTransferCostForStop = this.stops.get(fromStopId).getAverageTransferCost() * this.transfers.
+                    get(fromStopId).getTransferMap().size();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
             Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
@@ -561,6 +569,7 @@ public class GTFSDataReaderWriter {
                         if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
                                     AVERAGE_WALKING_SPEED_M_PER_MIN);
+                            averageTransferCostForStop += interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
                         } else {
                             // Penalize unrealistic transfers
                             this.transfers.get(fromStopId).getTransferMap().remove(toStopId);
@@ -568,6 +577,9 @@ public class GTFSDataReaderWriter {
                     }
                 }
             }
+            // Set the final average transfer cost for the stop
+            this.stops.get(fromStopId).setAverageTransferCost(averageTransferCostForStop / this.transfers.
+                    get(fromStopId).getTransferMap().size());
         }
         System.out.println("Transitivity of transfers established");
     }
@@ -756,7 +768,8 @@ public class GTFSDataReaderWriter {
             BufferedWriter raptorStopsWriter = new BufferedWriter(new FileWriter(raptorStopsFilePath));
 
             // Set up header array
-            raptorStopsWriter.write("stop_id,stop_name,location_type,stop_trip_count,stop_lon,stop_lat\n");
+            raptorStopsWriter.write("stop_id,stop_name,location_type,stop_trip_count,stop_lon,stop_lat," +
+                    "average_transfer_cost\n");
 
             // Write body based on "stops" hashmap
             for (HashMap.Entry<Integer, Stop> stopEntry : this.stops.entrySet()) {
@@ -766,9 +779,10 @@ public class GTFSDataReaderWriter {
                 int stopTripCount = stopEntry.getValue().getStopTripCount();
                 double stopLongitude = stopEntry.getValue().getStopLongitude();
                 double stopLatitude = stopEntry.getValue().getStopLatitude();
+                double averageTransferCost = stopEntry.getValue().getAverageTransferCost();
 
                 raptorStopsWriter.write(stopId + "," + stopName + "," + locationType + "," + stopTripCount + "," +
-                        stopLongitude + "," + stopLatitude + "\n");
+                        stopLongitude + "," + stopLatitude + "," + averageTransferCost + "\n");
             }
             System.out.println("Stops' data written to " + raptorStopsFilePath);
 

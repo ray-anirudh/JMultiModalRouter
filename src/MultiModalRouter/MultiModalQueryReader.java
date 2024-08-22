@@ -92,13 +92,12 @@ public class MultiModalQueryReader {
     // Calculate equi-rectangular distances
     private static double calculateEquiRectangularDistance(double originLongitude, double originLatitude, double
                                                            destinationLongitude, double destinationLatitude) {
-        int earthRadiusKm = 6_371;
+        final int EARTH_RADIUS_KM = 6_371;
         double latitudeDifference = Math.toRadians(destinationLatitude - originLatitude);
         double longitudeDifference = Math.toRadians(destinationLongitude - originLongitude);
-
         double x = longitudeDifference * Math.cos(Math.toRadians((originLatitude + destinationLatitude) / 2));
 
-        return earthRadiusKm * Math.sqrt(x * x + latitudeDifference * latitudeDifference);
+        return EARTH_RADIUS_KM * Math.sqrt((x * x) + (latitudeDifference * latitudeDifference));
     }
 
     // Getter for map of multi-modal queries

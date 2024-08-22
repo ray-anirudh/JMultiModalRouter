@@ -174,7 +174,7 @@ public class Tester {
             multiModalQueryResponses.setOriginPointLatitude(originPointLatitude);
             multiModalQueryResponses.setDestinationPointLongitude(destinationPointLongitude);
             multiModalQueryResponses.setDestinationPointLatitude(destinationPointLatitude);
-            multiModalQueryResponses.setDepartureTimeOriginPointInt(originPointDepartureTime);
+            multiModalQueryResponses.setDepartureTimeOriginPoint(originPointDepartureTime);
 
             // Find nearest nodes for the origin and destination points, as well as their parameters
             Node originNode = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
@@ -809,7 +809,7 @@ public class Tester {
                                 multiModalQueryResponsesEntry.getValue().getOriginPointLatitude() + "," +
                                 multiModalQueryResponsesEntry.getValue().getDestinationPointLongitude() + "," +
                                 multiModalQueryResponsesEntry.getValue().getDestinationPointLatitude() + "," +
-                                multiModalQueryResponsesEntry.getValue().getDepartureTimeOriginPointInt() + "," +
+                                multiModalQueryResponsesEntry.getValue().getDepartureTimeOriginPoint() + "," +
                                 multiModalQueryResponsesEntry.getValue().getNearestOriginNodeId() + "," +
                                 multiModalQueryResponsesEntry.getValue().getNearestDestinationNodeId() + "," +
                                 multiModalQueryResponsesEntry.getValue().
