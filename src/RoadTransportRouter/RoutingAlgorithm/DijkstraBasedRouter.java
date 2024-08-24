@@ -56,7 +56,6 @@ public class DijkstraBasedRouter {
                         ROAD_VS_AERIAL_DISTANCE_FACTOR) / AVERAGE_DRIVING_SPEED_M_PER_MIN;
                 return travelTimeMin;
             }
-
         }
 
         // Return the travel time in minutes
