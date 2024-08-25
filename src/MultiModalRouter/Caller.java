@@ -37,7 +37,7 @@ public class Caller {
     private static final double AVERAGE_ODM_WAIT_TIME_MIN = 6;
     // (Source: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6)
     private static final int STOP_TYPE_TO_IGNORE = 3;    // Aimed at the "stop hierarchy" (SH) heuristic
-    private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 450;  // Aimed at the "trip volume" (TV) heuristic
+    private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 400;  // Aimed at the "trip volume" (TV) heuristic
 
     /**
      * BEHAVIOUR DEFINITIONS
@@ -49,11 +49,8 @@ public class Caller {
          */
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester" +
-                "/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
-                "BBBikeOSMExtract.opl";
-        String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/DijkstraMaps";
+        String osmOplExtractFilePath = "E:/anirudh/Thesis/Data/BBBikeOSMExtract.opl";
+        String dijkstraFolderPath = "E:/anirudh/Thesis/Results/DijkstraMaps";
         getDijkstraMaps(osmOplExtractFilePath, dijkstraFolderPath, osmDataReaderWriterForDijkstra);
 
         // Get all data for Dijkstra algorithm's execution
@@ -81,10 +78,8 @@ public class Caller {
          */
         long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
-        String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/" +
-                "Data/GTFSDataMunich/Downloaded/AGGTFSData";
-        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/RAPTORMaps";
+        String gtfsFolderPath = "E:/anirudh/Thesis/Data/AGGTFSData";
+        String rAPTORFolderPath = "E:/anirudh/Thesis/Results/RAPTORMaps";
         getRAPTORMaps(gtfsFolderPath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
 
         // Get all data for RAPTOR execution
@@ -128,8 +123,7 @@ public class Caller {
         // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
         // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
-        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
+        String multiModalQueriesFilePath = "E:/anirudh/Thesis/Data/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
         LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
@@ -284,8 +278,8 @@ public class Caller {
                 queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         // Write out responses to the multi-modal queries
-        String multiModalQueriesResponsesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
-                "Fourth Semester/MasterThesis/Results/MultiModalQueriesResponses/multiModalQueriesResponses.csv";
+        String multiModalQueriesResponsesFilePath = "E:/anirudh/Thesis/Results/LearningData/" +
+                "multiModalQueriesResponses.csv";
         writeMultiModalQueriesResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
     }
 

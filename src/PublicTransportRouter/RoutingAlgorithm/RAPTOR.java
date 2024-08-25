@@ -29,16 +29,18 @@ public class RAPTOR {
         // Initialize a trip leg-wise earliest arrival time map
         LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tripLegWiseEarliestArrivalTimeMap =
                 new LinkedHashMap<>();
-        tripLegWiseEarliestArrivalTimeMap.put(0, summaryEarliestArrivalTimeMap);    // For the zeroth trip leg
+        int tripLegNumber = 0;
+        tripLegWiseEarliestArrivalTimeMap.put(tripLegNumber, summaryEarliestArrivalTimeMap);  // For the zeroth trip leg
 
         // Add the origin stop to the list of marked stops, only for the first round of route scans
         ArrayList<Integer> markedStops = new ArrayList<>();
         markedStops.add(originStopId);
         LinkedHashMap<Integer, Integer> routesServingMarkedStops = new LinkedHashMap<>();
 
-        int tripLegNumber = 1;
+
         // Core RAPTOR loops
         while (!markedStops.isEmpty()) {
+            tripLegNumber += 1;
             /* Initialize a trip leg-specific earliest arrival time map inside the trip leg-wise earliest arrival time
             map; external integer keys refer to trip leg numbers, internal integer keys to stop IDs, and internal
             decimal values to the known earliest arrival times at the corresponding stops
@@ -62,7 +64,16 @@ public class RAPTOR {
             handleFirstLegExits(tripLegNumber, originStopId, markedStops, transfers, summaryEarliestArrivalTimeMap,
                     tripLegWiseEarliestArrivalTimeMap);
 
-            tripLegNumber += 1;
+            /* Debugging statements:
+            System.out.println("Trip leg number: " + tripLegNumber);
+            for (HashMap.Entry<Integer, Double> stopArrivalTimeEntry : tripLegWiseEarliestArrivalTimeMap.
+                    get(tripLegNumber).entrySet()) {
+                if (stopArrivalTimeEntry.getValue() != Double.MAX_VALUE) {
+                    System.out.println("Stop name: " + stops.get(stopArrivalTimeEntry.getKey()).getStopName() +
+                            ", Arrival time: " + stopArrivalTimeEntry.getValue());
+                }
+            }
+            */
         }
 
         // Return query response
@@ -73,6 +84,20 @@ public class RAPTOR {
             transitQueryResponse = new TransitQueryResponse(destinationStopEarliestArrivalTimeMinutes,
                     transitTravelTimeMinutes);
         }
+
+        /* Debugging statements:
+            System.out.println("Origin stop name: " + stops.get(originStopId).getStopName());
+            System.out.println("Origin stop latitude: " + stops.get(originStopId).getStopLatitude());
+            System.out.println("Origin stop longitude: " + stops.get(originStopId).getStopLongitude());
+            System.out.println("Destination stop name: " + stops.get(destinationStopId).getStopName());
+            System.out.println("Destination stop latitude: " + stops.get(destinationStopId).getStopLatitude());
+            System.out.println("Destination stop longitude: " + stops.get(destinationStopId).getStopLongitude());
+            System.out.println("Departure time from origin stop: " + departureTimeOriginStop);
+            System.out.println("SEAT from origin stop: " + summaryEarliestArrivalTimeMap.get(originStopId));
+            System.out.println("SEAT from destination stop: " + summaryEarliestArrivalTimeMap.get(destinationStopId));
+            System.out.println(tripLegNumber);
+            System.exit(7);
+        */
         return transitQueryResponse;
     }
 
@@ -153,6 +178,7 @@ public class RAPTOR {
 
             // To handle arrival times after a temporal wraparound
             int[] dayCounter = {(int) (summaryEarliestArrivalTimeMap.get(stopId) / MINUTES_IN_DAY)};
+            // System.out.println("Day counter initial value: " + Arrays.toString(dayCounter)); // Debugging statement
 
             // Determine the pertinent trip
             LinkedHashMap<Integer, LinkedHashMap<Integer, StopTimeTriplet>> tripWiseStopTimeMaps = stopTimes.
@@ -184,8 +210,11 @@ public class RAPTOR {
                         double currentArrivalTime = stopTimeTripletEntry.getValue().getArrivalTime() + (dayCounter[0] *
                                 MINUTES_IN_DAY);    // Last expression is to address temporal wraparound
                         /* Debugging statements:
-                        System.out.println("Current arrival time: " + currentArrivalTime +
-                                ", Previous arrival time: " + previousArrivalTime);
+                        System.out.println("Day counter: " + Arrays.toString(dayCounter));
+                        System.out.println(
+                                "Route ID: " + routeId + ", Trip ID: " + tripIdForTraversal +
+                                ", Current stop ID: " + currentStopId + ", Current arrival time: " + currentArrivalTime
+                                + ", Previous arrival time: " + previousArrivalTime);
                         */
 
                         if (currentArrivalTime < previousArrivalTime) {
@@ -231,6 +260,7 @@ public class RAPTOR {
                 }
             }
         }
+        // System.exit(0);  // Debugging statement to assess performance over a single route-stop pair
     }
 
     // Determine the earliest possible trip that can be taken from a stop along a route
@@ -247,6 +277,7 @@ public class RAPTOR {
                 if ((stopTimeTriplet.getArrivalTime() % MINUTES_IN_DAY) >= (summaryEarliestArrivalTimeMap.get(stopId)
                         % MINUTES_IN_DAY)) {
                     tripIdForTraversal = tripSpecificStopTimeMap.getKey();
+                    // System.out.println("Trip to hop-on to has been found");   // Debugging statement
                     break;
                 }
             }
@@ -264,6 +295,7 @@ public class RAPTOR {
                         tripIdForTraversal = tripSpecificStopTimeMap.getKey();
                         if (tripIdForTraversal != tripIdForRedundancyCheck) {
                             dayCounter[0]++;
+                            // System.out.println("Day counter updated with wraparound");   // Debugging statement
                         }
                         break;
                     }
