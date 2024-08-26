@@ -43,9 +43,7 @@ public class GTFSDataReaderWriter {
     // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
-    private static final String OSM_OPL_EXTRACT_FILE_PATH = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
-            "Fourth Semester/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
-            "BBBikeOSMExtract.opl";
+    private static final String OSM_OPL_EXTRACT_FILE_PATH = "E:/anirudh/Thesis/Data/BBBikeOSMExtract.opl";
 
     // Initialize the RAPTOR-relevant hashmaps
     // Key for "routes" hashmap refers to "route_id"
@@ -207,12 +205,12 @@ public class GTFSDataReaderWriter {
                     String arrivalTimeHourString = stopTimeDataRecord[arrivalTimeIndex].substring(0, 2);
                     String arrivalTimeMinuteString = stopTimeDataRecord[arrivalTimeIndex].substring(3, 5);
                     double arrivalTimeMinutes = (Double.parseDouble(arrivalTimeHourString) * MINUTES_IN_HOUR +
-                            Double.parseDouble(arrivalTimeMinuteString)) % MINUTES_IN_HOUR;
+                            Double.parseDouble(arrivalTimeMinuteString)) % MINUTES_IN_DAY;
 
                     String departureTimeHourString = stopTimeDataRecord[departureTimeIndex].substring(0, 2);
                     String departureTimeMinuteString = stopTimeDataRecord[departureTimeIndex].substring(3, 5);
                     double departureTimeMinutes = (Double.parseDouble(departureTimeHourString) * MINUTES_IN_HOUR +
-                            Double.parseDouble(departureTimeMinuteString)) % MINUTES_IN_HOUR;
+                            Double.parseDouble(departureTimeMinuteString)) % MINUTES_IN_DAY;
 
                     StopTimeTriplet stopTimeTriplet = new StopTimeTriplet(stopSequence, arrivalTimeMinutes,
                             departureTimeMinutes);
