@@ -151,7 +151,8 @@ public class Caller {
 //                "MasterThesis/Results/MultiModalQueriesMap/multiModalQueries.txt";
 //        MultiModalQueryGenerator multiModalQueryGenerator = new MultiModalQueryGenerator();
 //        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryGenerator.
-//                generateQueries(NUMBER_MULTI_MODAL_QUERIES);   // Method argument contains number of queries to generate
+//                generateQueries(NUMBER_MULTI_MODAL_QUERIES);
+//                // Method argument contains number of queries to generate
 //        multiModalQueryGenerator.writeMultiModalQueries(multiModalQueriesFilePath);
         long queryGenEndTime = System.nanoTime();
 
@@ -165,10 +166,8 @@ public class Caller {
         DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
         RAPTOR rAPTOR = new RAPTOR();
 
-        // Set up ExecutorService for parallel processing
+        // Set up an ExecutorService instance for parallel processing, and a list to hold Future objects
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-        // List to hold Future objects
         List<Future<Map.Entry<Long, MultiModalQueryResponses>>> futures = new ArrayList<>();
 
         /**
@@ -197,7 +196,8 @@ public class Caller {
 
                 // Determine nodes nearest to the origin and destination points
                 Node originNode = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
-                Node destinationNode = kDTreeForNodes.findNearestNode(destinationPointLongitude, destinationPointLatitude);
+                Node destinationNode = kDTreeForNodes.findNearestNode(destinationPointLongitude,
+                        destinationPointLatitude);
                 long originNodeId = originNode.getNodeId();
                 long destinationNodeId = destinationNode.getNodeId();
                 multiModalQueryResponses.setNearestOriginNodeId(originNodeId);
@@ -215,8 +215,8 @@ public class Caller {
 
                 // Determine travel time from destination stop to destination
                 double travelTimeDestinationStopToDestinationPoint = (destinationStop.equiRectangularDistanceTo(
-                        destinationStopNode.getNodeLongitude(), destinationStopNode.getNodeLatitude()) + destinationNode.
-                        equiRectangularDistanceTo(destinationPointLongitude, destinationPointLatitude) +
+                        destinationStopNode.getNodeLongitude(), destinationStopNode.getNodeLatitude()) +
+                        destinationNode.equiRectangularDistanceTo(destinationPointLongitude, destinationPointLatitude) +
                         (dijkstraBasedRouter.findShortestDrivingPathCostMin(destinationStopNode.getNodeId(),
                                 destinationNodeId, nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN)) /
                         AVERAGE_WALKING_SPEED_M_PER_MIN;
@@ -227,8 +227,9 @@ public class Caller {
                  * Building three sets of origin stops to test different heuristics
                  */
                 // For origin node, get all the stops in a doughnut catchment; initialize heuristic-based stop lists
-                ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.getNodeLongitude(),
-                        originNode.getNodeLatitude(), MINIMUM_DRIVING_DISTANCE_M, MAXIMUM_DRIVING_DISTANCE_M);
+                ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.
+                                getNodeLongitude(), originNode.getNodeLatitude(), MINIMUM_DRIVING_DISTANCE_M,
+                        MAXIMUM_DRIVING_DISTANCE_M);
                 ArrayList<Stop> stopsNearOriginNodeSHHeuristic = new ArrayList<>();
                 ArrayList<Stop> stopsNearOriginNodeTVHeuristic = new ArrayList<>();
 
@@ -292,7 +293,7 @@ public class Caller {
             futures.add(future);
         }
 
-        // Process the results and add to the response map
+        // Process the results and add to the response map before shutting down the executor
         for (Future<Map.Entry<Long, MultiModalQueryResponses>> future : futures) {
             try {
                 Map.Entry<Long, MultiModalQueryResponses> result = future.get();
