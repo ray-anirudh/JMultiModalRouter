@@ -31,7 +31,7 @@ public class Caller {
      * ATTRIBUTE DEFINITIONS
      */
 
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 120;  // todo used in cutters and generators
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 15_000;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
@@ -298,7 +298,6 @@ public class Caller {
                 Map.Entry<Long, MultiModalQueryResponses> result = future.get();
                 if (result != null) {
                     multiModalQueriesResponses.put(result.getKey(), result.getValue());
-                    System.out.println("Query response added");
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -368,10 +367,10 @@ public class Caller {
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStops(gtfsStopsFilePath);
         gtfsDataReaderWriterForRAPTOR.padStopRoutes();
         gtfsDataReaderWriterForRAPTOR.buildTransfersHashMap();
-        // gtfsDataReaderWriterForRAPTOR.filterTransfersHashMap();  // todo fix back
+        gtfsDataReaderWriterForRAPTOR.filterTransfersHashMap();
 
         // Limit dataset to study area and ensure transitivity of transfers
-        // gtfsDataReaderWriterForRAPTOR.makeTransfersTransitive(); // todo fix back
+        gtfsDataReaderWriterForRAPTOR.makeTransfersTransitive();
         gtfsDataReaderWriterForRAPTOR.filterHashMapsOnLatLong();
 
         // Write out data used for RAPTOR
