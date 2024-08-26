@@ -28,6 +28,7 @@ public class Caller {
 
     // private static final long NUMBER_MULTI_MODAL_QUERIES = 100;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
+    private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
     private static final double MAXIMUM_DRIVING_DISTANCE_M = 9_000;
@@ -268,7 +269,7 @@ public class Caller {
             unitsSolved++;
             System.out.println("Multi-modal query responses: " + multiModalQueriesResponses.size());
             Toolkit.getDefaultToolkit().beep();
-            if (unitsSolved == 15) {
+            if (unitsSolved == 1_000) {
                 break;
             }
         }
@@ -402,7 +403,7 @@ public class Caller {
         }
         long singleMultiModalQueryEvaluationEndTime = System.nanoTime();
         double singleMultiModalQueryEvaluationDuration = (double) ((singleMultiModalQueryEvaluationEndTime -
-                singleMultiModalQueryEvaluationStartTime) / NANOSECONDS_PER_MIN);
+                singleMultiModalQueryEvaluationStartTime) / NANOSECONDS_PER_SECOND);
 
         // Ascribe output(s) to multi-modal query response instance
         if (leastTotalTravelTime != Double.MAX_VALUE) {
@@ -481,7 +482,7 @@ public class Caller {
                                                         LinkedHashMap<Long, MultiModalQueryResponses>
                                                                 multiModalQueriesResponses) {
         try {
-            // Writer for "multiModalQueriesResponses.txt"
+            // Writer for "multiModalQueriesResponses.csv"
             BufferedWriter multiModalQueriesResponsesWriter = new BufferedWriter(new FileWriter(
                     multiModalQueriesResponsesFilePath));
 
@@ -523,7 +524,7 @@ public class Caller {
                         multiModalQueryResponsesEntry.getValue().getDestinationStopName() + "," +
                         multiModalQueryResponsesEntry.getValue().getTravelTimeDestinationStopToDestination() + "," +
                         multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredExactSolution() + "," +
-                        String.format(".18%f", multiModalQueryResponsesEntry.getValue().
+                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
                                 getTimeElapsedQueryProcessingExactSolution()) + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopIdExactSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopNameExactSolution() + "," +
@@ -535,7 +536,7 @@ public class Caller {
                                 getTravelTimeOriginStopToDestinationStopExactSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getTotalTravelTimeExactSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredSHSolution() + "," +
-                        String.format(".18%f", multiModalQueryResponsesEntry.getValue().
+                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
                                 getTimeElapsedQueryProcessingSHSolution()) + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopIdSHSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopNameSHSolution() + "," +
@@ -546,10 +547,10 @@ public class Caller {
                         multiModalQueryResponsesEntry.getValue().
                                 getTravelTimeOriginStopToDestinationStopSHSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getTotalTravelTimeSHSolution() + "," +
-                        String.format(".18%f", multiModalQueryResponsesEntry.getValue().
+                        String.format("%.18f", multiModalQueryResponsesEntry.getValue().
                                 getRelativeTravelTimeDifferenceInSHAndExactSolutions()) + "," +
                         multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredTVSolution() + "," +
-                        String.format(".18%f", multiModalQueryResponsesEntry.getValue().
+                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
                                 getTimeElapsedQueryProcessingTVSolution()) + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopIdTVSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getOriginStopNameTVSolution() + "," +
@@ -560,10 +561,12 @@ public class Caller {
                         multiModalQueryResponsesEntry.getValue().
                                 getTravelTimeOriginStopToDestinationStopTVSolution() + "," +
                         multiModalQueryResponsesEntry.getValue().getTotalTravelTimeTVSolution() + "," +
-                        String.format(".18%f", multiModalQueryResponsesEntry.getValue().
+                        String.format("%.18f", multiModalQueryResponsesEntry.getValue().
                                 getRelativeTravelTimeDifferenceInTVAndExactSolutions())
                         + "\n");
             }
+            System.out.println("Multi-modal queries' responses written to: " + multiModalQueriesResponsesFilePath);
+
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check the \"multi-modal queries' responses\" hashmap.");
         }
