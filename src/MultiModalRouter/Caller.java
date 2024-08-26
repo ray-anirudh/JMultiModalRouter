@@ -26,7 +26,7 @@ public class Caller {
      * ATTRIBUTE DEFINITIONS
      */
 
-    // private static final long NUMBER_MULTI_MODAL_QUERIES = 100;
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 100;  // todo used in cutters and generators
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
@@ -127,7 +127,19 @@ public class Caller {
         String multiModalQueriesFilePath = "E:/anirudh/Thesis/Data/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
-        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
+        LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
+        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
+
+        // Limit the number of multi-modal queries to be processed
+        int multiModalQueryCount = 0;
+        for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : allMultiModalQueries.entrySet()) {
+            multiModalQueryCount++;
+            multiModalQueries.put(multiModalQueryEntry.getKey(), multiModalQueryEntry.getValue());
+
+            if (multiModalQueryCount >= NUMBER_MULTI_MODAL_QUERIES) {
+                break;
+            }
+        }
 
 //        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
 //        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
@@ -151,7 +163,6 @@ public class Caller {
         /**
          * Execute few queries on the JMultiModalRouter architecture
          */
-        int unitsSolved = 0;
         long queriesSolvingStartTime = System.nanoTime();
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
             // Get the multi-modal query and response instances
@@ -265,12 +276,6 @@ public class Caller {
                 }
             } else {
                 System.out.println("Skipping due to poor heuristic sets.");
-            }
-            unitsSolved++;
-            System.out.println("Multi-modal query responses: " + multiModalQueriesResponses.size());
-            Toolkit.getDefaultToolkit().beep();
-            if (unitsSolved == 1_000) {
-                break;
             }
         }
         long queriesSolvingEndTime = System.nanoTime();
