@@ -267,19 +267,22 @@ public class Caller {
                     runRAPTORAndDijkstra(stopsNearOriginNode, kDTreeForNodes, solutionTypeFlag, originPointLongitude,
                             originPointLatitude, originNode, originPointDepartureTime,
                             travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers, multiModalQueryResponses);
+                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
+                            multiModalQueryResponses);
 
                     solutionTypeFlag = "StopHierarchy";
                     runRAPTORAndDijkstra(stopsNearOriginNodeSHHeuristic, kDTreeForNodes, solutionTypeFlag,
                             originPointLongitude, originPointLatitude, originNode, originPointDepartureTime,
                             travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers, multiModalQueryResponses);
+                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
+                            multiModalQueryResponses);
 
                     solutionTypeFlag = "TripVolume";
                     runRAPTORAndDijkstra(stopsNearOriginNodeTVHeuristic, kDTreeForNodes, solutionTypeFlag,
                             originPointLongitude, originPointLatitude, originNode, originPointDepartureTime,
                             travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers, multiModalQueryResponses);
+                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
+                            multiModalQueryResponses);
 
                     if ((multiModalQueryResponses.getTotalTravelTimeExactSolution() != Double.MAX_VALUE) &&
                             (multiModalQueryResponses.getTotalTravelTimeSHSolution() != Double.MAX_VALUE) &&
@@ -422,7 +425,8 @@ public class Caller {
         for (int i = 0; i < stopsNearOriginNode.size(); i++) {
             double travelTimeOriginStopToDestinationStop = rAPTOR.findShortestTransitPath(stopsNearOriginNode.get(i).
                             getStopId(), destinationStopId, (originPointDepartureTime +
-                            travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes, transfers).
+                            travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes,
+                            transfers).
                     getTravelTimeMinutes();
 
             double totalTravelTime = (travelTimeOriginStopToDestinationStop == -1) ? Double.MAX_VALUE :
