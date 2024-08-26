@@ -18,6 +18,7 @@ public class MultiModalQueryReader {
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
     private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
+    private static final double MINIMUM_TRIP_LENGTH_KM = 10;
     LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
     /**
@@ -61,7 +62,7 @@ public class MultiModalQueryReader {
                         (destinationLongitude > STUDY_AREA_LONGITUDE_MAX) ||
                         (destinationLatitude > STUDY_AREA_LATITUDE_MAX) ||
                         (calculateEquiRectangularDistance(originLongitude, originLatitude, destinationLongitude,
-                                destinationLatitude) < 10)) {
+                                destinationLatitude) < MINIMUM_TRIP_LENGTH_KM)) {
                 } else {
                     MultiModalQuery multiModalQuery = new MultiModalQuery(originLongitude, originLatitude,
                             departureTime, destinationLongitude, destinationLatitude);
