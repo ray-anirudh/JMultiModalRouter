@@ -43,7 +43,7 @@ public class Caller {
     private static final double AVERAGE_ODM_WAIT_TIME_MIN = 6;
     // (Source: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6)
     private static final int STOP_TYPE_TO_IGNORE = 3;    // Aimed at the "stop hierarchy" (SH) heuristic
-    private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 400;  // Aimed at the "trip volume" (TV) heuristic
+    private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 450;  // Aimed at the "trip volume" (TV) heuristic
 
     /**
      * BEHAVIOUR DEFINITIONS
