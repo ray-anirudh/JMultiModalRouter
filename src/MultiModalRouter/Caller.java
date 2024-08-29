@@ -1,3 +1,12 @@
+/**
+ * Author: Anirudh Ray
+ * Institution: Professorship of Traffic Engineering and Control, Technical University of Munich
+ * Department: Mobility Systems Engineering, School of Engineering and Design
+ * E-mail Address: Anirudh.Ray@tum.de
+ * Purpose: Component of a Java-based multi-modal routing algorithm, built using RAPTOR, Dijkstra-algorithm, and
+ * KD-Trees
+ */
+
 package src.MultiModalRouter;
 // TUM: Technical University of Munich
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
@@ -31,7 +40,8 @@ public class Caller {
      * ATTRIBUTE DEFINITIONS
      */
 
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 15_000;
+    private static final long BEGIN_QUERY_ID = 209_000L;
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 9_000L;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
@@ -135,15 +145,10 @@ public class Caller {
         LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
         LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
-        // Limit the number of multi-modal queries to be processed
-        int multiModalQueryCount = 0;
-        for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : allMultiModalQueries.entrySet()) {
-            multiModalQueryCount++;
-            multiModalQueries.put(multiModalQueryEntry.getKey(), multiModalQueryEntry.getValue());
-
-            if (multiModalQueryCount >= NUMBER_MULTI_MODAL_QUERIES) {
-                break;
-            }
+        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
+        for (long multiModalQueryCount = BEGIN_QUERY_ID; multiModalQueryCount <= BEGIN_QUERY_ID +
+                NUMBER_MULTI_MODAL_QUERIES; multiModalQueryCount++) {
+            multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
         }
 
 //        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
