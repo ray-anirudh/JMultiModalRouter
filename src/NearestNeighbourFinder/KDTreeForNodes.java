@@ -86,6 +86,7 @@ public class KDTreeForNodes {
     // Find the nearest node to a source point from amongst a set of nodes
     public Node findNearestNode(double sourceLongitude, double sourceLatitude) {
         if (this.kDTreeRootNode == null) {
+            System.out.println(sourceLatitude + ", " + sourceLongitude);
             throw new IllegalStateException("Node-based KD-Tree is empty.");
         }
 

@@ -25,34 +25,12 @@ public class GTFSDataReaderWriter {
     /**
      * ATTRIBUTE DEFINITIONS
      */
-
-    private static final String[] AGENCY_ID_ARRAY = {
-            "21",  // Stadtwerke München
-            "40",  // Bayerische Regiobahn
-            "54",  // DB Regio AG Bayern
-            "62",  // DB Regio AG Südost
-            "71",  // Bayerische Oberlandbahn
-            "75",  // Go-Ahead Bayern GmbH
-            "153", // DB RegioBus Bayern
-            "173", // Regionalbus Ostbayern
-            "215", // Münchner Verkehrs- und Tarifverbund
-            "248", // Regionalverkehr Oberbayern
-            "302", // DB RegioNetz Verkehrs GmbH Südostbayernbahn
-            "390"  // Nahreisezug
-    };
-
-    // Set the constants
-    private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
-    private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
-    private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
-    private static final double STUDY_AREA_LONGITUDE_MAX = 12.043762;
-    private static final int MAXIMUM_TRANSFER_DISTANCE_M = 400;    // (Gritsch, 2024) and (Tischner, 2018)
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;   // (Gritsch, 2024)
-    private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
-    // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
+    ParametersFileReader parametersFileReader = new ParametersFileReader();
+    private final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
+    private final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+    private final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
-    private static final String OSM_OPL_EXTRACT_FILE_PATH = "E:/anirudh/Thesis/Data/BBBikeOSMExtract.opl";
 
     // Initialize the RAPTOR-relevant hashmaps
     // Key for "routes" hashmap refers to "route_id"
@@ -84,9 +62,6 @@ public class GTFSDataReaderWriter {
 
     // Setting up Dijkstra-relevant objects for transfer cost calculations
     private static final DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-    private static final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-    private static final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-    private static final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
     private static final KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
 
     /**
@@ -95,8 +70,12 @@ public class GTFSDataReaderWriter {
      */
 
     // Build the "routes" hashmap
-    public void readAndFilterGTFSRoutes(String gtfsRoutesFilePath) {
+    public void readAndFilterGTFSRoutes(String gtfsRoutesFilePath, String parametersFileFilePath) {
         try {
+            // Read the parameters file for parsing GTFS data
+            this.parametersFileReader.readParametersFile(parametersFileFilePath);
+            ArrayList<String> agencyIdList = this.parametersFileReader.getAgencyIdList();
+
             // Reader for "routes.txt"
             BufferedReader gtfsRoutesReader = new BufferedReader(new FileReader(gtfsRoutesFilePath));
             String newline;
@@ -106,7 +85,21 @@ public class GTFSDataReaderWriter {
             int agencyIdIndex = findIndexInArray("agency_id", routesHeaderArray);
             int routeIdIndex = findIndexInArray("route_id", routesHeaderArray);
             int routeTypeIndex = findIndexInArray("route_type", routesHeaderArray);
-            HashSet<String> agencyIdHashSet = new HashSet<>(Arrays.asList(AGENCY_ID_ARRAY));
+            HashSet<String> agencyIdHashSet = new HashSet<>(agencyIdList);
+            /* Agency IDs under consideration for JMMR's development:
+            "21", Stadtwerke München
+            "40", Bayerische Regiobahn
+            "54", DB Regio AG Bayern
+            "62", DB Regio AG Südost
+            "71", Bayerische Oberlandbahn
+            "75", Go-Ahead Bayern GmbH
+            "153", DB RegioBus Bayern
+            "173", Regionalbus Ostbayern
+            "215", Münchner Verkehrs- und Tarifverbund
+            "248", Regionalverkehr Oberbayern
+            "302", DB RegioNetz Verkehrs GmbH Südostbayernbahn
+            "390", Nahreisezug
+            */
 
             // Read body and process data
             while ((newline = gtfsRoutesReader.readLine()) != null) {
@@ -469,13 +462,13 @@ public class GTFSDataReaderWriter {
                 double interStopAerialDistanceM = this.stops.get(fromStopId).equiRectangularDistanceTo(
                         toStopLongitude, toStopLatitude);
 
-                if (interStopAerialDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                if (interStopAerialDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
                     /* Stops with identical latitude-longitude pairs are removed from each map, which is realistic to
                     avoid transfers at the very same stop; transfers are recorded in minutes
                     */
                     if (fromStopId != toStopId) {
                         double interStopAerialWalkingTimeMin = interStopAerialDistanceM /
-                                AVERAGE_WALKING_SPEED_M_PER_MIN;
+                                this.parametersFileReader.getAvgWalkingSpeedMPMin();
                         stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialWalkingTimeMin);
 
                         /* Debugging statements:
@@ -517,10 +510,11 @@ public class GTFSDataReaderWriter {
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
                         toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.
                                 getNodeId(), nearestNodeToStop.getNodeId(), nodes, links) *
-                        AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                        this.parametersFileReader.getAvgDrivingSpeedMPMin();
 
-                if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
-                    double interStopWalkingTimeMin = interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
+                if (interStopWalkingDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
+                    double interStopWalkingTimeMin = interStopWalkingDistanceM / this.parametersFileReader.
+                            getAvgWalkingSpeedMPMin();
                     stopSpecificTransferMap.put(toStopId, interStopWalkingTimeMin);
                     averageTransferCostForStop += interStopWalkingTimeMin;
                     /* Debugging statements:
@@ -571,12 +565,14 @@ public class GTFSDataReaderWriter {
                                 fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
                                         toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
                                 findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.
-                                                getNodeId(), nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN;
+                                                getNodeId(), nodes, links) * this.parametersFileReader.
+                                getAvgDrivingSpeedMPMin();
 
-                        if (interStopWalkingDistanceM <= MAXIMUM_TRANSFER_DISTANCE_M) {
+                        if (interStopWalkingDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    AVERAGE_WALKING_SPEED_M_PER_MIN);
-                            averageTransferCostForStop += interStopWalkingDistanceM / AVERAGE_WALKING_SPEED_M_PER_MIN;
+                                    this.parametersFileReader.getAvgWalkingSpeedMPMin());
+                            averageTransferCostForStop += interStopWalkingDistanceM / this.parametersFileReader.
+                                    getAvgWalkingSpeedMPMin();
                         } else {
                             // Penalize unrealistic transfers
                             this.transfers.get(fromStopId).getTransferMap().remove(toStopId);
@@ -597,10 +593,10 @@ public class GTFSDataReaderWriter {
         for (Iterator<HashMap.Entry<Integer, Stop>> stopIterator = this.stops.entrySet().iterator(); stopIterator.
                 hasNext(); ) {
             HashMap.Entry<Integer, Stop> stopEntry = stopIterator.next();
-            if ((stopEntry.getValue().getStopLatitude() > STUDY_AREA_LATITUDE_MAX) ||
-                    (stopEntry.getValue().getStopLatitude() < STUDY_AREA_LATITUDE_MIN) ||
-                    (stopEntry.getValue().getStopLongitude() > STUDY_AREA_LONGITUDE_MAX) ||
-                    (stopEntry.getValue().getStopLongitude() < STUDY_AREA_LONGITUDE_MIN)) {
+            if ((stopEntry.getValue().getStopLatitude() > this.parametersFileReader.getStudyAreaLatitudeMax()) ||
+                    (stopEntry.getValue().getStopLatitude() < this.parametersFileReader.getStudyAreaLatitudeMin()) ||
+                    (stopEntry.getValue().getStopLongitude() > this.parametersFileReader.getStudyAreaLongitudeMax()) ||
+                    (stopEntry.getValue().getStopLongitude() < this.parametersFileReader.getStudyAreaLongitudeMin())) {
                 stopIterator.remove();
                 this.stopRoutes.remove(stopEntry.getKey());
                 this.transfers.remove(stopEntry.getKey());
@@ -865,10 +861,10 @@ public class GTFSDataReaderWriter {
         return columnPosition;
     }
 
-    // Comma counter in a string array
+    // Comma counter in a string
     private int countCommasInString(String string) {
         int commaCount = 0;
-        for(int i = 0; i < string.length(); i++) {
+        for (int i = 0; i < string.length(); i++) {
             if (string.substring(i, i+1).equalsIgnoreCase(",")) {
                 commaCount++;
             }
@@ -877,13 +873,11 @@ public class GTFSDataReaderWriter {
     }
 
     // Get Dijkstra-relevant datasets ready
-    private static void getDijkstraMaps() {
-        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(GTFSDataReaderWriter.
-                OSM_OPL_EXTRACT_FILE_PATH);
-        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(GTFSDataReaderWriter.
-                OSM_OPL_EXTRACT_FILE_PATH);
-        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.associateLinksWithNode();
-        GTFSDataReaderWriter.osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
+    private void getDijkstraMaps() {
+        this.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(this.parametersFileReader.getOsmOplExtractFilePath());
+        this.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(this.parametersFileReader.getOsmOplExtractFilePath());
+        this.osmDataReaderWriterForDijkstra.associateLinksWithNode();
+        this.osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
     }
 
     // Getters of transit timetable data for RAPTOR queries

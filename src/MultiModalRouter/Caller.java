@@ -65,8 +65,11 @@ public class Caller {
          */
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        String osmOplExtractFilePath = "E:/anirudh/Thesis/Data/BBBikeOSMExtract.opl";
-        String dijkstraFolderPath = "E:/anirudh/Thesis/Results/DijkstraMaps";
+        String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
+                "BBBikeOSMExtract.opl";
+        String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/DijkstraMaps";
         getDijkstraMaps(osmOplExtractFilePath, dijkstraFolderPath, osmDataReaderWriterForDijkstra);
 
         // Get all data for Dijkstra algorithm's execution
@@ -94,9 +97,13 @@ public class Caller {
          */
         long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
-        String gtfsFolderPath = "E:/anirudh/Thesis/Data/AGGTFSData";
-        String rAPTORFolderPath = "E:/anirudh/Thesis/Results/RAPTORMaps";
-        getRAPTORMaps(gtfsFolderPath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
+        String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Data/GTFSDataMunich/Downloaded/AGGTFSData";
+        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Results/RAPTORMaps";
+        String parametersFileFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/JMultiModalRouter/JMMRParameters/GTFSParameters.txt";
+        getRAPTORMaps(gtfsFolderPath, parametersFileFilePath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
 
         // Get all data for RAPTOR execution
         LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRAPTOR.getRoutes();
@@ -139,7 +146,8 @@ public class Caller {
         // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
         // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
-        String multiModalQueriesFilePath = "E:/anirudh/Thesis/Data/multiModalQueries.csv";
+        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
+                "MasterThesis/Data/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
         LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
@@ -320,8 +328,8 @@ public class Caller {
                 queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         // Write out responses to the multi-modal queries
-        String multiModalQueriesResponsesFilePath = "E:/anirudh/Thesis/Results/LearningData/" +
-                "multiModalQueriesResponses.csv";
+        String multiModalQueriesResponsesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
+                "Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponses.csv";
         writeMultiModalQueriesResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
     }
 
@@ -347,6 +355,7 @@ public class Caller {
 
     // Get RAPTOR-relevant datasets ready
     private static void getRAPTORMaps(String gtfsFolderPath,
+                                      String parametersFileFilePath,
                                       String rAPTORFolderPath,
                                       GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR) {
         // Ready filepath arguments to read
@@ -365,7 +374,7 @@ public class Caller {
         String rAPTORTransfersFilePath = rAPTORFolderPath + "/transfers.txt";
 
         // Read and manage data for main RAPTOR loop
-        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSRoutes(gtfsRoutesFilePath);
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSRoutes(gtfsRoutesFilePath, parametersFileFilePath);
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSTrips(gtfsTripsFilePath);
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStopTimes(gtfsStopTimesFilePath);
         gtfsDataReaderWriterForRAPTOR.sortStopTimes();
