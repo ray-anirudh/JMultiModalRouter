@@ -41,7 +41,7 @@ public class Caller {
      */
 
     private static final long BEGIN_QUERY_ID = 209_000L;
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 9_000L;
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 9L;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
@@ -66,7 +66,7 @@ public class Caller {
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
         String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835,47.824_12.172,48.438.osm.opl/" +
+                "MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835_47.824_12.172_48.438.osm.opl/" +
                 "BBBikeOSMExtract.opl";
         String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
                 "MasterThesis/Results/DijkstraMaps";
@@ -147,7 +147,7 @@ public class Caller {
         long queryGenStartTime = System.nanoTime();
         // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
         String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/multiModalQueries.csv";
+                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
         LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();

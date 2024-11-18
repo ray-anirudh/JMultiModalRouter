@@ -26,9 +26,6 @@ public class GTFSDataReaderWriter {
      * ATTRIBUTE DEFINITIONS
      */
     ParametersFileReader parametersFileReader = new ParametersFileReader();
-    private final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-    private final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-    private final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
 
@@ -61,8 +58,11 @@ public class GTFSDataReaderWriter {
     private final LinkedHashMap<Integer, Transfer> transfers = new LinkedHashMap<>();
 
     // Setting up Dijkstra-relevant objects for transfer cost calculations
-    private static final DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
-    private static final KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
+    private final OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
+    private final LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
+    private final LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
+    private final DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
+    private final KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
 
     /**
      * BEHAVIOUR DEFINITIONS
@@ -490,7 +490,7 @@ public class GTFSDataReaderWriter {
     public void filterTransfersHashMap() {
         getDijkstraMaps();
         Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+        this.kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
         for (int fromStopId : fromStopIds) {
@@ -498,17 +498,17 @@ public class GTFSDataReaderWriter {
             LinkedHashMap<Integer, Double> stopSpecificTransferMap = this.transfers.get(fromStopId).getTransferMap();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
-            Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
+            Node nearestNodeFromStop = this.kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
 
             ArrayList<Integer> toStopIds = new ArrayList<>(stopSpecificTransferMap.keySet());
             for (int toStopId : toStopIds) {
                 double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
                 double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
-                Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
+                Node nearestNodeToStop = this.kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
 
                 double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(fromStopLongitude,
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
-                        toStopLatitude) + dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.
+                        toStopLatitude) + this.dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.
                                 getNodeId(), nearestNodeToStop.getNodeId(), nodes, links) *
                         this.parametersFileReader.getAvgDrivingSpeedMPMin();
 
@@ -539,7 +539,7 @@ public class GTFSDataReaderWriter {
     public void makeTransfersTransitive() {
         getDijkstraMaps();
         Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
-        kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
+        this.kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
 
         ArrayList<Integer> fromStopIds = new ArrayList<>(this.transfers.keySet());
         for (int fromStopId : fromStopIds) {
@@ -547,7 +547,7 @@ public class GTFSDataReaderWriter {
                     get(fromStopId).getTransferMap().size();
             double fromStopLongitude = this.stops.get(fromStopId).getStopLongitude();
             double fromStopLatitude = this.stops.get(fromStopId).getStopLatitude();
-            Node nearestNodeFromStop = kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
+            Node nearestNodeFromStop = this.kDTreeForNodes.findNearestNode(fromStopLongitude, fromStopLatitude);
 
             ArrayList<Integer> intermediateStopIds = new ArrayList<>(this.transfers.get(fromStopId).getTransferMap().
                     keySet());
@@ -558,12 +558,12 @@ public class GTFSDataReaderWriter {
                 for (int toStopId : toStopIds) {
                     double toStopLongitude = this.stops.get(toStopId).getStopLongitude();
                     double toStopLatitude = this.stops.get(toStopId).getStopLatitude();
-                    Node nearestNodeToStop = kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
+                    Node nearestNodeToStop = this.kDTreeForNodes.findNearestNode(toStopLongitude, toStopLatitude);
 
                     if (!this.transfers.get(fromStopId).getTransferMap().containsKey(toStopId)) {
                         double interStopWalkingDistanceM = nearestNodeFromStop.equiRectangularDistanceTo(
                                 fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
-                                        toStopLongitude, toStopLatitude) + dijkstraBasedRouter.
+                                        toStopLongitude, toStopLatitude) + this.dijkstraBasedRouter.
                                 findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.
                                                 getNodeId(), nodes, links) * this.parametersFileReader.
                                 getAvgDrivingSpeedMPMin();
