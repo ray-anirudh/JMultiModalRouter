@@ -41,7 +41,7 @@ public class Caller {
      */
 
     private static final long BEGIN_QUERY_ID = 209_000L;
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 9L;
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 90L;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
     private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
