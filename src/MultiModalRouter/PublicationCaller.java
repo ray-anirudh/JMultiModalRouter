@@ -4,14 +4,14 @@
  * Department: Mobility Systems Engineering, School of Engineering and Design
  * E-mail Address: Anirudh.Ray@tum.de
  * Purpose: Component of a Java-based multi-modal routing algorithm, built using RAPTOR, Dijkstra-algorithm, and
- * KD-Trees
+ * KD-Trees; Caller class built explicitly for publication purposes
  */
 
 package src.MultiModalRouter;
 // TUM: Technical University of Munich
 // RAPTOR: Round-based Public Transit Router (Delling et. al., 2015)
 // OSM: OpenStreetMap
-// OPL: Object-Per-Line (format)
+// OPL: Object-Per-Line (file format)
 
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.NearestNeighbourFinder.KDTreeForStops;
@@ -34,26 +34,36 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Caller {
+public class PublicationCaller {
 
     /**
      * ATTRIBUTE DEFINITIONS
      */
 
-    private static final long BEGIN_QUERY_ID = 209_000L;
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 90L;
+    private static final long BEGIN_QUERY_ID = 1L;
+    private static final long NUMBER_MULTI_MODAL_QUERIES = 300_000L;
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
-    private static final double MINIMUM_DRIVING_DISTANCE_M = 2_000;
+    private static final double MINIMUM_DRIVING_DISTANCE_M = 1_500;
     // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 9_000;
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;     // Translates to 1.4 m/s
+
+    private static final double MAXIMUM_DRIVING_DISTANCE_M = 12_000;
+    // Refer to: https://www.sciencedirect.com/science/article/pii/S0965856406001455
+    // Or: https://www.sciencedirect.com/science/article/pii/S0305054817302228
+    // Or: https://journals.sagepub.com/doi/10.3141/2219-12
+
+    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;
+    // Translates to 1.4 m/s
+
     private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
-    // (Source: https://www.tomtom.com/traffic-index/munich-traffic/); translates to approximately 29 km/h
+    // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
+
     private static final double AVERAGE_ODM_WAIT_TIME_MIN = 6;
-    // (Source: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6)
+    // Refer to: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6
+
     private static final int STOP_TYPE_TO_IGNORE = 3;
     // Aimed at the "stop hierarchy" (SH) heuristic
+
     private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 450;
     // Aimed at the "daily service count" (DSC) heuristic
 
@@ -440,8 +450,8 @@ public class Caller {
         // Calculate travel times between origin-destination stops, and report the minimized total travel time
         for (int i = 0; i < stopsNearOriginNode.size(); i++) {
             double travelTimeOriginStopToDestinationStop = rAPTOR.findShortestTransitPath(stopsNearOriginNode.get(i).
-                            getStopId(), destinationStopId, (originPointDepartureTime +
-                            travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes,
+                                    getStopId(), destinationStopId, (originPointDepartureTime +
+                                    travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes,
                             transfers).
                     getTravelTimeMinutes();
 
