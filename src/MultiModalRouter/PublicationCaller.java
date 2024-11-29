@@ -3,7 +3,7 @@
  * Institution: Professorship of Traffic Engineering and Control, Technical University of Munich
  * Department: Mobility Systems Engineering, School of Engineering and Design
  * E-mail Address: Anirudh.Ray@tum.de
- * Purpose: Component of a Java-based multi-modal routing algorithm, built using RAPTOR, Dijkstra-algorithm, and
+ * Purpose: Component of a Java-based multi-modal routing algorithm, built using RAPTOR, Dijkstra's algorithm, and
  * KD-Trees; Caller class built explicitly for publication purposes
  */
 
@@ -69,6 +69,23 @@ public class PublicationCaller {
         String gtfsParametersFilePath = callerParametersReader.getGtfsParametersFilePath();
         String multiModalQueriesFilePath = callerParametersReader.getMultiModalQueriesFilePath();
 
+        // Debugging statements: todo see what to do with this
+        System.out.println(beginQueryId + ", " +
+                numberMultiModalQueries + ", " +
+                minimumDrivingDistance + ", " +
+                maximumDrivingDistance + ", " +
+                avgWalkingSpeedMPerMin + ", " +
+                avgDrivingSpeedMPerMin + ", " +
+                avgODMWaitTimeMin + ", " +
+                stopTypeToIgnore + ", " +
+                cutoffDailyServiceCountOfStop + ", " +
+                osmOplExtractFilePath + ", " +
+                dijkstraFolderPath + ", " +
+                gtfsFolderPath + ", " +
+                raptorFolderPath + ", " +
+                gtfsParametersFilePath + ", " +
+                multiModalQueriesFilePath);
+
         /**
          * OSM data reader-writer instantiation to read, write, and store data
          */
@@ -79,12 +96,12 @@ public class PublicationCaller {
         // Get all data for Dijkstra algorithm's execution
         LinkedHashMap<Long, Link> links = osmDataReaderWriterForDijkstra.getLinks();
         LinkedHashMap<Long, Node> nodes = osmDataReaderWriterForDijkstra.getNodes();
-        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
         long osmEndTime = System.nanoTime();
         double osmDataProcessingDuration = (double) (osmEndTime - osmStartTime);
 
         // Set up the KD-Tree for nearest node searches
         long kDNodeStartTime = System.nanoTime();
+        Node[] nodesForNNSearches = nodes.values().toArray(new Node[0]);
         KDTreeForNodes kDTreeForNodes = new KDTreeForNodes();
         kDTreeForNodes.buildNodeBasedKDTree(nodesForNNSearches);
         long kDNodeEndTime = System.nanoTime();
@@ -109,7 +126,6 @@ public class PublicationCaller {
         LinkedHashMap<Integer, RouteStop> routeStops = gtfsDataReaderWriterForRAPTOR.getRouteStops();
         LinkedHashMap<Integer, StopTime> stopTimes = gtfsDataReaderWriterForRAPTOR.getStopTimes();
         LinkedHashMap<Integer, Stop> stops = gtfsDataReaderWriterForRAPTOR.getStops();
-        Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
         LinkedHashMap<Integer, StopRoute> stopRoutes = gtfsDataReaderWriterForRAPTOR.getStopRoutes();
         LinkedHashMap<Integer, Transfer> transfers = gtfsDataReaderWriterForRAPTOR.getTransfers();
         long gtfsEndTime = System.nanoTime();
@@ -117,6 +133,7 @@ public class PublicationCaller {
 
         // Set up the KD-Tree for nearest stop searches
         long kDStopStartTime = System.nanoTime();
+        Stop[] stopsForNNSearches = stops.values().toArray(new Stop[0]);
         KDTreeForStops kDTreeForStops = new KDTreeForStops();
         kDTreeForStops.buildStopBasedKDTree(stopsForNNSearches);
         long kDStopEndTime = System.nanoTime();
@@ -149,11 +166,11 @@ public class PublicationCaller {
         LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
         LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
-        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
-        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
-             multiModalQueryCount++) {
-            multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
-        }
+//        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
+//        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
+//             multiModalQueryCount++) {
+//            multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
+//        }
 
 //        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
 //        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
@@ -230,7 +247,7 @@ public class PublicationCaller {
                                 destinationNodeId, nodes, links) * avgDrivingSpeedMPerMin)) / avgWalkingSpeedMPerMin;
                 multiModalQueryResponses.setTravelTimeDestinationStopToDestination(
                         travelTimeDestinationStopToDestinationPoint);
-
+                // todo build a querz splitter for exact and heuristic sets
                 /**
                  * Building three sets of origin stops to test different heuristics
                  */
@@ -356,7 +373,7 @@ public class PublicationCaller {
 
     // Get RAPTOR-relevant datasets ready
     private static void getRAPTORMaps(String gtfsFolderPath,
-                                      String parametersFileFilePath,
+                                      String gtfsParametersFilePath,
                                       String rAPTORFolderPath,
                                       GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR) {
         // Ready filepath arguments to read
@@ -375,7 +392,7 @@ public class PublicationCaller {
         String rAPTORTransfersFilePath = rAPTORFolderPath + "/transfers.txt";
 
         // Read and manage data for main RAPTOR loop
-        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSRoutes(gtfsRoutesFilePath, parametersFileFilePath);
+        gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSRoutes(gtfsRoutesFilePath, gtfsParametersFilePath);
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSTrips(gtfsTripsFilePath);
         gtfsDataReaderWriterForRAPTOR.readAndFilterGTFSStopTimes(gtfsStopTimesFilePath);
         gtfsDataReaderWriterForRAPTOR.sortStopTimes();
