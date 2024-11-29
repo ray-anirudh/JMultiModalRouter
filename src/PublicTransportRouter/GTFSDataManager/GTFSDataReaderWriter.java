@@ -25,7 +25,7 @@ public class GTFSDataReaderWriter {
     /**
      * ATTRIBUTE DEFINITIONS
      */
-    ParametersFileReader parametersFileReader = new ParametersFileReader();
+    GTFSParametersReader gtfsParametersReader = new GTFSParametersReader();
     private static final int MINUTES_IN_HOUR = 60;
     private static final int MINUTES_IN_DAY = 1440;
 
@@ -73,8 +73,8 @@ public class GTFSDataReaderWriter {
     public void readAndFilterGTFSRoutes(String gtfsRoutesFilePath, String parametersFileFilePath) {
         try {
             // Read the parameters file for parsing GTFS data
-            this.parametersFileReader.readParametersFile(parametersFileFilePath);
-            ArrayList<String> agencyIdList = this.parametersFileReader.getAgencyIdList();
+            this.gtfsParametersReader.readGTFSParameters(parametersFileFilePath);
+            ArrayList<String> agencyIdList = this.gtfsParametersReader.getAgencyIdList();
 
             // Reader for "routes.txt"
             BufferedReader gtfsRoutesReader = new BufferedReader(new FileReader(gtfsRoutesFilePath));
@@ -462,13 +462,13 @@ public class GTFSDataReaderWriter {
                 double interStopAerialDistanceM = this.stops.get(fromStopId).equiRectangularDistanceTo(
                         toStopLongitude, toStopLatitude);
 
-                if (interStopAerialDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
+                if (interStopAerialDistanceM <= this.gtfsParametersReader.getMaxWalkingDistanceM()) {
                     /* Stops with identical latitude-longitude pairs are removed from each map, which is realistic to
                     avoid transfers at the very same stop; transfers are recorded in minutes
                     */
                     if (fromStopId != toStopId) {
                         double interStopAerialWalkingTimeMin = interStopAerialDistanceM /
-                                this.parametersFileReader.getAvgWalkingSpeedMPMin();
+                                this.gtfsParametersReader.getAvgWalkingSpeedMPMin();
                         stopSpecificTransferMap.getTransferMap().put(toStopId, interStopAerialWalkingTimeMin);
 
                         /* Debugging statements:
@@ -510,10 +510,10 @@ public class GTFSDataReaderWriter {
                         fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(toStopLongitude,
                         toStopLatitude) + this.dijkstraBasedRouter.findShortestDrivingPathCostMin(nearestNodeFromStop.
                                 getNodeId(), nearestNodeToStop.getNodeId(), nodes, links) *
-                        this.parametersFileReader.getAvgDrivingSpeedMPMin();
+                        this.gtfsParametersReader.getAvgDrivingSpeedMPMin();
 
-                if (interStopWalkingDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
-                    double interStopWalkingTimeMin = interStopWalkingDistanceM / this.parametersFileReader.
+                if (interStopWalkingDistanceM <= this.gtfsParametersReader.getMaxWalkingDistanceM()) {
+                    double interStopWalkingTimeMin = interStopWalkingDistanceM / this.gtfsParametersReader.
                             getAvgWalkingSpeedMPMin();
                     stopSpecificTransferMap.put(toStopId, interStopWalkingTimeMin);
                     averageTransferCostForStop += interStopWalkingTimeMin;
@@ -565,13 +565,13 @@ public class GTFSDataReaderWriter {
                                 fromStopLongitude, fromStopLatitude) + nearestNodeToStop.equiRectangularDistanceTo(
                                         toStopLongitude, toStopLatitude) + this.dijkstraBasedRouter.
                                 findShortestDrivingPathCostMin(nearestNodeFromStop.getNodeId(), nearestNodeToStop.
-                                                getNodeId(), nodes, links) * this.parametersFileReader.
+                                                getNodeId(), nodes, links) * this.gtfsParametersReader.
                                 getAvgDrivingSpeedMPMin();
 
-                        if (interStopWalkingDistanceM <= this.parametersFileReader.getMaxWalkingDistanceM()) {
+                        if (interStopWalkingDistanceM <= this.gtfsParametersReader.getMaxWalkingDistanceM()) {
                             this.transfers.get(fromStopId).getTransferMap().put(toStopId, interStopWalkingDistanceM /
-                                    this.parametersFileReader.getAvgWalkingSpeedMPMin());
-                            averageTransferCostForStop += interStopWalkingDistanceM / this.parametersFileReader.
+                                    this.gtfsParametersReader.getAvgWalkingSpeedMPMin());
+                            averageTransferCostForStop += interStopWalkingDistanceM / this.gtfsParametersReader.
                                     getAvgWalkingSpeedMPMin();
                         } else {
                             // Penalize unrealistic transfers
@@ -593,10 +593,10 @@ public class GTFSDataReaderWriter {
         for (Iterator<HashMap.Entry<Integer, Stop>> stopIterator = this.stops.entrySet().iterator(); stopIterator.
                 hasNext(); ) {
             HashMap.Entry<Integer, Stop> stopEntry = stopIterator.next();
-            if ((stopEntry.getValue().getStopLatitude() > this.parametersFileReader.getStudyAreaLatitudeMax()) ||
-                    (stopEntry.getValue().getStopLatitude() < this.parametersFileReader.getStudyAreaLatitudeMin()) ||
-                    (stopEntry.getValue().getStopLongitude() > this.parametersFileReader.getStudyAreaLongitudeMax()) ||
-                    (stopEntry.getValue().getStopLongitude() < this.parametersFileReader.getStudyAreaLongitudeMin())) {
+            if ((stopEntry.getValue().getStopLatitude() > this.gtfsParametersReader.getStudyAreaLatitudeMax()) ||
+                    (stopEntry.getValue().getStopLatitude() < this.gtfsParametersReader.getStudyAreaLatitudeMin()) ||
+                    (stopEntry.getValue().getStopLongitude() > this.gtfsParametersReader.getStudyAreaLongitudeMax()) ||
+                    (stopEntry.getValue().getStopLongitude() < this.gtfsParametersReader.getStudyAreaLongitudeMin())) {
                 stopIterator.remove();
                 this.stopRoutes.remove(stopEntry.getKey());
                 this.transfers.remove(stopEntry.getKey());
@@ -874,8 +874,8 @@ public class GTFSDataReaderWriter {
 
     // Get Dijkstra-relevant datasets ready
     private void getDijkstraMaps() {
-        this.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(this.parametersFileReader.getOsmOplExtractFilePath());
-        this.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(this.parametersFileReader.getOsmOplExtractFilePath());
+        this.osmDataReaderWriterForDijkstra.readAndFilterOsmLinks(this.gtfsParametersReader.getOsmOplExtractFilePath());
+        this.osmDataReaderWriterForDijkstra.readAndFilterOsmNodes(this.gtfsParametersReader.getOsmOplExtractFilePath());
         this.osmDataReaderWriterForDijkstra.associateLinksWithNode();
         this.osmDataReaderWriterForDijkstra.calculateLinkTravelTimesMin();
     }

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class ParametersFileReader {
+public class GTFSParametersReader {
     private ArrayList<String> agencyIdList = new ArrayList<>();
     private double studyAreaLatitudeMin;
     private double studyAreaLatitudeMax;
@@ -17,13 +17,13 @@ public class ParametersFileReader {
     private double avgWalkingSpeedMPMin;
     private double avgDrivingSpeedMPMin;
     private String osmOplExtractFilePath;
-    public void readParametersFile(String parametersFileFilePath) {
+    public void readGTFSParameters(String gtfsParametersFilePath) {
         try {
-            BufferedReader parametersFileReader = new BufferedReader(new FileReader(parametersFileFilePath));
+            BufferedReader gtfsParametersFileReader = new BufferedReader(new FileReader(gtfsParametersFilePath));
             String newline;
 
             // Read and store identifiers of all relevant agencies
-            newline = parametersFileReader.readLine();
+            newline = gtfsParametersFileReader.readLine();
             String[] agencyIdsRecord = newline.split("[,=]");
 
             if (agencyIdsRecord.length > 1) {   // To ensure that agency IDs exist in the record to be parsed
@@ -34,10 +34,10 @@ public class ParametersFileReader {
             }
 
             // Read and store coordinates of study area boundaries
-            String[] studyAreaLatitudeMinRecord = parametersFileReader.readLine().split("[,=]");
-            String[] studyAreaLatitudeMaxRecord = parametersFileReader.readLine().split("[,=]");
-            String[] studyAreaLongitudeMinRecord = parametersFileReader.readLine().split("[,=]");
-            String[] studyAreaLongitudeMaxRecord = parametersFileReader.readLine().split("[,=]");
+            String[] studyAreaLatitudeMinRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] studyAreaLatitudeMaxRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] studyAreaLongitudeMinRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] studyAreaLongitudeMaxRecord = gtfsParametersFileReader.readLine().split("[,=]");
 
             this.studyAreaLatitudeMin = Double.parseDouble(studyAreaLatitudeMinRecord[1]);
             this.studyAreaLatitudeMax = Double.parseDouble(studyAreaLatitudeMaxRecord[1]);
@@ -45,10 +45,10 @@ public class ParametersFileReader {
             this.studyAreaLongitudeMax = Double.parseDouble(studyAreaLongitudeMaxRecord[1]);
 
             // Read and store walking- and Dijkstra-related parameters
-            String[] maxWalkingDistanceMRecord = parametersFileReader.readLine().split("[,=]");
-            String[] avgWalkingSpeedMPMinRecord = parametersFileReader.readLine().split("[,=]");
-            String[] avgDrivingSpeedMPMinRecord = parametersFileReader.readLine().split("[,=]");
-            String[] osmOplExtractFilePathRecord = parametersFileReader.readLine().split("[,=]");
+            String[] maxWalkingDistanceMRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] avgWalkingSpeedMPMinRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] avgDrivingSpeedMPMinRecord = gtfsParametersFileReader.readLine().split("[,=]");
+            String[] osmOplExtractFilePathRecord = gtfsParametersFileReader.readLine().split("[,=]");
 
             this.maxWalkingDistanceM = Integer.parseInt(maxWalkingDistanceMRecord[1]);
             this.avgWalkingSpeedMPMin = Double.parseDouble(avgWalkingSpeedMPMinRecord[1]);
@@ -56,9 +56,9 @@ public class ParametersFileReader {
             this.osmOplExtractFilePath = osmOplExtractFilePathRecord[1];
 
         } catch (FileNotFoundException fNFE) {
-            System.out.println("File not found at " + parametersFileFilePath);
+            System.out.println("File not found at " + gtfsParametersFilePath);
         } catch (IOException iOE) {
-            System.out.println("Input-output exception; please check the file at " + parametersFileFilePath);
+            System.out.println("Input-output exception; please check the file at " + gtfsParametersFilePath);
         }
     }
 

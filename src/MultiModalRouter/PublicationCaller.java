@@ -40,48 +40,40 @@ public class PublicationCaller {
      * ATTRIBUTE DEFINITIONS
      */
 
-    private static final long BEGIN_QUERY_ID = 1L;
-    private static final long NUMBER_MULTI_MODAL_QUERIES = 300_000L;
+    private static CallerParametersReader callerParametersReader = new CallerParametersReader();
+    private static String callerParametersFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
+            "Fourth Semester/MasterThesis/JMultiModalRouter/JMMRParameters/CallerParameters.txt";
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
-    private static final double MINIMUM_DRIVING_DISTANCE_M = 1_500;
-    // Refer to: https://www.emerald.com/insight/content/doi/10.1108/SASBE-07-2017-0031/full/html
-
-    private static final double MAXIMUM_DRIVING_DISTANCE_M = 12_000;
-    // Refer to: https://www.sciencedirect.com/science/article/pii/S0965856406001455
-    // Or: https://www.sciencedirect.com/science/article/pii/S0305054817302228
-    // Or: https://journals.sagepub.com/doi/10.3141/2219-12
-
-    private static final double AVERAGE_WALKING_SPEED_M_PER_MIN = 85.20;
-    // Translates to 1.4 m/s
-
-    private static final double AVERAGE_DRIVING_SPEED_M_PER_MIN = 483.33;
-    // Refer to: https://www.tomtom.com/traffic-index/munich-traffic/; translates to approximately 29 km/h
-
-    private static final double AVERAGE_ODM_WAIT_TIME_MIN = 6;
-    // Refer to: https://link.springer.com/article/10.1007/s13177-023-00345-5/tables/6
-
-    private static final int STOP_TYPE_TO_IGNORE = 3;
-    // Aimed at the "stop hierarchy" (SH) heuristic
-
-    private static final int CUTOFF_TRIP_VOLUME_SERVED_BY_STOP = 450;
-    // Aimed at the "daily service count" (DSC) heuristic
 
     /**
      * BEHAVIOUR DEFINITIONS
      */
 
     public static void main(String[] args) {
+        // Set the caller's parameters
+        setCallerParameters(callerParametersReader, callerParametersFilePath);
+        long beginQueryId = callerParametersReader.getBeginQueryId();
+        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries();
+        double minimumDrivingDistance = callerParametersReader.getMinimumDrivingDistance();
+        double maximumDrivingDistance = callerParametersReader.getMaximumDrivingDistance();
+        double avgWalkingSpeedMPerMin = callerParametersReader.getAvgWalkingSpeedMPMin();
+        double avgDrivingSpeedMPerMin = callerParametersReader.getAvgDrivingSpeedMPMin();
+        double avgODMWaitTimeMin = callerParametersReader.getAvgODMWaitTimeMin();
+        int stopTypeToIgnore = callerParametersReader.getStopTypeToIgnore();
+        int cutoffDailyServiceCountOfStop = callerParametersReader.getCutoffDailyServiceCountOfStop();
+        String osmOplExtractFilePath = callerParametersReader.getOsmOplExtractFilePath();
+        String dijkstraFolderPath = callerParametersReader.getDijkstraFolderPath();
+        String gtfsFolderPath = callerParametersReader.getGtfsFolderPath();
+        String raptorFolderPath = callerParametersReader.getRaptorFolderPath();
+        String gtfsParametersFilePath = callerParametersReader.getGtfsParametersFilePath();
+        String multiModalQueriesFilePath = callerParametersReader.getMultiModalQueriesFilePath();
+
         /**
          * OSM data reader-writer instantiation to read, write, and store data
          */
         long osmStartTime = System.nanoTime();
         OSMDataReaderWriter osmDataReaderWriterForDijkstra = new OSMDataReaderWriter();
-        String osmOplExtractFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835_47.824_12.172_48.438.osm.opl/" +
-                "BBBikeOSMExtract.opl";
-        String dijkstraFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/DijkstraMaps";
         getDijkstraMaps(osmOplExtractFilePath, dijkstraFolderPath, osmDataReaderWriterForDijkstra);
 
         // Get all data for Dijkstra algorithm's execution
@@ -109,13 +101,7 @@ public class PublicationCaller {
          */
         long gtfsStartTime = System.nanoTime();
         GTFSDataReaderWriter gtfsDataReaderWriterForRAPTOR = new GTFSDataReaderWriter();
-        String gtfsFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/GTFSDataMunich/Downloaded/AGGTFSData";
-        String rAPTORFolderPath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Results/RAPTORMaps";
-        String parametersFileFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/JMultiModalRouter/JMMRParameters/GTFSParameters.txt";
-        getRAPTORMaps(gtfsFolderPath, parametersFileFilePath, rAPTORFolderPath, gtfsDataReaderWriterForRAPTOR);
+        getRAPTORMaps(gtfsFolderPath, gtfsParametersFilePath, raptorFolderPath, gtfsDataReaderWriterForRAPTOR);
 
         // Get all data for RAPTOR execution
         LinkedHashMap<Integer, Route> routes = gtfsDataReaderWriterForRAPTOR.getRoutes();
@@ -158,16 +144,14 @@ public class PublicationCaller {
         // Load all multi-modal queries, and instantiate the responses map
         long queryGenStartTime = System.nanoTime();
         // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
-        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
-                "MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv";
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
         LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
         LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
         // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
-        for (long multiModalQueryCount = BEGIN_QUERY_ID; multiModalQueryCount <= BEGIN_QUERY_ID +
-                NUMBER_MULTI_MODAL_QUERIES; multiModalQueryCount++) {
+        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
+             multiModalQueryCount++) {
             multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
         }
 
@@ -243,8 +227,7 @@ public class PublicationCaller {
                         destinationStopNode.getNodeLongitude(), destinationStopNode.getNodeLatitude()) +
                         destinationNode.equiRectangularDistanceTo(destinationPointLongitude, destinationPointLatitude) +
                         (dijkstraBasedRouter.findShortestDrivingPathCostMin(destinationStopNode.getNodeId(),
-                                destinationNodeId, nodes, links) * AVERAGE_DRIVING_SPEED_M_PER_MIN)) /
-                        AVERAGE_WALKING_SPEED_M_PER_MIN;
+                                destinationNodeId, nodes, links) * avgDrivingSpeedMPerMin)) / avgWalkingSpeedMPerMin;
                 multiModalQueryResponses.setTravelTimeDestinationStopToDestination(
                         travelTimeDestinationStopToDestinationPoint);
 
@@ -253,8 +236,8 @@ public class PublicationCaller {
                  */
                 // For origin node, get all the stops in a doughnut catchment; initialize heuristic-based stop lists
                 ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.
-                                getNodeLongitude(), originNode.getNodeLatitude(), MINIMUM_DRIVING_DISTANCE_M,
-                        MAXIMUM_DRIVING_DISTANCE_M);
+                                getNodeLongitude(), originNode.getNodeLatitude(), minimumDrivingDistance,
+                        maximumDrivingDistance);
                 ArrayList<Stop> stopsNearOriginNodeSHHeuristic = new ArrayList<>();
                 ArrayList<Stop> stopsNearOriginNodeTVHeuristic = new ArrayList<>();
 
@@ -274,14 +257,14 @@ public class PublicationCaller {
                 if (!stopsNearOriginNode.isEmpty()) {
                     // For origin node, get all the stops that satisfy the "stop hierarchy" heuristic criterion
                     for (Stop stopNearOriginNode : stopsNearOriginNode) {
-                        if (stopNearOriginNode.getStopType() != STOP_TYPE_TO_IGNORE) {
+                        if (stopNearOriginNode.getStopType() != stopTypeToIgnore) {
                             stopsNearOriginNodeSHHeuristic.add(stopNearOriginNode);
                         }
                     }
 
                     // For origin node, get all the stops that satisfy the "trip volume" heuristic criterion
                     for (Stop stopNearOriginNode : stopsNearOriginNode) {
-                        if (stopNearOriginNode.getStopTripCount() >= CUTOFF_TRIP_VOLUME_SERVED_BY_STOP) {
+                        if (stopNearOriginNode.getStopTripCount() >= cutoffDailyServiceCountOfStop) {
                             stopsNearOriginNodeTVHeuristic.add(stopNearOriginNode);
                         }
                     }
@@ -290,24 +273,24 @@ public class PublicationCaller {
                 if ((!stopsNearOriginNodeSHHeuristic.isEmpty()) && (!stopsNearOriginNodeTVHeuristic.isEmpty())) {
                     String solutionTypeFlag = "Exact";
                     runRAPTORAndDijkstra(stopsNearOriginNode, kDTreeForNodes, solutionTypeFlag, originPointLongitude,
-                            originPointLatitude, originNode, originPointDepartureTime,
-                            travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
+                            originPointLatitude, originNode, originPointDepartureTime, avgWalkingSpeedMPerMin,
+                            avgODMWaitTimeMin, travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR,
+                            dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
                             multiModalQueryResponses);
 
                     solutionTypeFlag = "StopHierarchy";
                     runRAPTORAndDijkstra(stopsNearOriginNodeSHHeuristic, kDTreeForNodes, solutionTypeFlag,
                             originPointLongitude, originPointLatitude, originNode, originPointDepartureTime,
-                            travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
-                            multiModalQueryResponses);
+                            avgWalkingSpeedMPerMin, avgODMWaitTimeMin, travelTimeDestinationStopToDestinationPoint,
+                            destinationStopId, rAPTOR, dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops,
+                            stopRoutes, transfers, multiModalQueryResponses);
 
                     solutionTypeFlag = "TripVolume";
                     runRAPTORAndDijkstra(stopsNearOriginNodeTVHeuristic, kDTreeForNodes, solutionTypeFlag,
                             originPointLongitude, originPointLatitude, originNode, originPointDepartureTime,
-                            travelTimeDestinationStopToDestinationPoint, destinationStopId, rAPTOR, dijkstraBasedRouter,
-                            nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
-                            multiModalQueryResponses);
+                            avgWalkingSpeedMPerMin, avgODMWaitTimeMin, travelTimeDestinationStopToDestinationPoint,
+                            destinationStopId, rAPTOR, dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops,
+                            stopRoutes, transfers, multiModalQueryResponses);
 
                     if ((multiModalQueryResponses.getTotalTravelTimeExactSolution() != Double.MAX_VALUE) &&
                             (multiModalQueryResponses.getTotalTravelTimeSHSolution() != Double.MAX_VALUE) &&
@@ -343,6 +326,12 @@ public class PublicationCaller {
         String multiModalQueriesResponsesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
                 "Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponses.csv";
         writeMultiModalQueriesResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
+    }
+
+    // Set the parameters required for running the caller class
+    public static void setCallerParameters(CallerParametersReader callerParametersReader,
+                                           String callerParametersFilePath) {
+        callerParametersReader.readCallerParameters(callerParametersFilePath);
     }
 
     // Get Dijkstra-relevant datasets ready
@@ -417,7 +406,8 @@ public class PublicationCaller {
     private static void runRAPTORAndDijkstra(ArrayList<Stop> stopsNearOriginNode,
                                              KDTreeForNodes kDTreeForNodes, String solutionTypeFlag,
                                              double originPointLongitude, double originPointLatitude, Node originNode,
-                                             int originPointDepartureTime,
+                                             int originPointDepartureTime, double avgWalkingSpeedMPerMin,
+                                             double avgODMWaitTimeMin,
                                              double travelTimeDestinationStopToDestinationPoint, int destinationStopId,
                                              RAPTOR rAPTOR, DijkstraBasedRouter dijkstraBasedRouter,
                                              LinkedHashMap<Long, Node> nodes, LinkedHashMap<Long, Link> links,
@@ -437,11 +427,11 @@ public class PublicationCaller {
             Node nodeNearOriginStop = kDTreeForNodes.findNearestNode(stopNearOriginNode.getStopLongitude(),
                     stopNearOriginNode.getStopLatitude());
 
-            travelTimesOriginPointToOriginStops.add(AVERAGE_ODM_WAIT_TIME_MIN + // Waiting for ODM service is expected
+            travelTimesOriginPointToOriginStops.add(avgODMWaitTimeMin + // Waiting for ODM service is expected
                     // Walking to and from ODM pick-up and drop-off is also expected
                     ((originNode.equiRectangularDistanceTo(originPointLongitude, originPointLatitude) +
                             nodeNearOriginStop.equiRectangularDistanceTo(stopNearOriginNode.getStopLongitude(),
-                                    stopNearOriginNode.getStopLatitude())) / AVERAGE_WALKING_SPEED_M_PER_MIN) +
+                                    stopNearOriginNode.getStopLatitude())) / avgWalkingSpeedMPerMin) +
                     // Driving between network nodes via an ODM vehicle is also expected
                     (dijkstraBasedRouter.findShortestDrivingPathCostMin(originNode.getNodeId(),
                             nodeNearOriginStop.getNodeId(), nodes, links)));

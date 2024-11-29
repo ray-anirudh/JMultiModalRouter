@@ -1,0 +1,15 @@
+ID of First Query to be Processed=1
+Number of Multi-modal Queries to be Processed=49
+Minimum Driving Distance (in m)=1500
+Maximum Driving Distance (in m)=12000
+Average Walking Speed (in m per min)=85.20
+Average Driving Speed (in m per min)=483.33
+Average ODM Service Wait Time (in min)=6
+Stop Type to Ignore for the Stop Type Heuristic=3
+Cutoff Volume of Services at a Stop Per Day for the Daily Service Count Heuristic=450
+OpenStreetMap Object-Per-Line Extract File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835_47.824_12.172_48.438.osm.opl/BBBikeOSMExtract.opl
+Dijkstra Output Folder Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Results/DijkstraMaps
+Google Transit Feed Specification Data Folder Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/GTFSDataMunich/Downloaded/AGGTFSData
+RAPTOR Output Folder Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Results/RAPTORMaps
+GTFS Data Parsing Parameters File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/JMultiModalRouter/JMMRParameters/GTFSParameters.txt
+Multi-modal Queries File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv
