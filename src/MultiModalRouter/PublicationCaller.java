@@ -163,8 +163,7 @@ public class PublicationCaller {
         // Consideration of trips simulated by TUM's Travel Behaviour professorship for Munich and its environs
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
-        LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
-        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
+        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
 
 //        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
 //        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
@@ -188,19 +187,26 @@ public class PublicationCaller {
                 multiModalQueries.size() + " multi-modal queries for JavaMultiModalRouter read in " + String.format
                 ("%.3f", queryGenerationDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
-        // Set up router instances
+        // Set up routers' instances
         DijkstraBasedRouter dijkstraBasedRouter = new DijkstraBasedRouter();
         RAPTOR rAPTOR = new RAPTOR();
 
         // Set up an ExecutorService instance for parallel processing, and a list to hold Future objects
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        int totalAvailableProcessors = Runtime.getRuntime().availableProcessors();
+        double processingCapacityUtilizationFactor = 0.7;
+        int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
+
+        ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
         List<Future<Map.Entry<Long, MultiModalQueryResponses>>> futures = new ArrayList<>();
 
         /**
-         * Execute few queries on the JMultiModalRouter architecture
+         * Execute queries on the JMultiModalRouter architecture
          */
         long queriesSolvingStartTime = System.nanoTime();
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
+            Random solutionTypeRandomizer = new Random(1);
+            int solutionTypeSelector = solutionTypeRandomizer.nextInt(10);
+
             Future<Map.Entry<Long, MultiModalQueryResponses>> future = executor.submit(() -> {
 
                 // Get the multi-modal query and response instances
@@ -247,10 +253,12 @@ public class PublicationCaller {
                                 destinationNodeId, nodes, links) * avgDrivingSpeedMPerMin)) / avgWalkingSpeedMPerMin;
                 multiModalQueryResponses.setTravelTimeDestinationStopToDestination(
                         travelTimeDestinationStopToDestinationPoint);
-                // todo build a querz splitter for exact and heuristic sets
+
                 /**
                  * Building three sets of origin stops to test different heuristics
                  */
+
+                // todo check this
                 // For origin node, get all the stops in a doughnut catchment; initialize heuristic-based stop lists
                 ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.
                                 getNodeLongitude(), originNode.getNodeLatitude(), minimumDrivingDistance,
