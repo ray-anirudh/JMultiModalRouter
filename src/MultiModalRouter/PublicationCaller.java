@@ -182,6 +182,7 @@ public class PublicationCaller {
         long queryGenEndTime = System.nanoTime();
 
         double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
+        // Hashmap to store journey information for all possible journeys resulting for each query
         LinkedHashMap<Long, MultiModalQueryResponses> multiModalQueriesResponses = new LinkedHashMap<>();
         System.out.println("\n" +
                 multiModalQueries.size() + " multi-modal queries for JavaMultiModalRouter read in " + String.format
@@ -204,7 +205,8 @@ public class PublicationCaller {
          */
         long queriesSolvingStartTime = System.nanoTime();
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
-            Random solutionTypeRandomizer = new Random(1);
+            Random solutionTypeRandomizer = new Random(7);
+            // todo use information below to select solution type
             int solutionTypeSelector = solutionTypeRandomizer.nextInt(10);
 
             Future<Map.Entry<Long, MultiModalQueryResponses>> future = executor.submit(() -> {
@@ -220,6 +222,8 @@ public class PublicationCaller {
                 double destinationPointLongitude = multiModalQuery.getDestinationLongitude();
                 double destinationPointLatitude = multiModalQuery.getDestinationLatitude();
                 int originPointDepartureTime = multiModalQuery.getDepartureTime();
+
+                // todo move information below to solution info
                 multiModalQueryResponses.setOriginPointLongitude(originPointLongitude);
                 multiModalQueryResponses.setOriginPointLatitude(originPointLatitude);
                 multiModalQueryResponses.setDestinationPointLongitude(destinationPointLongitude);
@@ -259,6 +263,7 @@ public class PublicationCaller {
                  */
 
                 // todo check this
+                
                 // For origin node, get all the stops in a doughnut catchment; initialize heuristic-based stop lists
                 ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.
                                 getNodeLongitude(), originNode.getNodeLatitude(), minimumDrivingDistance,

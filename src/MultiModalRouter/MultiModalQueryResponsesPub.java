@@ -10,8 +10,7 @@
 package src.MultiModalRouter;
 // Can average transfer costs at stops also be factored in for heuristic development
 
-public class MultiModalQueryResponses {
-    // Attributes common to all cases
+public class MultiModalQueryResponsesPub {
     private double originPointLongitude;
     private double originPointLatitude;
     private double destinationPointLongitude;
@@ -25,21 +24,24 @@ public class MultiModalQueryResponses {
     private double nearestDestinationNodeLatitude;
     private int destinationStopId;
     private String destinationStopName;
+    private int destinationStopType;
+    private int destinationStopTripVolume;
+    private double destinationStopAverageTransferCost;
     private double destinationStopLongitude;
     private double destinationStopLatitude;
     private double travelTimeDestinationStopToDestination;
-
-    // Attributes of "exact" solution
-    private int countOriginStopsConsideredExactSolution;
-    private double timeElapsedQueryProcessingExactSolution;
-    private int originStopIdExactSolution;
-    private String originStopNameExactSolution;
-    private int originStopTypeExactSolution;
-    private int originStopTripVolumeExactSolution;
-    private double originStopAverageTransferCostExactSolution;
-    private double travelTimeOriginToOriginStopExactSolution;
-    private double travelTimeOriginStopToDestinationStopExactSolution;
-    private double totalTravelTimeExactSolution;
+    private int countOriginStopsConsideredSolution;
+    private long timeElapsedInRoutingNanoSeconds;
+    private int originStopId;
+    private String originStopName;
+    private int originStopType;
+    private int originStopTripVolume;
+    private double originStopAverageTransferCost;
+    private double originStopLongitude;
+    private double originStopLatitude;
+    private double travelTimeOriginToOriginStop;
+    private double travelTimeOriginStopToDestinationStop;
+    private double totalJourneyTime;
 
     // Attributes of solution based on "stop hierarchy" heuristic
     private int countOriginStopsConsideredSHSolution;
