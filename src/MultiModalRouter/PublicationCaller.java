@@ -262,7 +262,7 @@ public class PublicationCaller {
                  * Building three sets of origin stops to test different heuristics
                  */
 
-                // todo check this
+                // todo check thiss
                 
                 // For origin node, get all the stops in a doughnut catchment; initialize heuristic-based stop lists
                 ArrayList<Stop> stopsNearOriginNode = kDTreeForStops.findStopsWithinDoughnut(originNode.

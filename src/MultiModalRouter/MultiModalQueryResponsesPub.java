@@ -11,11 +11,17 @@ package src.MultiModalRouter;
 // Can average transfer costs at stops also be factored in for heuristic development
 
 public class MultiModalQueryResponsesPub {
+    // Trip-related attributes to be used as independent variables
     private double originPointLongitude;
     private double originPointLatitude;
     private double destinationPointLongitude;
     private double destinationPointLatitude;
     private int departureTimeOriginPoint;
+    private int originTazId;
+    private int destinationTazId;
+    private double travelTimeOriginTazToDestinationTazPeak;
+    private double travelTimeOriginTazToDestinationTazOffPeak;
+    private double travelTimeOriginTazToDestinationTazNight;
     private long nearestOriginNodeId;
     private double nearestOriginNodeLongitude;
     private double nearestOriginNodeLatitude;
@@ -25,390 +31,387 @@ public class MultiModalQueryResponsesPub {
     private int destinationStopId;
     private String destinationStopName;
     private int destinationStopType;
-    private int destinationStopTripVolume;
+    private int destinationStopDailyServiceCount;
     private double destinationStopAverageTransferCost;
     private double destinationStopLongitude;
     private double destinationStopLatitude;
-    private double travelTimeDestinationStopToDestination;
+    private long nearestDestinationStopNodeId;
+    private double nearestDestinationStopNodeLongitude;
+    private double nearestDestinationStopNodeLatitude;
     private int countOriginStopsConsideredSolution;
-    private long timeElapsedInRoutingNanoSeconds;
+
+    // Journey-related attributes to be used as covariates
+    private double travelTimeOriginToOriginStop;
+    private double travelTimeOriginStopToDestinationStop;
+    private double travelTimeDestinationStopToDestination;
+    private int numberTransfersInTransit;
+    private long timeElapsedInJourneyComputationNanoSeconds;
+
+    // Stop-related attributes to be used as regressors
     private int originStopId;
     private String originStopName;
     private int originStopType;
-    private int originStopTripVolume;
+    private int originStopDailyServiceCount;
     private double originStopAverageTransferCost;
     private double originStopLongitude;
     private double originStopLatitude;
-    private double travelTimeOriginToOriginStop;
-    private double travelTimeOriginStopToDestinationStop;
+    private long originStopNearestNodeId;
+    private double originStopNearestNodeLongitude;
+    private double originStopNearestNodeLatitude;
+
+    // Journey-related attributes to be used as target variables
     private double totalJourneyTime;
+    private double relativeDifferenceToBestJourneyTime;
 
-    // Attributes of solution based on "stop hierarchy" heuristic
-    private int countOriginStopsConsideredSHSolution;
-    private double timeElapsedQueryProcessingSHSolution;
-    private int originStopIdSHSolution;
-    private String originStopNameSHSolution;
-    private int originStopTypeSHSolution;
-    private int originStopTripVolumeSHSolution;
-    private double originStopAverageTransferCostSHSolution;
-    private double travelTimeOriginToOriginStopSHSolution;
-    private double travelTimeOriginStopToDestinationStopSHSolution;
-    private double totalTravelTimeSHSolution;
-    private double relativeTravelTimeDifferenceInSHAndExactSolutions;
-
-    // Attributes of solution based on "trip volume" heuristic
-    private int countOriginStopsConsideredTVSolution;
-    private double timeElapsedQueryProcessingTVSolution;
-    private int originStopIdTVSolution;
-    private String originStopNameTVSolution;
-    private int originStopTypeTVSolution;
-    private int originStopTripVolumeTVSolution;
-    private double originStopAverageTransferCostTVSolution;
-    private double travelTimeOriginToOriginStopTVSolution;
-    private double travelTimeOriginStopToDestinationStopTVSolution;
-    private double totalTravelTimeTVSolution;
-    private double relativeTravelTimeDifferenceInTVAndExactSolutions;
-
-    // Set up setters
-    public void setOriginPointLongitude(double originPointLongitude) {
-        this.originPointLongitude = originPointLongitude;
-    }
-
-    public void setOriginPointLatitude(double originPointLatitude) {
-        this.originPointLatitude = originPointLatitude;
-    }
-
-    public void setDestinationPointLongitude(double destinationPointLongitude) {
-        this.destinationPointLongitude = destinationPointLongitude;
-    }
-
-    public void setDestinationPointLatitude(double destinationPointLatitude) {
-        this.destinationPointLatitude = destinationPointLatitude;
-    }
-
-    public void setDepartureTimeOriginPoint(int departureTimeOriginPoint) {
-        this.departureTimeOriginPoint = departureTimeOriginPoint;
-    }
-
-    public void setNearestOriginNodeId(long nearestOriginNodeId) {
-        this.nearestOriginNodeId = nearestOriginNodeId;
-    }
-
-    public void setNearestDestinationNodeId(long nearestDestinationNodeId) {
-        this.nearestDestinationNodeId = nearestDestinationNodeId;
-    }
-
-    public void setDestinationStopId(int destinationStopId) {
-        this.destinationStopId = destinationStopId;
-    }
-
-    public void setDestinationStopName(String destinationStopName) {
-        this.destinationStopName = destinationStopName;
-    }
-
-    public void setTravelTimeDestinationStopToDestination(double travelTimeDestinationStopToDestination) {
-        this.travelTimeDestinationStopToDestination = travelTimeDestinationStopToDestination;
-    }
-
-    public void setCountOriginStopsConsideredExactSolution(int countOriginStopsConsideredExactSolution) {
-        this.countOriginStopsConsideredExactSolution = countOriginStopsConsideredExactSolution;
-    }
-
-    public void setTimeElapsedQueryProcessingExactSolution(double timeElapsedQueryProcessingExactSolution) {
-        this.timeElapsedQueryProcessingExactSolution = timeElapsedQueryProcessingExactSolution;
-    }
-
-    public void setOriginStopIdExactSolution(int originStopIdExactSolution) {
-        this.originStopIdExactSolution = originStopIdExactSolution;
-    }
-
-    public void setOriginStopNameExactSolution(String originStopNameExactSolution) {
-        this.originStopNameExactSolution = originStopNameExactSolution;
-    }
-
-    public void setOriginStopTypeExactSolution(int originStopTypeExactSolution) {
-        this.originStopTypeExactSolution = originStopTypeExactSolution;
-    }
-
-    public void setOriginStopTripVolumeExactSolution(int originStopTripVolumeExactSolution) {
-        this.originStopTripVolumeExactSolution = originStopTripVolumeExactSolution;
-    }
-
-    public void setOriginStopAverageTransferCostExactSolution(double originStopAverageTransferCostExactSolution) {
-        this.originStopAverageTransferCostExactSolution = originStopAverageTransferCostExactSolution;
-    }
-
-    public void setTravelTimeOriginToOriginStopExactSolution(double travelTimeOriginToOriginStopExactSolution) {
-        this.travelTimeOriginToOriginStopExactSolution = travelTimeOriginToOriginStopExactSolution;
-    }
-
-    public void setTravelTimeOriginStopToDestinationStopExactSolution(
-            double travelTimeOriginStopToDestinationStopExactSolution) {
-        this.travelTimeOriginStopToDestinationStopExactSolution = travelTimeOriginStopToDestinationStopExactSolution;
-    }
-
-    public void setTotalTravelTimeExactSolution(double totalTravelTimeExactSolution) {
-        this.totalTravelTimeExactSolution = totalTravelTimeExactSolution;
-    }
-
-    public void setCountOriginStopsConsideredSHSolution(int countOriginStopsConsideredSHSolution) {
-        this.countOriginStopsConsideredSHSolution = countOriginStopsConsideredSHSolution;
-    }
-
-    public void setTimeElapsedQueryProcessingSHSolution(double timeElapsedQueryProcessingSHSolution) {
-        this.timeElapsedQueryProcessingSHSolution = timeElapsedQueryProcessingSHSolution;
-    }
-
-    public void setOriginStopIdSHSolution(int originStopIdSHSolution) {
-        this.originStopIdSHSolution = originStopIdSHSolution;
-    }
-
-    public void setOriginStopNameSHSolution(String originStopNameSHSolution) {
-        this.originStopNameSHSolution = originStopNameSHSolution;
-    }
-
-    public void setOriginStopTypeSHSolution(int originStopTypeSHSolution) {
-        this.originStopTypeSHSolution = originStopTypeSHSolution;
-    }
-
-    public void setOriginStopTripVolumeSHSolution(int originStopTripVolumeSHSolution) {
-        this.originStopTripVolumeSHSolution = originStopTripVolumeSHSolution;
-    }
-
-    public void setOriginStopAverageTransferCostSHSolution(double originStopAverageTransferCostSHSolution) {
-        this.originStopAverageTransferCostSHSolution = originStopAverageTransferCostSHSolution;
-    }
-
-    public void setTravelTimeOriginToOriginStopSHSolution(double travelTimeOriginToOriginStopSHSolution) {
-        this.travelTimeOriginToOriginStopSHSolution = travelTimeOriginToOriginStopSHSolution;
-    }
-
-    public void setTravelTimeOriginStopToDestinationStopSHSolution(
-            double travelTimeOriginStopToDestinationStopSHSolution) {
-        this.travelTimeOriginStopToDestinationStopSHSolution = travelTimeOriginStopToDestinationStopSHSolution;
-    }
-
-    public void setTotalTravelTimeSHSolution(double totalTravelTimeSHSolution) {
-        this.totalTravelTimeSHSolution = totalTravelTimeSHSolution;
-    }
-
-    public void setRelativeTravelTimeDifferenceInSHAndExactSolutions(
-            double relativeTravelTimeDifferenceInSHAndExactSolutions) {
-        this.relativeTravelTimeDifferenceInSHAndExactSolutions = relativeTravelTimeDifferenceInSHAndExactSolutions;
-    }
-
-    public void setCountOriginStopsConsideredTVSolution(int countOriginStopsConsideredTVSolution) {
-        this.countOriginStopsConsideredTVSolution = countOriginStopsConsideredTVSolution;
-    }
-
-    public void setTimeElapsedQueryProcessingTVSolution(double timeElapsedQueryProcessingTVSolution) {
-        this.timeElapsedQueryProcessingTVSolution = timeElapsedQueryProcessingTVSolution;
-    }
-
-    public void setOriginStopIdTVSolution(int originStopIdTVSolution) {
-        this.originStopIdTVSolution = originStopIdTVSolution;
-    }
-
-    public void setOriginStopNameTVSolution(String originStopNameTVSolution) {
-        this.originStopNameTVSolution = originStopNameTVSolution;
-    }
-
-    public void setOriginStopTypeTVSolution(int originStopTypeTVSolution) {
-        this.originStopTypeTVSolution = originStopTypeTVSolution;
-    }
-
-    public void setOriginStopTripVolumeTVSolution(int originStopTripVolumeTVSolution) {
-        this.originStopTripVolumeTVSolution = originStopTripVolumeTVSolution;
-    }
-
-    public void setOriginStopAverageTransferCostTVSolution(double originStopAverageTransferCostTVSolution) {
-        this.originStopAverageTransferCostTVSolution = originStopAverageTransferCostTVSolution;
-    }
-
-    public void setTravelTimeOriginToOriginStopTVSolution(double travelTimeOriginToOriginStopTVSolution) {
-        this.travelTimeOriginToOriginStopTVSolution = travelTimeOriginToOriginStopTVSolution;
-    }
-
-    public void setTravelTimeOriginStopToDestinationStopTVSolution(
-            double travelTimeOriginStopToDestinationStopTVSolution) {
-        this.travelTimeOriginStopToDestinationStopTVSolution = travelTimeOriginStopToDestinationStopTVSolution;
-    }
-
-    public void setTotalTravelTimeTVSolution(double totalTravelTimeTVSolution) {
-        this.totalTravelTimeTVSolution = totalTravelTimeTVSolution;
-    }
-
-    public void setRelativeTravelTimeDifferenceInTVAndExactSolutions(
-            double relativeTravelTimeDifferenceInTVAndExactSolutions) {
-        this.relativeTravelTimeDifferenceInTVAndExactSolutions = relativeTravelTimeDifferenceInTVAndExactSolutions;
-    }
-
-    // Set up getters
     public double getOriginPointLongitude() {
         return this.originPointLongitude;
+    }
+
+    public void setOriginPointLongitude(double originPointLongitude) {
+        this.originPointLongitude = originPointLongitude;
     }
 
     public double getOriginPointLatitude() {
         return this.originPointLatitude;
     }
 
+    public void setOriginPointLatitude(double originPointLatitude) {
+        this.originPointLatitude = originPointLatitude;
+    }
+
     public double getDestinationPointLongitude() {
         return this.destinationPointLongitude;
+    }
+
+    public void setDestinationPointLongitude(double destinationPointLongitude) {
+        this.destinationPointLongitude = destinationPointLongitude;
     }
 
     public double getDestinationPointLatitude() {
         return this.destinationPointLatitude;
     }
 
+    public void setDestinationPointLatitude(double destinationPointLatitude) {
+        this.destinationPointLatitude = destinationPointLatitude;
+    }
+
     public int getDepartureTimeOriginPoint() {
         return this.departureTimeOriginPoint;
+    }
+
+    public void setDepartureTimeOriginPoint(int departureTimeOriginPoint) {
+        this.departureTimeOriginPoint = departureTimeOriginPoint;
+    }
+
+    public int getOriginTazId() {
+        return this.originTazId;
+    }
+
+    public void setOriginTazId(int originTazId) {
+        this.originTazId = originTazId;
+    }
+
+    public int getDestinationTazId() {
+        return this.destinationTazId;
+    }
+
+    public void setDestinationTazId(int destinationTazId) {
+        this.destinationTazId = destinationTazId;
+    }
+
+    public double getTravelTimeOriginTazToDestinationTazPeak() {
+        return this.travelTimeOriginTazToDestinationTazPeak;
+    }
+
+    public void setTravelTimeOriginTazToDestinationTazPeak(double travelTimeOriginTazToDestinationTazPeak) {
+        this.travelTimeOriginTazToDestinationTazPeak = travelTimeOriginTazToDestinationTazPeak;
+    }
+
+    public double getTravelTimeOriginTazToDestinationTazOffPeak() {
+        return this.travelTimeOriginTazToDestinationTazOffPeak;
+    }
+
+    public void setTravelTimeOriginTazToDestinationTazOffPeak(double travelTimeOriginTazToDestinationTazOffPeak) {
+        this.travelTimeOriginTazToDestinationTazOffPeak = travelTimeOriginTazToDestinationTazOffPeak;
+    }
+
+    public double getTravelTimeOriginTazToDestinationTazNight() {
+        return this.travelTimeOriginTazToDestinationTazNight;
+    }
+
+    public void setTravelTimeOriginTazToDestinationTazNight(double travelTimeOriginTazToDestinationTazNight) {
+        this.travelTimeOriginTazToDestinationTazNight = travelTimeOriginTazToDestinationTazNight;
     }
 
     public long getNearestOriginNodeId() {
         return this.nearestOriginNodeId;
     }
 
+    public void setNearestOriginNodeId(long nearestOriginNodeId) {
+        this.nearestOriginNodeId = nearestOriginNodeId;
+    }
+
+    public double getNearestOriginNodeLongitude() {
+        return this.nearestOriginNodeLongitude;
+    }
+
+    public void setNearestOriginNodeLongitude(double nearestOriginNodeLongitude) {
+        this.nearestOriginNodeLongitude = nearestOriginNodeLongitude;
+    }
+
+    public double getNearestOriginNodeLatitude() {
+        return this.nearestOriginNodeLatitude;
+    }
+
+    public void setNearestOriginNodeLatitude(double nearestOriginNodeLatitude) {
+        this.nearestOriginNodeLatitude = nearestOriginNodeLatitude;
+    }
+
     public long getNearestDestinationNodeId() {
         return this.nearestDestinationNodeId;
+    }
+
+    public void setNearestDestinationNodeId(long nearestDestinationNodeId) {
+        this.nearestDestinationNodeId = nearestDestinationNodeId;
+    }
+
+    public double getNearestDestinationNodeLongitude() {
+        return this.nearestDestinationNodeLongitude;
+    }
+
+    public void setNearestDestinationNodeLongitude(double nearestDestinationNodeLongitude) {
+        this.nearestDestinationNodeLongitude = nearestDestinationNodeLongitude;
+    }
+
+    public double getNearestDestinationNodeLatitude() {
+        return this.nearestDestinationNodeLatitude;
+    }
+
+    public void setNearestDestinationNodeLatitude(double nearestDestinationNodeLatitude) {
+        this.nearestDestinationNodeLatitude = nearestDestinationNodeLatitude;
     }
 
     public int getDestinationStopId() {
         return this.destinationStopId;
     }
 
+    public void setDestinationStopId(int destinationStopId) {
+        this.destinationStopId = destinationStopId;
+    }
+
     public String getDestinationStopName() {
         return this.destinationStopName;
+    }
+
+    public void setDestinationStopName(String destinationStopName) {
+        this.destinationStopName = destinationStopName;
+    }
+
+    public int getDestinationStopType() {
+        return this.destinationStopType;
+    }
+
+    public void setDestinationStopType(int destinationStopType) {
+        this.destinationStopType = destinationStopType;
+    }
+
+    public int getDestinationStopDailyServiceCount() {
+        return this.destinationStopDailyServiceCount;
+    }
+
+    public void setDestinationStopDailyServiceCount(int destinationStopDailyServiceCount) {
+        this.destinationStopDailyServiceCount = destinationStopDailyServiceCount;
+    }
+
+    public double getDestinationStopAverageTransferCost() {
+        return this.destinationStopAverageTransferCost;
+    }
+
+    public void setDestinationStopAverageTransferCost(double destinationStopAverageTransferCost) {
+        this.destinationStopAverageTransferCost = destinationStopAverageTransferCost;
+    }
+
+    public double getDestinationStopLongitude() {
+        return this.destinationStopLongitude;
+    }
+
+    public void setDestinationStopLongitude(double destinationStopLongitude) {
+        this.destinationStopLongitude = destinationStopLongitude;
+    }
+
+    public double getDestinationStopLatitude() {
+        return this.destinationStopLatitude;
+    }
+
+    public void setDestinationStopLatitude(double destinationStopLatitude) {
+        this.destinationStopLatitude = destinationStopLatitude;
+    }
+
+    public long getNearestDestinationStopNodeId() {
+        return this.nearestDestinationStopNodeId;
+    }
+
+    public void setNearestDestinationStopNodeId(long nearestDestinationStopNodeId) {
+        this.nearestDestinationStopNodeId = nearestDestinationStopNodeId;
+    }
+
+    public double getNearestDestinationStopNodeLongitude() {
+        return this.nearestDestinationStopNodeLongitude;
+    }
+
+    public void setNearestDestinationStopNodeLongitude(double nearestDestinationStopNodeLongitude) {
+        this.nearestDestinationStopNodeLongitude = nearestDestinationStopNodeLongitude;
+    }
+
+    public double getNearestDestinationStopNodeLatitude() {
+        return this.nearestDestinationStopNodeLatitude;
+    }
+
+    public void setNearestDestinationStopNodeLatitude(double nearestDestinationStopNodeLatitude) {
+        this.nearestDestinationStopNodeLatitude = nearestDestinationStopNodeLatitude;
+    }
+
+    public int getCountOriginStopsConsideredSolution() {
+        return this.countOriginStopsConsideredSolution;
+    }
+
+    public void setCountOriginStopsConsideredSolution(int countOriginStopsConsideredSolution) {
+        this.countOriginStopsConsideredSolution = countOriginStopsConsideredSolution;
+    }
+
+    public double getTravelTimeOriginToOriginStop() {
+        return this.travelTimeOriginToOriginStop;
+    }
+
+    public void setTravelTimeOriginToOriginStop(double travelTimeOriginToOriginStop) {
+        this.travelTimeOriginToOriginStop = travelTimeOriginToOriginStop;
+    }
+
+    public double getTravelTimeOriginStopToDestinationStop() {
+        return this.travelTimeOriginStopToDestinationStop;
+    }
+
+    public void setTravelTimeOriginStopToDestinationStop(double travelTimeOriginStopToDestinationStop) {
+        this.travelTimeOriginStopToDestinationStop = travelTimeOriginStopToDestinationStop;
     }
 
     public double getTravelTimeDestinationStopToDestination() {
         return this.travelTimeDestinationStopToDestination;
     }
 
-    public int getCountOriginStopsConsideredExactSolution() {
-        return this.countOriginStopsConsideredExactSolution;
+    public void setTravelTimeDestinationStopToDestination(double travelTimeDestinationStopToDestination) {
+        this.travelTimeDestinationStopToDestination = travelTimeDestinationStopToDestination;
     }
 
-    public double getTimeElapsedQueryProcessingExactSolution() {
-        return this.timeElapsedQueryProcessingExactSolution;
+    public int getNumberTransfersInTransit() {
+        return this.numberTransfersInTransit;
     }
 
-    public int getOriginStopIdExactSolution() {
-        return this.originStopIdExactSolution;
+    public void setNumberTransfersInTransit(int numberTransfersInTransit) {
+        this.numberTransfersInTransit = numberTransfersInTransit;
     }
 
-    public String getOriginStopNameExactSolution() {
-        return this.originStopNameExactSolution;
+    public long getTimeElapsedInJourneyComputationNanoSeconds() {
+        return this.timeElapsedInJourneyComputationNanoSeconds;
     }
 
-    public int getOriginStopTypeExactSolution() {
-        return this.originStopTypeExactSolution;
+    public void setTimeElapsedInJourneyComputationNanoSeconds(long timeElapsedInJourneyComputationNanoSeconds) {
+        this.timeElapsedInJourneyComputationNanoSeconds = timeElapsedInJourneyComputationNanoSeconds;
     }
 
-    public int getOriginStopTripVolumeExactSolution() {
-        return this.originStopTripVolumeExactSolution;
+    public int getOriginStopId() {
+        return this.originStopId;
     }
 
-    public double getOriginStopAverageTransferCostExactSolution() {
-        return this.originStopAverageTransferCostExactSolution;
+    public void setOriginStopId(int originStopId) {
+        this.originStopId = originStopId;
     }
 
-    public double getTravelTimeOriginToOriginStopExactSolution() {
-        return this.travelTimeOriginToOriginStopExactSolution;
+    public String getOriginStopName() {
+        return this.originStopName;
     }
 
-    public double getTravelTimeOriginStopToDestinationStopExactSolution() {
-        return this.travelTimeOriginStopToDestinationStopExactSolution;
+    public void setOriginStopName(String originStopName) {
+        this.originStopName = originStopName;
     }
 
-    public double getTotalTravelTimeExactSolution() {
-        return this.totalTravelTimeExactSolution;
+    public int getOriginStopType() {
+        return this.originStopType;
     }
 
-    public int getCountOriginStopsConsideredSHSolution() {
-        return this.countOriginStopsConsideredSHSolution;
+    public void setOriginStopType(int originStopType) {
+        this.originStopType = originStopType;
     }
 
-    public double getTimeElapsedQueryProcessingSHSolution() {
-        return this.timeElapsedQueryProcessingSHSolution;
+    public int getOriginStopDailyServiceCount() {
+        return this.originStopDailyServiceCount;
     }
 
-    public int getOriginStopIdSHSolution() {
-        return this.originStopIdSHSolution;
+    public void setOriginStopDailyServiceCount(int originStopDailyServiceCount) {
+        this.originStopDailyServiceCount = originStopDailyServiceCount;
     }
 
-    public String getOriginStopNameSHSolution() {
-        return this.originStopNameSHSolution;
+    public double getOriginStopAverageTransferCost() {
+        return this.originStopAverageTransferCost;
     }
 
-    public int getOriginStopTypeSHSolution() {
-        return this.originStopTypeSHSolution;
+    public void setOriginStopAverageTransferCost(double originStopAverageTransferCost) {
+        this.originStopAverageTransferCost = originStopAverageTransferCost;
     }
 
-    public int getOriginStopTripVolumeSHSolution() {
-        return this.originStopTripVolumeSHSolution;
+    public double getOriginStopLongitude() {
+        return this.originStopLongitude;
     }
 
-    public double getOriginStopAverageTransferCostSHSolution() {
-        return this.originStopAverageTransferCostSHSolution;
+    public void setOriginStopLongitude(double originStopLongitude) {
+        this.originStopLongitude = originStopLongitude;
     }
 
-    public double getTravelTimeOriginToOriginStopSHSolution() {
-        return this.travelTimeOriginToOriginStopSHSolution;
+    public double getOriginStopLatitude() {
+        return this.originStopLatitude;
     }
 
-    public double getTravelTimeOriginStopToDestinationStopSHSolution() {
-        return this.travelTimeOriginStopToDestinationStopSHSolution;
+    public void setOriginStopLatitude(double originStopLatitude) {
+        this.originStopLatitude = originStopLatitude;
     }
 
-    public double getTotalTravelTimeSHSolution() {
-        return this.totalTravelTimeSHSolution;
+    public long getOriginStopNearestNodeId() {
+        return this.originStopNearestNodeId;
     }
 
-    public double getRelativeTravelTimeDifferenceInSHAndExactSolutions() {
-        return this.relativeTravelTimeDifferenceInSHAndExactSolutions;
+    public void setOriginStopNearestNodeId(long originStopNearestNodeId) {
+        this.originStopNearestNodeId = originStopNearestNodeId;
     }
 
-    public int getCountOriginStopsConsideredTVSolution() {
-        return this.countOriginStopsConsideredTVSolution;
+    public double getOriginStopNearestNodeLongitude() {
+        return this.originStopNearestNodeLongitude;
     }
 
-    public double getTimeElapsedQueryProcessingTVSolution() {
-        return this.timeElapsedQueryProcessingTVSolution;
+    public void setOriginStopNearestNodeLongitude(double originStopNearestNodeLongitude) {
+        this.originStopNearestNodeLongitude = originStopNearestNodeLongitude;
     }
 
-    public int getOriginStopIdTVSolution() {
-        return this.originStopIdTVSolution;
+    public double getOriginStopNearestNodeLatitude() {
+        return this.originStopNearestNodeLatitude;
     }
 
-    public String getOriginStopNameTVSolution() {
-        return this.originStopNameTVSolution;
+    public void setOriginStopNearestNodeLatitude(double originStopNearestNodeLatitude) {
+        this.originStopNearestNodeLatitude = originStopNearestNodeLatitude;
     }
 
-    public int getOriginStopTypeTVSolution() {
-        return this.originStopTypeTVSolution;
+    public double getTotalJourneyTime() {
+        return this.totalJourneyTime;
     }
 
-    public int getOriginStopTripVolumeTVSolution() {
-        return this.originStopTripVolumeTVSolution;
+    public void setTotalJourneyTime(double totalJourneyTime) {
+        this.totalJourneyTime = totalJourneyTime;
     }
 
-    public double getOriginStopAverageTransferCostTVSolution() {
-        return this.originStopAverageTransferCostTVSolution;
+    public double getRelativeDifferenceToBestJourneyTime() {
+        return this.relativeDifferenceToBestJourneyTime;
     }
 
-    public double getTravelTimeOriginToOriginStopTVSolution() {
-        return this.travelTimeOriginToOriginStopTVSolution;
-    }
-
-    public double getTravelTimeOriginStopToDestinationStopTVSolution() {
-        return this.travelTimeOriginStopToDestinationStopTVSolution;
-    }
-
-    public double getTotalTravelTimeTVSolution() {
-        return this.totalTravelTimeTVSolution;
-    }
-
-    public double getRelativeTravelTimeDifferenceInTVAndExactSolutions() {
-        return this.relativeTravelTimeDifferenceInTVAndExactSolutions;
+    public void setRelativeDifferenceToBestJourneyTime(double relativeDifferenceToBestJourneyTime) {
+        this.relativeDifferenceToBestJourneyTime = relativeDifferenceToBestJourneyTime;
     }
 }
