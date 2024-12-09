@@ -35,9 +35,9 @@ public class MultiModalQueryResponsesPub {
     private double destinationStopAverageTransferCost;
     private double destinationStopLongitude;
     private double destinationStopLatitude;
-    private long nearestDestinationStopNodeId;
-    private double nearestDestinationStopNodeLongitude;
-    private double nearestDestinationStopNodeLatitude;
+    private long destinationStopNearestNodeId;
+    private double destinationStopNearestNodeLongitude;
+    private double destinationStopNearestNodeLatitude;
     private int countOriginStopsConsideredSolution;
 
     // Journey-related attributes to be used as covariates
@@ -247,28 +247,28 @@ public class MultiModalQueryResponsesPub {
         this.destinationStopLatitude = destinationStopLatitude;
     }
 
-    public long getNearestDestinationStopNodeId() {
-        return this.nearestDestinationStopNodeId;
+    public long getDestinationStopNearestNodeId() {
+        return this.destinationStopNearestNodeId;
     }
 
-    public void setNearestDestinationStopNodeId(long nearestDestinationStopNodeId) {
-        this.nearestDestinationStopNodeId = nearestDestinationStopNodeId;
+    public void setDestinationStopNearestNodeId(long destinationStopNearestNodeId) {
+        this.destinationStopNearestNodeId = destinationStopNearestNodeId;
     }
 
-    public double getNearestDestinationStopNodeLongitude() {
-        return this.nearestDestinationStopNodeLongitude;
+    public double getDestinationStopNearestNodeLongitude() {
+        return this.destinationStopNearestNodeLongitude;
     }
 
-    public void setNearestDestinationStopNodeLongitude(double nearestDestinationStopNodeLongitude) {
-        this.nearestDestinationStopNodeLongitude = nearestDestinationStopNodeLongitude;
+    public void setDestinationStopNearestNodeLongitude(double destinationStopNearestNodeLongitude) {
+        this.destinationStopNearestNodeLongitude = destinationStopNearestNodeLongitude;
     }
 
-    public double getNearestDestinationStopNodeLatitude() {
-        return this.nearestDestinationStopNodeLatitude;
+    public double getDestinationStopNearestNodeLatitude() {
+        return this.destinationStopNearestNodeLatitude;
     }
 
-    public void setNearestDestinationStopNodeLatitude(double nearestDestinationStopNodeLatitude) {
-        this.nearestDestinationStopNodeLatitude = nearestDestinationStopNodeLatitude;
+    public void setDestinationStopNearestNodeLatitude(double destinationStopNearestNodeLatitude) {
+        this.destinationStopNearestNodeLatitude = destinationStopNearestNodeLatitude;
     }
 
     public int getCountOriginStopsConsideredSolution() {

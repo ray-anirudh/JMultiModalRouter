@@ -44,7 +44,8 @@ public class MultiModalQueryReader {
             String[] multiModalQueriesHeaderArray = multiModalQueriesReader.readLine().split(",");
             int originLongitudeIndex = findIndexInArray("originLongitude",
                     multiModalQueriesHeaderArray);
-            int originLatitudeIndex = findIndexInArray("originLatitude", multiModalQueriesHeaderArray);
+            int originLatitudeIndex = findIndexInArray("originLatitude",
+                    multiModalQueriesHeaderArray);
             int destinationLongitudeIndex = findIndexInArray("destinationLongitude",
                     multiModalQueriesHeaderArray);
             int destinationLatitudeIndex = findIndexInArray("destinationLatitude",
