@@ -12,10 +12,12 @@ package src.PublicTransportRouter.RoutingAlgorithm;
 public class TransitQueryResponse {
     private double earliestArrivalTimeMinutes;
     private double travelTimeMinutes;
+    private int numberOfTransfers;
 
-    TransitQueryResponse(double earliestArrivalTimeMinutes, double travelTimeMinutes) {
+    TransitQueryResponse(double earliestArrivalTimeMinutes, double travelTimeMinutes, int numberOfTransfers) {
         this.earliestArrivalTimeMinutes = earliestArrivalTimeMinutes;
         this.travelTimeMinutes = travelTimeMinutes;
+        this.numberOfTransfers = numberOfTransfers;
     }
 
     public double getEarliestArrivalTimeMinutes() {
@@ -24,5 +26,9 @@ public class TransitQueryResponse {
 
     public double getTravelTimeMinutes() {
         return this.travelTimeMinutes;
+    }
+
+    public int getNumberOfTransfers() {
+        return this.numberOfTransfers;
     }
 }

@@ -29,7 +29,8 @@ public class RAPTOR {
                                                         LinkedHashMap<Integer, Transfer> transfers) {
 
         // Initialize earliest arrival time output
-        TransitQueryResponse transitQueryResponse = new TransitQueryResponse(-1, -1);
+        TransitQueryResponse transitQueryResponse = new TransitQueryResponse(-1,
+                -1, -1);
 
         // Initialize RAPTOR
         LinkedHashMap<Integer, Double> summaryEarliestArrivalTimeMap = initializeSummaryEarliestArrivalTimeMap(stops);
@@ -91,7 +92,7 @@ public class RAPTOR {
                 (destinationStopEarliestArrivalTimeMinutes != Double.POSITIVE_INFINITY)) {
             double transitTravelTimeMinutes = destinationStopEarliestArrivalTimeMinutes - departureTimeOriginStop;
             transitQueryResponse = new TransitQueryResponse(destinationStopEarliestArrivalTimeMinutes,
-                    transitTravelTimeMinutes);
+                    transitTravelTimeMinutes, tripLegNumber - 1);
         }
 
         /* Debugging statements:
