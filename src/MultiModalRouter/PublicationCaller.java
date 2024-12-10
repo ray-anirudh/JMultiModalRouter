@@ -259,6 +259,7 @@ public class PublicationCaller {
                 double destinationStopNearestNodeLongitude = destinationStopNearestNode.getNodeLongitude();
                 double destinationStopNearestNodeLatitude = destinationStopNearestNode.getNodeLatitude();
 
+                // todo continue from here.......
                 // Determine travel time from destination stop to destination
                 double travelTimeDestinationStopToDestinationPoint = (destinationStop.equiRectangularDistanceTo(
                         destinationStopNode.getNodeLongitude(), destinationStopNode.getNodeLatitude()) +
@@ -268,7 +269,7 @@ public class PublicationCaller {
                 multiModalQueryResponses.setTravelTimeDestinationStopToDestination(
                         travelTimeDestinationStopToDestinationPoint);
 
-                // todo continue from here.......
+
                 // todo move information below to solution info
                 multiModalQueryResponsesPub.setOriginPointLongitude(originPointLongitude);
                 multiModalQueryResponsesPub.setOriginPointLatitude(originPointLatitude);
