@@ -1,5 +1,5 @@
 ID of First Query to be Processed=1
-Number of Multi-modal Queries to be Processed=49
+Number of Multi-modal Queries to be Processed=59
 Minimum Driving Distance (in m)=1500
 Maximum Driving Distance (in m)=12000
 Average Walking Speed (in m per min)=85.20
@@ -12,4 +12,4 @@ Dijkstra Output Folder Path=D:/Documents - Education + Work/Education - TUM/Year
 Google Transit Feed Specification Data Folder Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/GTFSDataMunich/Downloaded/AGGTFSData
 RAPTOR Output Folder Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Results/RAPTORMaps
 GTFS Data Parsing Parameters File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/JMultiModalRouter/JMMRParameters/GTFSParameters.txt
-Multi-modal Queries File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/MITOTripDataMunich/multiModalQueries.csv
+Multi-modal Queries File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/MITOTripDataMunich/MITO20PercentTripsEPSG4326Final.csv
