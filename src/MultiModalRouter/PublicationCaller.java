@@ -19,6 +19,7 @@ import src.NearestNeighbourFinder.KDTreeForStops;
 import src.PublicTransportRouter.GTFSDataManager.*;
 import src.PublicTransportRouter.RoutingAlgorithm.RAPTOR;
 
+import src.PublicTransportRouter.RoutingAlgorithm.TransitQueryResponse;
 import src.RoadTransportRouter.OSMDataManager.Link;
 import src.RoadTransportRouter.OSMDataManager.Node;
 import src.RoadTransportRouter.OSMDataManager.OSMDataReaderWriter;
@@ -40,9 +41,8 @@ public class PublicationCaller {
      * ATTRIBUTE DEFINITIONS
      */
 
-    private static CallerParametersReader callerParametersReader = new CallerParametersReader();
-    private static String callerParametersFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
-            "Fourth Semester/MasterThesis/JMultiModalRouter/JMMRParameters/CallerParameters.txt";
+    private static final CallerParametersReader callerParametersReader = new CallerParametersReader();
+    private static final String callerParametersFilePath = "JMMRParameters/CallerParameters.txt";
     private static final long NANOSECONDS_PER_MIN = 60_000_000_000L;
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
 
@@ -69,22 +69,13 @@ public class PublicationCaller {
         String gtfsParametersFilePath = callerParametersReader.getGtfsParametersFilePath();
         String multiModalQueriesFilePath = callerParametersReader.getMultiModalQueriesFilePath();
 
-        // Debugging statements: todo see what to do with this
-        System.out.println(beginQueryId + ", " +
-                numberMultiModalQueries + ", " +
-                minimumDrivingDistance + ", " +
-                maximumDrivingDistance + ", " +
-                avgWalkingSpeedMPerMin + ", " +
-                avgDrivingSpeedMPerMin + ", " +
-                avgODMWaitTimeMin + ", " +
-                stopTypeToIgnore + ", " +
-                cutoffDailyServiceCountOfStop + ", " +
-                osmOplExtractFilePath + ", " +
-                dijkstraFolderPath + ", " +
-                gtfsFolderPath + ", " +
-                raptorFolderPath + ", " +
-                gtfsParametersFilePath + ", " +
-                multiModalQueriesFilePath);
+        /* Debugging statements:
+        System.out.println(beginQueryId + ", " + numberMultiModalQueries + ", " + minimumDrivingDistance + ", " +
+                maximumDrivingDistance + ", " + avgWalkingSpeedMPerMin + ", " + avgDrivingSpeedMPerMin + ", " +
+                avgODMWaitTimeMin + ", " + stopTypeToIgnore + ", " + cutoffDailyServiceCountOfStop + ", " +
+                osmOplExtractFilePath + ", " + dijkstraFolderPath + ", " + gtfsFolderPath + ", " +
+                raptorFolderPath + ", " + gtfsParametersFilePath + ", " + multiModalQueriesFilePath);
+        */
 
         /**
          * OSM data reader-writer instantiation to read, write, and store data
@@ -184,8 +175,8 @@ public class PublicationCaller {
         double queryGenerationDuration = (double) (queryGenEndTime - queryGenStartTime);
 
         // Hashmap to store learning data for all possible journeys resulting for each query
-        LinkedHashMap<Long, LinkedHashMap<Long, MultiModalQueryResponsesPub>> multiModalQueriesResponses = new
-                LinkedHashMap<>();  // todo this is a huge change from response collection and writing perspective
+        LinkedHashMap<Long, ArrayList<MultiModalQueryResponsesPub>> multiModalQueriesResponsesPub = new
+                LinkedHashMap<>();
         System.out.println("\n" +
                 multiModalQueries.size() + " multi-modal queries for JavaMultiModalRouter read in " + String.format
                 ("%.3f", queryGenerationDuration / NANOSECONDS_PER_MIN) + " minutes.");
@@ -200,24 +191,24 @@ public class PublicationCaller {
         int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
 
         ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
-        // todo check whether we are asking for responses or responsesPub
-        ArrayList<Future<HashMap.Entry<Long, MultiModalQueryResponsesPub>>> futures = new ArrayList<>();
+        // todo check whether we are asking for responses or responsesPub everywhere
+        ArrayList<Future<ArrayList<MultiModalQueryResponsesPub>>> futures = new ArrayList<>();
+        Long queryEntryId = 0L;
 
         /**
          * Execute queries on the JMultiModalRouter architecture
          */
-        // todo finish it come the FUCK on
         long queriesSolvingStartTime = System.nanoTime();
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
+            queryEntryId = multiModalQueryEntry.getKey();
             Random solutionTypeRandomizer = new Random(7);
             int solutionTypeSelector = solutionTypeRandomizer.nextInt(9);
 
-            Future<HashMap.Entry<Long, MultiModalQueryResponsesPub>> future = executor.submit(() -> {
+            Future<ArrayList<MultiModalQueryResponsesPub>> future = executor.submit(() -> {
 
                 // Get the multi-modal query and response instances
-                Long queryId = multiModalQueryEntry.getKey();
                 MultiModalQuery multiModalQuery = multiModalQueryEntry.getValue();
-                MultiModalQueryResponsesPub multiModalQueryResponsesPub = new MultiModalQueryResponsesPub();
+                ArrayList<MultiModalQueryResponsesPub> querySpecificMultiModalQueryResponsesPub = new ArrayList<>();
 
                 // Parse locational and temporal data from the query
                 double originPointLongitude = multiModalQuery.getOriginLongitude();
@@ -225,33 +216,22 @@ public class PublicationCaller {
                 double destinationPointLongitude = multiModalQuery.getDestinationLongitude();
                 double destinationPointLatitude = multiModalQuery.getDestinationLatitude();
                 int originPointDepartureTime = multiModalQuery.getDepartureTime();
-                int originPointTazId = 0;   // TODO Fix this
-                int destinationPointTazId = 0;   // TODO Fix this
-                double travelTimeOriginTazToDestinationTazPeak = 0;   // TODO Fix this
-                double travelTimeOriginTazToDestinationTazOffPeak = 0;   // TODO Fix this
-                double travelTimeOriginTazToDestinationTazNight = 0;   // TODO Fix this
+                int originPointTazId = 0;   // TODO See later
+                int destinationPointTazId = 0;   // TODO See later
+                double travelTimeOriginTazToDestinationTazPeak = 0;   // TODO See later
+                double travelTimeOriginTazToDestinationTazOffPeak = 0;   // TODO See later
+                double travelTimeOriginTazToDestinationTazNight = 0;   // TODO See later
 
                 // Determine nodes nearest to the origin and destination points
                 Node originNode = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
                 Node destinationNode = kDTreeForNodes.findNearestNode(destinationPointLongitude,
                         destinationPointLatitude);
-                long originNodeId = originNode.getNodeId();
                 long destinationNodeId = destinationNode.getNodeId();
-                double originNodeLongitude = originNode.getNodeLongitude();
-                double originNodeLatitude = originNode.getNodeLatitude();
-                double destinationNodeLongitude = destinationNode.getNodeLongitude();
-                double destinationNodeLatitude = destinationNode.getNodeLatitude();
 
                 // Determine stop (and allied node) nearest to destination point
                 Stop destinationStop = kDTreeForStops.findNearestStop(destinationPointLongitude,
                         destinationPointLatitude);
                 int destinationStopId = destinationStop.getStopId();
-                String destinationStopName = destinationStop.getStopName();
-                int destinationStopType = destinationStop.getStopType();
-                int destinationStopDailyServiceCount = destinationStop.getStopTripCount();
-                double destinationStopAverageTransferCost = destinationStop.getAverageTransferCost();
-                double destinationStopLongitude = destinationStop.getStopLongitude();
-                double destinationStopLatitude = destinationStop.getStopLatitude();
 
                 Node destinationStopNearestNode = kDTreeForNodes.findNearestNode(destinationStop.getStopLongitude(),
                         destinationStop.getStopLatitude());
@@ -293,64 +273,23 @@ public class PublicationCaller {
 
                 // Exactly... route!
                 runRAPTORAndDijkstra(stopsNearOrigin, kDTreeForNodes, originPointLongitude,
-                        originPointLatitude, originNode, originPointDepartureTime, avgWalkingSpeedMPerMin,
+                        originPointLatitude, originNode, destinationPointLongitude, destinationPointLatitude,
+                        destinationNode, destinationStopNearestNode, originPointDepartureTime, avgWalkingSpeedMPerMin,
                         avgODMWaitTimeMin, travelTimeDestinationStopToDestination, destinationStopId, rAPTOR,
                         dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
-                        multiModalQueryResponses);
+                        querySpecificMultiModalQueryResponsesPub);
 
-
-                // todo move information below to solution info
-                multiModalQueryResponsesPub.setOriginPointLongitude(originPointLongitude);
-                multiModalQueryResponsesPub.setOriginPointLatitude(originPointLatitude);
-                multiModalQueryResponsesPub.setDestinationPointLongitude(destinationPointLongitude);
-                multiModalQueryResponsesPub.setDestinationPointLatitude(destinationPointLatitude);
-                multiModalQueryResponsesPub.setDepartureTimeOriginPoint(originPointDepartureTime);
-                multiModalQueryResponsesPub.setOriginTazId(originPointTazId);
-                multiModalQueryResponsesPub.setDestinationTazId(destinationPointTazId);
-                multiModalQueryResponsesPub.setTravelTimeOriginTazToDestinationTazPeak(
-                        travelTimeOriginTazToDestinationTazPeak);
-                multiModalQueryResponsesPub.setTravelTimeOriginTazToDestinationTazOffPeak(
-                        travelTimeOriginTazToDestinationTazOffPeak);
-                multiModalQueryResponsesPub.setTravelTimeOriginTazToDestinationTazNight(
-                        travelTimeOriginTazToDestinationTazNight);
-                multiModalQueryResponsesPub.setNearestOriginNodeId(originNodeId);
-                multiModalQueryResponsesPub.setNearestDestinationNodeId(destinationNodeId);
-                multiModalQueryResponsesPub.setNearestOriginNodeLongitude(originNodeLongitude);
-                multiModalQueryResponsesPub.setNearestOriginNodeLatitude(originNodeLatitude);
-                multiModalQueryResponsesPub.setNearestDestinationNodeLongitude(destinationNodeLongitude);
-                multiModalQueryResponsesPub.setNearestDestinationNodeLatitude(destinationNodeLatitude);
-                multiModalQueryResponsesPub.setDestinationStopId(destinationStopId);
-                multiModalQueryResponsesPub.setDestinationStopName(destinationStopName);
-                multiModalQueryResponsesPub.setDestinationStopType(destinationStopType);
-                multiModalQueryResponsesPub.setDestinationStopDailyServiceCount(destinationStopDailyServiceCount);
-                multiModalQueryResponsesPub.setDestinationStopAverageTransferCost(destinationStopAverageTransferCost);
-                multiModalQueryResponsesPub.setDestinationStopLongitude(destinationStopLongitude);
-                multiModalQueryResponsesPub.setDestinationStopLatitude(destinationStopLatitude);
-                multiModalQueryResponsesPub.setDestinationStopNearestNodeId(destinationStopNearestNodeId);
-                multiModalQueryResponsesPub.setDestinationStopNearestNodeLongitude(destinationStopNearestNodeLongitude);
-                multiModalQueryResponsesPub.setDestinationStopNearestNodeLatitude(destinationStopNearestNodeLatitude);
-                multiModalQueryResponsesPub.setTravelTimeDestinationStopToDestination(
-                        travelTimeDestinationStopToDestination);
-
-
-
-                    if ((multiModalQueryResponses.getTotalTravelTimeExactSolution() != Double.MAX_VALUE) &&
-                            (multiModalQueryResponses.getTotalTravelTimeSHSolution() != Double.MAX_VALUE) &&
-                            (multiModalQueryResponses.getTotalTravelTimeTVSolution() != Double.MAX_VALUE)) {
-                        return new AbstractMap.SimpleEntry<>(queryId, multiModalQueryResponsesPub);
-                        // multiModalQueriesResponses.put(multiModalQueryEntry.getKey(), multiModalQueryResponses);
-                    }
-                return null;
+                return querySpecificMultiModalQueryResponsesPub;
             });
             futures.add(future);
         }
 
         // Process the results and add to the response map before shutting down the executor
-        for (Future<Map.Entry<Long, MultiModalQueryResponsesPub>> future : futures) {
+        for (Future<ArrayList<MultiModalQueryResponsesPub>> future : futures) {
             try {
-                Map.Entry<Long, MultiModalQueryResponsesPub> result = future.get();
-                if (result != null) {
-                    multiModalQueriesResponses.put(result.getKey(), result.getValue());
+                ArrayList<MultiModalQueryResponsesPub> responsePubList = future.get();
+                if (responsePubList != null) {
+                    multiModalQueriesResponsesPub.put(queryEntryId, responsePubList);
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -363,13 +302,16 @@ public class PublicationCaller {
         System.out.println("\n" + multiModalQueries.size() + " multi-modal queries solved in " + String.format("%.3f",
                 queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
-        // Write out responses to the multi-modal queries
-        String multiModalQueriesResponsesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
-                "Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponses.csv";
-        writeMultiModalQueriesResponses(multiModalQueriesResponsesFilePath, multiModalQueriesResponses);
+        // Write out responses to the multi-modal queries in batches (based on query ID)
+        if (queryEntryId % 10_000 == 0) {
+            String multiModalQueriesResponsesPubFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
+                    "Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponsesPub" + queryEntryId +
+            ".csv";
+            int queryVolume = 10_000;
+            writeMultiModalQueriesResponses(queryEntryId, queryVolume, multiModalQueriesResponsesPubFilePath,
+                    multiModalQueriesResponsesPub);
+        }
     }
-
-    // todo lets go mate - TAZ booms
 
     // Set the parameters required for running the caller class
     public static void setCallerParameters(CallerParametersReader callerParametersReader,
@@ -448,6 +390,8 @@ public class PublicationCaller {
     // Run RAPTOR and Dijkstra algorithms and update the multi-modal query response object (pertaining to the pub)
     private static void runRAPTORAndDijkstra(ArrayList<Stop> stopsNearOrigin, KDTreeForNodes kDTreeForNodes,
                                              double originPointLongitude, double originPointLatitude, Node originNode,
+                                             double destinationPointLongitude, double destinationPointLatitude,
+                                             Node destinationNode, Node destinationStopNearestNode,
                                              int originPointDepartureTime, double avgWalkingSpeedMPerMin,
                                              double avgODMWaitTimeMin,
                                              double travelTimeDestinationStopToDestinationPoint, int destinationStopId,
@@ -458,16 +402,20 @@ public class PublicationCaller {
                                              LinkedHashMap<Integer, Stop> stops,
                                              LinkedHashMap<Integer, StopRoute> stopRoutes,
                                              LinkedHashMap<Integer, Transfer> transfers,
-                                             MultiModalQueryResponsesPub multiModalQueryResponsesPub) {
+                                             ArrayList<MultiModalQueryResponsesPub>
+                                                     querySpecificMultiModalQueryResponsesPub) {
         long journeyFindingStartTime = System.nanoTime();
         double leastTotalTravelTime = Double.MAX_VALUE;
-        int solutionStopIndex = -1; // todo see use
+        int solutionStopIndex;
 
         // Derive travel times from origin point to stops in its vicinity
         ArrayList<Double> travelTimesOriginPointToOriginStops = new ArrayList<>();
+        ArrayList<Node> originStopsNearestNodeList = new ArrayList<>();
+
         for (Stop stopNearOrigin : stopsNearOrigin) {
             Node nodeNearOriginStop = kDTreeForNodes.findNearestNode(stopNearOrigin.getStopLongitude(),
                     stopNearOrigin.getStopLatitude());
+            originStopsNearestNodeList.add(nodeNearOriginStop);
 
             travelTimesOriginPointToOriginStops.add(avgODMWaitTimeMin + // Waiting for ODM service is expected
                     // Walking to and from ODM pick-up and drop-off is also expected
@@ -479,18 +427,18 @@ public class PublicationCaller {
                             nodeNearOriginStop.getNodeId(), nodes, links)));
         }
 
-        // TODO CONTINUE HERE
-
-        // Calculate travel times between origin-destination stops, and report the minimized total travel time
+        ArrayList<TransitQueryResponse> transitQueryResponses = new ArrayList<>();
+        // Calculate travel times between origin-destination stops, and report a list of transit query responses
         for (int i = 0; i < stopsNearOrigin.size(); i++) {
-            double travelTimeOriginStopToDestinationStop = rAPTOR.findShortestTransitPath(stopsNearOrigin.get(i).
+            TransitQueryResponse transitQueryResponse = rAPTOR.findShortestTransitPath(stopsNearOrigin.get(i).
                                     getStopId(), destinationStopId, (originPointDepartureTime +
-                                    travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops, stopRoutes,
-                            transfers).
-                    getTravelTimeMinutes();
+                                    travelTimesOriginPointToOriginStops.get(i)), routeStops, stopTimes, stops,
+                            stopRoutes, transfers);
+            // If any attribute of response is -1, a transit path was not found via RAPTOR (unlikely for graphs)
+            transitQueryResponses.add(transitQueryResponse);
 
-            double totalTravelTime = (travelTimeOriginStopToDestinationStop == -1) ? Double.MAX_VALUE :
-                    travelTimesOriginPointToOriginStops.get(i) + travelTimeOriginStopToDestinationStop +
+            double totalTravelTime = (transitQueryResponse.getTravelTimeMinutes() == -1) ? Double.MAX_VALUE :
+                    travelTimesOriginPointToOriginStops.get(i) + transitQueryResponse.getTravelTimeMinutes() +
                             travelTimeDestinationStopToDestinationPoint;
 
             if (totalTravelTime < leastTotalTravelTime) {
@@ -498,172 +446,139 @@ public class PublicationCaller {
                 solutionStopIndex = i;
             }
         }
+
         long journeyFindingEndTime = System.nanoTime();
-        long journeyComputationTime = journeyFindingEndTime - journeyFindingStartTime;
+        long journeyComputationTimeNs = journeyFindingEndTime - journeyFindingStartTime;
 
-        // Ascribe output(s) to multi-modal query response instance
-        if (leastTotalTravelTime != Double.MAX_VALUE) {
-            Stop solutionStop = stopsNearOrigin.get(solutionStopIndex);
+        if (leastTotalTravelTime == Double.MAX_VALUE) {
+            return;
+        }
 
-            if (solutionTypeFlag.equalsIgnoreCase("Exact")) {
-                multiModalQueryResponses.setCountOriginStopsConsideredExactSolution(stopsNearOrigin.size());
-                multiModalQueryResponses.setTimeElapsedQueryProcessingExactSolution(
-                        singleMultiModalQueryEvaluationDuration);
-                multiModalQueryResponses.setOriginStopIdExactSolution(solutionStop.getStopId());
-                multiModalQueryResponses.setOriginStopNameExactSolution(solutionStop.getStopName());
-                multiModalQueryResponses.setOriginStopTypeExactSolution(solutionStop.getStopType());
-                multiModalQueryResponses.setOriginStopTripVolumeExactSolution(solutionStop.getStopTripCount());
-                multiModalQueryResponses.setOriginStopAverageTransferCostExactSolution(solutionStop.
-                        getAverageTransferCost());
-                multiModalQueryResponses.setTravelTimeOriginToOriginStopExactSolution(
-                        travelTimesOriginPointToOriginStops.get(solutionStopIndex));
-                multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopExactSolution(leastTotalTravelTime -
-                        travelTimesOriginPointToOriginStops.get(solutionStopIndex) -
-                        travelTimeDestinationStopToDestinationPoint);
-                multiModalQueryResponses.setTotalTravelTimeExactSolution(leastTotalTravelTime);
+        for (int i = 0; i < transitQueryResponses.size(); i++) {
+            TransitQueryResponse transitQueryResponse = transitQueryResponses.get(i);
+            if (transitQueryResponse.getTravelTimeMinutes() != -1) {
+                Stop originStop = stopsNearOrigin.get(i);
+                Stop destinationStop = stops.get(destinationStopId);
+                Node nodeNearOriginStop = originStopsNearestNodeList.get(i);
+                double totalJourneyTime = travelTimesOriginPointToOriginStops.get(i) + transitQueryResponse.
+                        getTravelTimeMinutes() + travelTimeDestinationStopToDestinationPoint;
+                double relativeDiffMinTravelTime = (totalJourneyTime - leastTotalTravelTime) / leastTotalTravelTime;
 
-            } else if (solutionTypeFlag.equalsIgnoreCase("StopHierarchy")) {
-                multiModalQueryResponses.setCountOriginStopsConsideredSHSolution(stopsNearOrigin.size());
-                multiModalQueryResponses.setTimeElapsedQueryProcessingSHSolution(
-                        singleMultiModalQueryEvaluationDuration);
-                multiModalQueryResponses.setOriginStopIdSHSolution(solutionStop.getStopId());
-                multiModalQueryResponses.setOriginStopNameSHSolution(solutionStop.getStopName());
-                multiModalQueryResponses.setOriginStopTypeSHSolution(solutionStop.getStopType());
-                multiModalQueryResponses.setOriginStopTripVolumeSHSolution(solutionStop.getStopTripCount());
-                multiModalQueryResponses.setOriginStopAverageTransferCostSHSolution(solutionStop.
-                        getAverageTransferCost());
-                multiModalQueryResponses.setTravelTimeOriginToOriginStopSHSolution(travelTimesOriginPointToOriginStops.
-                        get(solutionStopIndex));
-                multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopSHSolution(leastTotalTravelTime -
-                        travelTimesOriginPointToOriginStops.get(solutionStopIndex) -
-                        travelTimeDestinationStopToDestinationPoint);
-                multiModalQueryResponses.setTotalTravelTimeSHSolution(leastTotalTravelTime);
-                multiModalQueryResponses.setRelativeTravelTimeDifferenceInSHAndExactSolutions((multiModalQueryResponses.
-                        getTotalTravelTimeExactSolution() - leastTotalTravelTime) /
-                        multiModalQueryResponses.getTotalTravelTimeExactSolution());
+                MultiModalQueryResponsesPub multiModalQueryResponsesPub = new MultiModalQueryResponsesPub(
+                        originPointLongitude, originPointLatitude, destinationPointLongitude, destinationPointLatitude,
+                        originPointDepartureTime, 1, 1, 1,
+                        1, 1, originNode.getNodeId(),
+                        originNode.getNodeLongitude(), originNode.getNodeLatitude(), destinationNode.getNodeId(),
+                        destinationNode.getNodeLongitude(), destinationNode.getNodeLatitude(), destinationStopId,
+                        destinationStop.getStopName(), destinationStop.getStopType(),
+                        destinationStop.getStopTripCount(), destinationStop.getAverageTransferCost(),
+                        destinationStop.getStopLongitude(), destinationStop.getStopLatitude(),
+                        destinationStopNearestNode.getNodeId(), destinationStopNearestNode.getNodeLongitude(),
+                        destinationStopNearestNode.getNodeLatitude(), transitQueryResponses.size(),
+                        travelTimesOriginPointToOriginStops.get(i), transitQueryResponses.get(i).getTravelTimeMinutes(),
+                        travelTimeDestinationStopToDestinationPoint, transitQueryResponse.getNumberOfTransfers(),
+                        journeyComputationTimeNs, originStop.getStopId(), originStop.getStopName(),
+                        originStop.getStopType(), originStop.getStopTripCount(), originStop.getAverageTransferCost(),
+                        originStop.getStopLongitude(), originStop.getStopLatitude(), nodeNearOriginStop.getNodeId(),
+                        nodeNearOriginStop.getNodeLongitude(), nodeNearOriginStop.getNodeLatitude(), totalJourneyTime,
+                        relativeDiffMinTravelTime);
 
-            } else if (solutionTypeFlag.equalsIgnoreCase("TripVolume")) {
-                multiModalQueryResponses.setCountOriginStopsConsideredTVSolution(stopsNearOrigin.size());
-                multiModalQueryResponses.setTimeElapsedQueryProcessingTVSolution(
-                        singleMultiModalQueryEvaluationDuration);
-                multiModalQueryResponses.setOriginStopIdTVSolution(solutionStop.getStopId());
-                multiModalQueryResponses.setOriginStopNameTVSolution(solutionStop.getStopName());
-                multiModalQueryResponses.setOriginStopTypeTVSolution(solutionStop.getStopType());
-                multiModalQueryResponses.setOriginStopTripVolumeTVSolution(solutionStop.getStopTripCount());
-                multiModalQueryResponses.setOriginStopAverageTransferCostTVSolution(solutionStop.
-                        getAverageTransferCost());
-                multiModalQueryResponses.setTravelTimeOriginToOriginStopTVSolution(travelTimesOriginPointToOriginStops.
-                        get(solutionStopIndex));
-                multiModalQueryResponses.setTravelTimeOriginStopToDestinationStopTVSolution(leastTotalTravelTime -
-                        travelTimesOriginPointToOriginStops.get(solutionStopIndex) -
-                        travelTimeDestinationStopToDestinationPoint);
-                multiModalQueryResponses.setTotalTravelTimeTVSolution(leastTotalTravelTime);
-                multiModalQueryResponses.setRelativeTravelTimeDifferenceInTVAndExactSolutions((multiModalQueryResponses.
-                        getTotalTravelTimeExactSolution() - leastTotalTravelTime) /
-                        multiModalQueryResponses.getTotalTravelTimeExactSolution());
-            }
-        } else {
-            if (solutionTypeFlag.equalsIgnoreCase("Exact")) {
-                multiModalQueryResponses.setTotalTravelTimeExactSolution(leastTotalTravelTime);
-            } else if (solutionTypeFlag.equalsIgnoreCase("StopHierarchy")) {
-                multiModalQueryResponses.setTotalTravelTimeSHSolution(leastTotalTravelTime);
-            } else if (solutionTypeFlag.equalsIgnoreCase("TripVolume")) {
-                multiModalQueryResponses.setTotalTravelTimeTVSolution(leastTotalTravelTime);
+                querySpecificMultiModalQueryResponsesPub.add(multiModalQueryResponsesPub);
             }
         }
     }
 
     // Write a "multiModalQueriesResponses.txt" file
-    private static void writeMultiModalQueriesResponses(String multiModalQueriesResponsesFilePath,
-                                                        LinkedHashMap<Long, MultiModalQueryResponses>
-                                                                multiModalQueriesResponses) {
+    private static void writeMultiModalQueriesResponses(Long queryEntryId, int queryVolume,
+                                                        String multiModalQueriesResponsesPubFilePath,
+                                                        LinkedHashMap<Long, ArrayList<MultiModalQueryResponsesPub>>
+                                                                multiModalQueriesResponsesPub) {
         try {
             // Writer for "multiModalQueriesResponses.csv"
-            BufferedWriter multiModalQueriesResponsesWriter = new BufferedWriter(new FileWriter(
-                    multiModalQueriesResponsesFilePath));
+            BufferedWriter multiModalQueriesResponsesPubWriter = new BufferedWriter(new FileWriter(
+                    multiModalQueriesResponsesPubFilePath));
 
             // Set up header array
-            multiModalQueriesResponsesWriter.write("query_id,origin_point_longitude,origin_point_latitude," +
+            multiModalQueriesResponsesPubWriter.write("query_id,origin_point_longitude,origin_point_latitude," +
                     "destination_point_longitude,destination_point_latitude,departure_time_origin_point," +
-                    "nearest_origin_node_id,nearest_destination_node_id,destination_stop_id,destination_stop_name," +
-                    "travel_time_destination_stop_to_destination,count_origin_stops_considered_exact_solution," +
-                    "time_elapsed_query_processing_exact_solution,origin_stop_id_exact_solution," +
-                    "origin_stop_name_exact_solution,origin_stop_type_exact_solution," +
-                    "origin_stop_trip_volume_exact_solution,origin_stop_average_transfer_cost_exact_solution," +
-                    "travel_time_origin_to_origin_stop_exact_solution," +
-                    "travel_time_origin_stop_to_destination_stop_exact_solution,total_travel_time_exact_solution," +
-                    "count_origin_stops_considered_sh_solution,time_elapsed_query_processing_sh_solution," +
-                    "origin_stop_id_sh_solution,origin_stop_name_sh_solution,origin_stop_type_sh_solution," +
-                    "origin_stop_trip_volume_sh_solution,origin_stop_average_transfer_cost_sh_solution," +
-                    "travel_time_origin_to_origin_stop_sh_solution," +
-                    "travel_time_origin_stop_to_destination_stop_sh_solution,total_travel_time_sh_solution," +
-                    "relative_travel_time_difference_in_sh_and_exact_solutions," +
-                    "count_origin_stops_considered_tv_solution,time_elapsed_query_processing_tv_solution," +
-                    "origin_stop_id_tv_solution,origin_stop_name_tv_solution,origin_stop_type_tv_solution," +
-                    "origin_stop_trip_volume_tv_solution,origin_stop_average_transfer_cost_tv_solution," +
-                    "travel_time_origin_to_origin_stop_tv_solution," +
-                    "travel_time_origin_stop_to_destination_stop_tv_solution,total_travel_time_tv_solution," +
-                    "relative_travel_time_difference_in_tv_and_exact_solutions\n");
+                    "origin_taz_id,destination_taz_id,travel_time_origin_taz_to_destination_taz_peak," +
+                    "travel_time_origin_taz_to_destination_taz_off_peak," +
+                    "travel_time_origin_taz_to_destination_taz_night," +
+                    "nearest_origin_node_id,nearest_origin_node_longitude,nearest_origin_node_latitude," +
+                    "nearest_destination_node_id,nearest_destination_node_longitude," +
+                    "nearest_destination_node_latitude," +
+                    "destination_stop_id,destination_stop_name,destination_stop_type," +
+                    "destination_stop_daily_service_count," +
+                    "destination_stop_average_transfer_cost,destination_stop_longitude,destination_stop_latitude," +
+                    "destination_stop_nearest_node_id,destination_stop_nearest_node_longitude," +
+                    "destination_stop_nearest_node_latitude,count_origin_stops_considered_solution," +
+                    "travel_time_origin_to_origin_stop,travel_time_origin_stop_to_destination_stop," +
+                    "travel_time_destination_stop_to_destination,number_transfers_in_transit," +
+                    "time_elapsed_in_journey_computation_nanoseconds,origin_stop_id,origin_stop_name," +
+                    "origin_stop_type,origin_stop_daily_service_count,origin_stop_average_transfer_cost," +
+                    "origin_stop_longitude,origin_stop_latitude,origin_stop_nearest_node_id," +
+                    "origin_stop_nearest_node_longitude,origin_stop_nearest_node_latitude,total_journey_time," +
+                    "relative_difference_to_best_journey_time\n");
 
             // Write body based on "multiModalQueriesResponses" hashmap
-            for (HashMap.Entry<Long, MultiModalQueryResponses> multiModalQueryResponsesEntry :
-                    multiModalQueriesResponses.entrySet()) {
-                multiModalQueriesResponsesWriter.write(multiModalQueryResponsesEntry.getKey() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginPointLongitude() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginPointLatitude() + "," +
-                        multiModalQueryResponsesEntry.getValue().getDestinationPointLongitude() + "," +
-                        multiModalQueryResponsesEntry.getValue().getDestinationPointLatitude() + "," +
-                        multiModalQueryResponsesEntry.getValue().getDepartureTimeOriginPoint() + "," +
-                        multiModalQueryResponsesEntry.getValue().getNearestOriginNodeId() + "," +
-                        multiModalQueryResponsesEntry.getValue().getNearestDestinationNodeId() + "," +
-                        multiModalQueryResponsesEntry.getValue().getDestinationStopId() + "," +
-                        multiModalQueryResponsesEntry.getValue().getDestinationStopName() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTravelTimeDestinationStopToDestination() + "," +
-                        multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredExactSolution() + "," +
-                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
-                                getTimeElapsedQueryProcessingExactSolution()) + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopIdExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopNameExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTypeExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTripVolumeExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopAverageTransferCostExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTravelTimeOriginToOriginStopExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().
-                                getTravelTimeOriginStopToDestinationStopExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTotalTravelTimeExactSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredSHSolution() + "," +
-                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
-                                getTimeElapsedQueryProcessingSHSolution()) + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopIdSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopNameSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTypeSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTripVolumeSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopAverageTransferCostSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTravelTimeOriginToOriginStopSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().
-                                getTravelTimeOriginStopToDestinationStopSHSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTotalTravelTimeSHSolution() + "," +
-                        String.format("%.18f", multiModalQueryResponsesEntry.getValue().
-                                getRelativeTravelTimeDifferenceInSHAndExactSolutions()) + "," +
-                        multiModalQueryResponsesEntry.getValue().getCountOriginStopsConsideredTVSolution() + "," +
-                        String.format("%.5f", multiModalQueryResponsesEntry.getValue().
-                                getTimeElapsedQueryProcessingTVSolution()) + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopIdTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopNameTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTypeTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopTripVolumeTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getOriginStopAverageTransferCostTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTravelTimeOriginToOriginStopTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().
-                                getTravelTimeOriginStopToDestinationStopTVSolution() + "," +
-                        multiModalQueryResponsesEntry.getValue().getTotalTravelTimeTVSolution() + "," +
-                        String.format("%.18f", multiModalQueryResponsesEntry.getValue().
-                                getRelativeTravelTimeDifferenceInTVAndExactSolutions())
-                        + "\n");
+            for(long queryEntryIdentifier = queryEntryId; queryEntryIdentifier < queryEntryId + queryVolume;
+                queryEntryIdentifier++) {
+                ArrayList<MultiModalQueryResponsesPub> multiModalQueriesResponses = multiModalQueriesResponsesPub.
+                        get(queryEntryIdentifier);
+                if (multiModalQueriesResponses == null) continue;
+
+                for (MultiModalQueryResponsesPub stopPairSpecificResponse : multiModalQueriesResponses) {
+                    multiModalQueriesResponsesPubWriter.write(queryEntryIdentifier + "," +
+                            stopPairSpecificResponse.getOriginPointLongitude() + "," +
+                            stopPairSpecificResponse.getOriginPointLatitude() + "," +
+                            stopPairSpecificResponse.getDestinationPointLongitude() + "," +
+                            stopPairSpecificResponse.getDestinationPointLatitude() + "," +
+                            stopPairSpecificResponse.getDepartureTimeOriginPoint() + "," +
+                            stopPairSpecificResponse.getOriginTazId() + "," +
+                            stopPairSpecificResponse.getDestinationTazId() + "," +
+                            stopPairSpecificResponse.getTravelTimeOriginTazToDestinationTazPeak() + "," +
+                            stopPairSpecificResponse.getTravelTimeOriginTazToDestinationTazOffPeak() + "," +
+                            stopPairSpecificResponse.getTravelTimeOriginTazToDestinationTazNight() + "," +
+                            stopPairSpecificResponse.getNearestOriginNodeId() + "," +
+                            stopPairSpecificResponse.getNearestOriginNodeLongitude() + "," +
+                            stopPairSpecificResponse.getNearestOriginNodeLatitude() + "," +
+                            stopPairSpecificResponse.getNearestDestinationNodeId() + "," +
+                            stopPairSpecificResponse.getNearestDestinationNodeLongitude() + "," +
+                            stopPairSpecificResponse.getNearestDestinationNodeLatitude() + "," +
+                            stopPairSpecificResponse.getDestinationStopId() + "," +
+                            stopPairSpecificResponse.getDestinationStopName() + "," +
+                            stopPairSpecificResponse.getDestinationStopType() + "," +
+                            stopPairSpecificResponse.getDestinationStopDailyServiceCount() + "," +
+                            stopPairSpecificResponse.getDestinationStopAverageTransferCost() + "," +
+                            stopPairSpecificResponse.getDestinationStopLongitude() + "," +
+                            stopPairSpecificResponse.getDestinationStopLatitude() + "," +
+                            stopPairSpecificResponse.getDestinationStopNearestNodeId() + "," +
+                            stopPairSpecificResponse.getDestinationStopNearestNodeLongitude() + "," +
+                            stopPairSpecificResponse.getDestinationStopNearestNodeLatitude() + "," +
+                            stopPairSpecificResponse.getCountOriginStopsConsideredSolution() + "," +
+                            stopPairSpecificResponse.getTravelTimeOriginToOriginStop() + "," +
+                            stopPairSpecificResponse.getTravelTimeOriginStopToDestinationStop() + "," +
+                            stopPairSpecificResponse.getTravelTimeDestinationStopToDestination() + "," +
+                            stopPairSpecificResponse.getNumberTransfersInTransit() + "," +
+                            stopPairSpecificResponse.getTimeElapsedInJourneyComputationNanoSeconds() + "," +
+                            stopPairSpecificResponse.getOriginStopId() + "," +
+                            stopPairSpecificResponse.getOriginStopName() + "," +
+                            stopPairSpecificResponse.getOriginStopType() + "," +
+                            stopPairSpecificResponse.getOriginStopDailyServiceCount() + "," +
+                            stopPairSpecificResponse.getOriginStopAverageTransferCost() + "," +
+                            stopPairSpecificResponse.getOriginStopLongitude() + "," +
+                            stopPairSpecificResponse.getOriginStopLatitude() + "," +
+                            stopPairSpecificResponse.getOriginStopNearestNodeId() + "," +
+                            stopPairSpecificResponse.getOriginStopNearestNodeLongitude() + "," +
+                            stopPairSpecificResponse.getOriginStopNearestNodeLatitude() + "," +
+                            stopPairSpecificResponse.getTotalJourneyTime() + "," +
+                            stopPairSpecificResponse.getRelativeDifferenceToBestJourneyTime() + "\n");
+                }
             }
-            multiModalQueriesResponsesWriter.flush();   // todo super important
-            multiModalQueriesResponsesWriter.close();   // todo super important
-            System.out.println("Multi-modal queries' responses written to: " + multiModalQueriesResponsesFilePath);
+
+            multiModalQueriesResponsesPubWriter.flush();
+            multiModalQueriesResponsesPubWriter.close();
+            System.out.println("Multi-modal queries' responses written to: " + multiModalQueriesResponsesPubFilePath);
 
         } catch (IOException iOE) {
             System.out.println("Input-output exception. Please check the \"multi-modal queries' responses\" hashmap.");

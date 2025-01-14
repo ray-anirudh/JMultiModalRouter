@@ -63,6 +63,75 @@ public class MultiModalQueryResponsesPub {
     private double totalJourneyTime; // todo gather from router
     private double relativeDifferenceToBestJourneyTime; // todo gather from router
 
+    public MultiModalQueryResponsesPub(double originPointLongitude, double originPointLatitude,
+                                       double destinationPointLongitude, double destinationPointLatitude,
+                                       int departureTimeOriginPoint, int originTazId, int destinationTazId,
+                                       double travelTimeOriginTazToDestinationTazPeak,
+                                       double travelTimeOriginTazToDestinationTazOffPeak,
+                                       double travelTimeOriginTazToDestinationTazNight,
+                                       long nearestOriginNodeId, double nearestOriginNodeLongitude,
+                                       double nearestOriginNodeLatitude, long nearestDestinationNodeId,
+                                       double nearestDestinationNodeLongitude, double nearestDestinationNodeLatitude,
+                                       int destinationStopId, String destinationStopName, int destinationStopType,
+                                       int destinationStopDailyServiceCount, double destinationStopAverageTransferCost,
+                                       double destinationStopLongitude, double destinationStopLatitude,
+                                       long destinationStopNearestNodeId, double destinationStopNearestNodeLongitude,
+                                       double destinationStopNearestNodeLatitude,
+                                       int countOriginStopsConsideredSolution, double travelTimeOriginToOriginStop,
+                                       double travelTimeOriginStopToDestinationStop,
+                                       double travelTimeDestinationStopToDestination, int numberTransfersInTransit,
+                                       long timeElapsedInJourneyComputationNanoSeconds, int originStopId,
+                                       String originStopName, int originStopType, int originStopDailyServiceCount,
+                                       double originStopAverageTransferCost, double originStopLongitude,
+                                       double originStopLatitude, long originStopNearestNodeId,
+                                       double originStopNearestNodeLongitude, double originStopNearestNodeLatitude,
+                                       double totalJourneyTime, double relativeDifferenceToBestJourneyTime) {
+        this.originPointLongitude = originPointLongitude;
+        this.originPointLatitude = originPointLatitude;
+        this.destinationPointLongitude = destinationPointLongitude;
+        this.destinationPointLatitude = destinationPointLatitude;
+        this.departureTimeOriginPoint = departureTimeOriginPoint;
+        this.originTazId = originTazId;
+        this.destinationTazId = destinationTazId;
+        this.travelTimeOriginTazToDestinationTazPeak = travelTimeOriginTazToDestinationTazPeak;
+        this.travelTimeOriginTazToDestinationTazOffPeak = travelTimeOriginTazToDestinationTazOffPeak;
+        this.travelTimeOriginTazToDestinationTazNight = travelTimeOriginTazToDestinationTazNight;
+        this.nearestOriginNodeId = nearestOriginNodeId;
+        this.nearestOriginNodeLongitude = nearestOriginNodeLongitude;
+        this.nearestOriginNodeLatitude = nearestOriginNodeLatitude;
+        this.nearestDestinationNodeId = nearestDestinationNodeId;
+        this.nearestDestinationNodeLongitude = nearestDestinationNodeLongitude;
+        this.nearestDestinationNodeLatitude = nearestDestinationNodeLatitude;
+        this.destinationStopId = destinationStopId;
+        this.destinationStopName = destinationStopName;
+        this.destinationStopType = destinationStopType;
+        this.destinationStopDailyServiceCount = destinationStopDailyServiceCount;
+        this.destinationStopAverageTransferCost = destinationStopAverageTransferCost;
+        this.destinationStopLongitude = destinationStopLongitude;
+        this.destinationStopLatitude = destinationStopLatitude;
+        this.destinationStopNearestNodeId = destinationStopNearestNodeId;
+        this.destinationStopNearestNodeLongitude = destinationStopNearestNodeLongitude;
+        this.destinationStopNearestNodeLatitude = destinationStopNearestNodeLatitude;
+        this.countOriginStopsConsideredSolution = countOriginStopsConsideredSolution;
+        this.travelTimeOriginToOriginStop = travelTimeOriginToOriginStop;
+        this.travelTimeOriginStopToDestinationStop = travelTimeOriginStopToDestinationStop;
+        this.travelTimeDestinationStopToDestination = travelTimeDestinationStopToDestination;
+        this.numberTransfersInTransit = numberTransfersInTransit;
+        this.timeElapsedInJourneyComputationNanoSeconds = timeElapsedInJourneyComputationNanoSeconds;
+        this.originStopId = originStopId;
+        this.originStopName = originStopName;
+        this.originStopType = originStopType;
+        this.originStopDailyServiceCount = originStopDailyServiceCount;
+        this.originStopAverageTransferCost = originStopAverageTransferCost;
+        this.originStopLongitude = originStopLongitude;
+        this.originStopLatitude = originStopLatitude;
+        this.originStopNearestNodeId = originStopNearestNodeId;
+        this.originStopNearestNodeLongitude = originStopNearestNodeLongitude;
+        this.originStopNearestNodeLatitude = originStopNearestNodeLatitude;
+        this.totalJourneyTime = totalJourneyTime;
+        this.relativeDifferenceToBestJourneyTime = relativeDifferenceToBestJourneyTime;
+    }
+
     public double getOriginPointLongitude() {
         return this.originPointLongitude;
     }
