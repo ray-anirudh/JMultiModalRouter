@@ -155,13 +155,14 @@ public class PublicationCaller {
         // Consideration of trips simulated by TUM's Travel Behaviour Professorship for Munich and its environs
         MultiModalQueryReader multiModalQueryReader = new MultiModalQueryReader();
         multiModalQueryReader.readMultiModalQueries(multiModalQueriesFilePath);
-        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = multiModalQueryReader.getMultiModalQueries();
+        LinkedHashMap<Long, MultiModalQuery> allMultiModalQueries = multiModalQueryReader.getMultiModalQueries();
+        LinkedHashMap<Long, MultiModalQuery> multiModalQueries = new LinkedHashMap<>();
 
-//        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
-//        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
-//             multiModalQueryCount++) {
-//            multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
-//        }
+        // Limit the number of multi-modal queries to be processed, slicing through the master-list of queries
+        for (long multiModalQueryCount = beginQueryId; multiModalQueryCount <= beginQueryId + numberMultiModalQueries;
+             multiModalQueryCount++) {
+            multiModalQueries.put(multiModalQueryCount, allMultiModalQueries.get(multiModalQueryCount));
+        }
 
 //        // Alternate pathway (bi-variate normal distribution-based) for generating random multi-modal queries
 //        String multiModalQueriesFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/" +
@@ -191,16 +192,15 @@ public class PublicationCaller {
         int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
 
         ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
-        // todo check whether we are asking for responses or responsesPub everywhere
         ArrayList<Future<ArrayList<MultiModalQueryResponsesPub>>> futures = new ArrayList<>();
-        Long queryEntryId = 0L;
+
 
         /**
          * Execute queries on the JMultiModalRouter architecture
          */
         long queriesSolvingStartTime = System.nanoTime();
         for (HashMap.Entry<Long, MultiModalQuery> multiModalQueryEntry : multiModalQueries.entrySet()) {
-            queryEntryId = multiModalQueryEntry.getKey();
+            Long queryEntryId = multiModalQueryEntry.getKey();
             Random solutionTypeRandomizer = new Random(7);
             int solutionTypeSelector = solutionTypeRandomizer.nextInt(9);
 
@@ -285,11 +285,11 @@ public class PublicationCaller {
         }
 
         // Process the results and add to the response map before shutting down the executor
-        for (Future<ArrayList<MultiModalQueryResponsesPub>> future : futures) {
+        for (int i = 0; i < futures.size(); i++) {
             try {
-                ArrayList<MultiModalQueryResponsesPub> responsePubList = future.get();
+                ArrayList<MultiModalQueryResponsesPub> responsePubList = futures.get(i).get();
                 if (responsePubList != null) {
-                    multiModalQueriesResponsesPub.put(queryEntryId, responsePubList);
+                    multiModalQueriesResponsesPub.put((long) i, responsePubList);
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -297,19 +297,24 @@ public class PublicationCaller {
         }
         executor.shutdown();
 
+        System.out.println("Response list size: " + multiModalQueriesResponsesPub.size());  // todo check
+
         long queriesSolvingEndTime = System.nanoTime();
         double queriesSolvingDuration = (double) (queriesSolvingEndTime - queriesSolvingStartTime);
-        System.out.println("\n" + multiModalQueries.size() + " multi-modal queries solved in " + String.format("%.3f",
-                queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
+        System.out.println("\n" + multiModalQueriesResponsesPub.size() + " multi-modal queries solved in " +
+                String.format("%.3f", queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         // Write out responses to the multi-modal queries in batches (based on query ID)
-        if (queryEntryId % 10_000 == 0) {
-            String multiModalQueriesResponsesPubFilePath = "D:/Documents - Education + Work/Education - TUM/Year 2/" +
-                    "Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponsesPub" + queryEntryId +
-            ".csv";
-            int queryVolume = 10_000;
-            writeMultiModalQueriesResponses(queryEntryId, queryVolume, multiModalQueriesResponsesPubFilePath,
-                    multiModalQueriesResponsesPub);
+        for (long i : multiModalQueriesResponsesPub.keySet()) { // todo debug if i is being used each time or not
+            // todo check how to print each n values for each nth call
+            if (i % 25 == 1) {   // todo make into 10,000 or something like 20,000
+                String multiModalQueriesResponsesPubFilePath = "D:/Documents - Education + Work/Education - TUM/" +
+                        "Year 2/Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponsesPub" +
+                        i + ".csv";
+                int queryVolumeToWrite = 25;    // todo make into 10,000
+                writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
+                        multiModalQueriesResponsesPub);
+            }
         }
     }
 
