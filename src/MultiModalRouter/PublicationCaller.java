@@ -297,7 +297,7 @@ public class PublicationCaller {
         }
         executor.shutdown();
 
-        System.out.println("Response list size: " + multiModalQueriesResponsesPub.size());  // todo check
+        System.out.println("Response list size: " + multiModalQueriesResponsesPub.size());
 
         long queriesSolvingEndTime = System.nanoTime();
         double queriesSolvingDuration = (double) (queriesSolvingEndTime - queriesSolvingStartTime);
@@ -305,13 +305,11 @@ public class PublicationCaller {
                 String.format("%.3f", queriesSolvingDuration / NANOSECONDS_PER_MIN) + " minutes.");
 
         // Write out responses to the multi-modal queries in batches (based on query ID)
-        for (long i : multiModalQueriesResponsesPub.keySet()) { // todo debug if i is being used each time or not
-            // todo check how to print each n values for each nth call
-            if (i % 25 == 1) {   // todo make into 10,000 or something like 20,000
-                String multiModalQueriesResponsesPubFilePath = "D:/Documents - Education + Work/Education - TUM/" +
-                        "Year 2/Fourth Semester/MasterThesis/Results/LearningData/multiModalQueriesResponsesPub" +
-                        i + ".csv";
-                int queryVolumeToWrite = 25;    // todo make into 10,000
+        for (long i : multiModalQueriesResponsesPub.keySet()) {
+            if (i % 25 == 1) {
+                String multiModalQueriesResponsesPubFilePath = "F:/Anirudh/Results/LearningData/" +
+                        "multiModalQueriesResponsesPub" + i + ".csv";
+                int queryVolumeToWrite = 25;
                 writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
                         multiModalQueriesResponsesPub);
             }
