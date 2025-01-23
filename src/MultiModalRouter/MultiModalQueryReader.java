@@ -21,7 +21,10 @@ public class MultiModalQueryReader {
     /**
      * ATTRIBUTE DEFINITIONS
      */
-
+    private static final double MUNICH_LATITUDE_MIN = 48.0617;
+    private static final double MUNICH_LATITUDE_MAX = 48.2481;
+    private static final double MUNICH_LONGITUDE_MIN = 11.4436;
+    private static final double MUNICH_LONGITUDE_MAX = 11.7226;
     private static final double STUDY_AREA_LATITUDE_MIN = 47.829752;
     private static final double STUDY_AREA_LATITUDE_MAX = 48.433757;
     private static final double STUDY_AREA_LONGITUDE_MIN = 10.962982;
@@ -62,14 +65,10 @@ public class MultiModalQueryReader {
                 double destinationLatitude = Double.parseDouble(multiModalQueryDataRecord[destinationLatitudeIndex]);
                 int departureTime = Integer.parseInt(multiModalQueryDataRecord[departureTimeIndex]);
 
-                if ((originLongitude < STUDY_AREA_LONGITUDE_MIN) ||
-                        (originLatitude < STUDY_AREA_LATITUDE_MIN) ||
-                        (destinationLongitude < STUDY_AREA_LONGITUDE_MIN) ||
-                        (destinationLatitude < STUDY_AREA_LATITUDE_MIN) ||
-                        (originLongitude > STUDY_AREA_LONGITUDE_MAX) ||
-                        (originLatitude > STUDY_AREA_LATITUDE_MAX) ||
-                        (destinationLongitude > STUDY_AREA_LONGITUDE_MAX) ||
-                        (destinationLatitude > STUDY_AREA_LATITUDE_MAX) ||
+                if ((originLongitude < STUDY_AREA_LONGITUDE_MIN) || (originLatitude < STUDY_AREA_LATITUDE_MIN) ||
+                        (destinationLongitude < MUNICH_LONGITUDE_MIN) || (destinationLatitude < MUNICH_LATITUDE_MIN) ||
+                        (originLongitude > STUDY_AREA_LONGITUDE_MAX) || (originLatitude > STUDY_AREA_LATITUDE_MAX) ||
+                        (destinationLongitude > MUNICH_LONGITUDE_MAX) || (destinationLatitude > MUNICH_LATITUDE_MAX) ||
                         (calculateEquiRectangularDistance(originLongitude, originLatitude, destinationLongitude,
                                 destinationLatitude) < MINIMUM_TRIP_LENGTH_KM)) {
                 } else {
@@ -78,7 +77,8 @@ public class MultiModalQueryReader {
                     this.multiModalQueries.put(++multiModalQueryId, multiModalQuery);
                 }
             }
-            System.out.println("Multi-modal queries read from " + multiModalQueriesFilePath);
+            System.out.println(this.multiModalQueries.size() + " multi-modal queries read from " +
+                    multiModalQueriesFilePath + ".");
 
         } catch (FileNotFoundException fNFE) {
             System.out.println("File not found at specified path: " + multiModalQueriesFilePath);
