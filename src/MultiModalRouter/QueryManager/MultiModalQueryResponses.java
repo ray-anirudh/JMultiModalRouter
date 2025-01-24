@@ -7,7 +7,7 @@
  * KD-Trees
  */
 
-package src.MultiModalRouter;
+package src.MultiModalRouter.QueryManager;
 // Can average transfer costs at stops also be factored in for heuristic development
 
 public class MultiModalQueryResponses {

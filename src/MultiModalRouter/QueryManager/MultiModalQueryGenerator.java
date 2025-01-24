@@ -7,7 +7,7 @@
  * KD-Trees
  */
 
-package src.MultiModalRouter;
+package src.MultiModalRouter.QueryManager;
 // ODM: On-demand Mobility
 
 import java.io.BufferedWriter;

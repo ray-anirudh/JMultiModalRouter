@@ -7,7 +7,7 @@
  * KD-Trees
  */
 
-package src.MultiModalRouter;
+package src.MultiModalRouter.QueryManager;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

@@ -7,7 +7,7 @@
  * KD-Trees
  */
 
-package src.MultiModalRouter;
+package src.MultiModalRouter.QueryManager;
 
 public class MultiModalQuery {
     private double originLongitude;
@@ -25,23 +25,23 @@ public class MultiModalQuery {
         this.destinationLatitude = destinationLatitude;
     }
 
-    double getOriginLongitude() {
+    public double getOriginLongitude() {
         return this.originLongitude;
     }
 
-    double getOriginLatitude() {
+    public double getOriginLatitude() {
         return this.originLatitude;
     }
 
-    int getDepartureTime() {
+    public int getDepartureTime() {
         return this.departureTime;
     }
 
-    double getDestinationLongitude() {
+    public double getDestinationLongitude() {
         return this.destinationLongitude;
     }
 
-    double getDestinationLatitude() {
+    public double getDestinationLatitude() {
         return this.destinationLatitude;
     }
 }

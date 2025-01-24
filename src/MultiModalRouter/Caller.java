@@ -13,6 +13,9 @@ package src.MultiModalRouter;
 // OSM: OpenStreetMap
 // OPL: Object-Per-Line (format)
 
+import src.MultiModalRouter.QueryManager.MultiModalQuery;
+import src.MultiModalRouter.QueryManager.MultiModalQueryReader;
+import src.MultiModalRouter.QueryManager.MultiModalQueryResponses;
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.NearestNeighbourFinder.KDTreeForStops;
 

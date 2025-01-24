@@ -13,6 +13,9 @@ package src.MultiModalRouter;
 // OSM: OpenStreetMap
 // OPL: Object-Per-Line (file format)
 
+import src.MultiModalRouter.QueryManager.MultiModalQuery;
+import src.MultiModalRouter.QueryManager.MultiModalQueryReader;
+import src.MultiModalRouter.QueryManager.MultiModalQueryResponsesPub;
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.NearestNeighbourFinder.KDTreeForStops;
 
@@ -306,10 +309,10 @@ public class PublicationCaller {
 
         // Write out responses to the multi-modal queries in batches (based on query ID)
         for (long i : multiModalQueriesResponsesPub.keySet()) {
-            if (i % 25 == 1) {
+            if (i % 25 == 1) {  // todo manage
                 String multiModalQueriesResponsesPubFilePath = "F:/Anirudh/Results/LearningData/" +
                         "multiModalQueriesResponsesPub" + i + ".csv";
-                int queryVolumeToWrite = 25;
+                int queryVolumeToWrite = 25;    // todo manage
                 writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
                         multiModalQueriesResponsesPub);
             }
