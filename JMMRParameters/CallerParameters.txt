@@ -13,3 +13,5 @@ Google Transit Feed Specification Data Folder Path=F:/Anirudh/Data/AGGTFSData
 RAPTOR Output Folder Path=F:/Anirudh/Results/RAPTORMaps
 GTFS Data Parsing Parameters File Path=JMMRParameters/GTFSParameters.txt
 Multi-modal Queries File Path=F:/Anirudh/Data/MITO20PercentTripsEPSG4326Final.csv
+TAZCentroidsFilePath=FILEPATHDEDO
+Departure Time for TAZ to TAZ travel=1020

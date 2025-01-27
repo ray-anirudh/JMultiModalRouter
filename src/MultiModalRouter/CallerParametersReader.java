@@ -13,6 +13,7 @@ public class CallerParametersReader {
     private double avgWalkingSpeedMPMin;
     private double avgDrivingSpeedMPMin;
     private double avgODMWaitTimeMin;
+    private double departureTimeForTAZToTAZTravel;
     private int stopTypeToIgnore;
     private int cutoffDailyServiceCountOfStop;
     private String osmOplExtractFilePath;
@@ -21,6 +22,8 @@ public class CallerParametersReader {
     private String raptorFolderPath;
     private String gtfsParametersFilePath;
     private String multiModalQueriesFilePath;
+    private String tAZCentroidsFilePath;
+
 
     public void readCallerParameters(String callerParametersFilePath) {
         try {
@@ -36,10 +39,12 @@ public class CallerParametersReader {
             this.maximumDrivingDistance = Double.parseDouble(callerParametersFileReader.readLine().split("[=]")
                     [1]);
 
-            // Read and store travelling speeds and waiting times
+            // Read and store travelling speeds, departure times, and waiting times
             this.avgWalkingSpeedMPMin = Double.parseDouble(callerParametersFileReader.readLine().split("[=]")[1]);
             this.avgDrivingSpeedMPMin = Double.parseDouble(callerParametersFileReader.readLine().split("[=]")[1]);
             this.avgODMWaitTimeMin = Double.parseDouble(callerParametersFileReader.readLine().split("[=]")[1]);
+            this.departureTimeForTAZToTAZTravel = Double.parseDouble(callerParametersFileReader.readLine().
+                    split("[=]")[1]);
 
             // Read and store the heuristics-defining values
             this.stopTypeToIgnore = Integer.parseInt(callerParametersFileReader.readLine().split("[=]")[1]);
@@ -53,6 +58,7 @@ public class CallerParametersReader {
             this.raptorFolderPath = callerParametersFileReader.readLine().split("[=]")[1];
             this.gtfsParametersFilePath = callerParametersFileReader.readLine().split("[=]")[1];
             this.multiModalQueriesFilePath = callerParametersFileReader.readLine().split("[=]")[1];
+            this.tAZCentroidsFilePath = callerParametersFileReader.readLine().split("[=]")[1];
 
         } catch (FileNotFoundException fNFE) {
             System.out.println("File not found at " + callerParametersFilePath);
@@ -89,6 +95,10 @@ public class CallerParametersReader {
         return this.avgODMWaitTimeMin;
     }
 
+    public double getDepartureTimeForTAZToTAZTravel() {
+        return this.departureTimeForTAZToTAZTravel;
+    }
+
     public int getStopTypeToIgnore() {
         return this.stopTypeToIgnore;
     }
@@ -119,5 +129,9 @@ public class CallerParametersReader {
 
     public String getMultiModalQueriesFilePath() {
         return this.multiModalQueriesFilePath;
+    }
+
+    public String getTAZCentroidsFilePath() {
+        return this.tAZCentroidsFilePath;
     }
 }

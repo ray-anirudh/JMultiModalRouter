@@ -15,6 +15,9 @@ public class MultiModalQuery {
     private int departureTime;  // Agent departs origin at this very time; no delays are considered
     private double destinationLongitude;
     private double destinationLatitude;
+    private int originPointTAZId;
+    private int destinationPointTAZId;
+    private double crossTAZTravelTimeMins;
 
     MultiModalQuery(double originLongitude, double originLatitude, int departureTime, double destinationLongitude,
                     double destinationLatitude) {
@@ -23,6 +26,18 @@ public class MultiModalQuery {
         this.departureTime = departureTime;
         this.destinationLongitude = destinationLongitude;
         this.destinationLatitude = destinationLatitude;
+    }
+
+    public void setOriginPointTAZId(int originPointTAZId) {
+        this.originPointTAZId = originPointTAZId;
+    }
+
+    public void setDestinationPointTAZId(int destinationPointTAZId) {
+        this.destinationPointTAZId = destinationPointTAZId;
+    }
+
+    public void setCrossTAZTravelTimeMins(double crossTAZTravelTimeMins) {
+        this.crossTAZTravelTimeMins = crossTAZTravelTimeMins;
     }
 
     public double getOriginLongitude() {
@@ -43,5 +58,17 @@ public class MultiModalQuery {
 
     public double getDestinationLatitude() {
         return this.destinationLatitude;
+    }
+
+    public int getOriginPointTAZId() {
+        return this.originPointTAZId;
+    }
+
+    public int getDestinationPointTAZId() {
+        return this.destinationPointTAZId;
+    }
+
+    public double getCrossTAZTravelTimeMins() {
+        return this.crossTAZTravelTimeMins;
     }
 }

@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.LinkedHashMap;
 
 public class TAZCentroidsReader {
-    private LinkedHashMap<Integer, TAZCentroid> tAZCentroids = new LinkedHashMap<>();
+    private final LinkedHashMap<Integer, TAZCentroid> tAZCentroids = new LinkedHashMap<>();
 
     public void readTAZCentroids(String tAZCentroidsFilePath) {
         try {
@@ -13,7 +13,6 @@ public class TAZCentroidsReader {
 
             // Read the header array
             String[] tAZHeaderArray = tAZCentroidReader.readLine().split("[,.;]|^");
-            int tAZIdIndex = findIndexInArray(tAZHeaderArray, "objectid");
             int tAZXCoordinateIndex = findIndexInArray(tAZHeaderArray, "xCoordinate25832");
             int tAZYCoordinateIndex = findIndexInArray(tAZHeaderArray, "yCoordinate25832");
             int tAZLongitudeIndex = findIndexInArray(tAZHeaderArray, "Longitude");
@@ -41,6 +40,10 @@ public class TAZCentroidsReader {
             System.out.println("Input-output exception; please check the file at " + tAZCentroidsFilePath);
             iOE.printStackTrace();
         }
+    }
+
+    public LinkedHashMap<Integer, TAZCentroid> getTAZCentroids() {
+        return this.tAZCentroids;
     }
 
     private int findIndexInArray(String[] headerArray, String stringToMatch) {
