@@ -21,6 +21,7 @@ import src.MultiModalRouter.TAZManager.TAZCentroidsReader;
 import src.NearestNeighbourFinder.KDTreeForNodes;
 import src.NearestNeighbourFinder.KDTreeForStops;
 
+import src.NearestNeighbourFinder.KDTreeForTAZCentroids;
 import src.PublicTransportRouter.GTFSDataManager.*;
 import src.PublicTransportRouter.RoutingAlgorithm.RAPTOR;
 
@@ -211,6 +212,11 @@ public class PublicationCaller {
         tAZCentroidsReader.readTAZCentroids(tAZCentroidsFilePath);
         LinkedHashMap<Integer, TAZCentroid> tAZCentroids = tAZCentroidsReader.getTAZCentroids();
 
+        TAZCentroid[] tAZCentroidsArray = tAZCentroids.values().toArray(new TAZCentroid[0]);
+        KDTreeForTAZCentroids kDTreeForTAZCentroids = new KDTreeForTAZCentroids();
+        kDTreeForTAZCentroids.buildTAZCentroidBasedKDTree(tAZCentroidsArray);
+
+        ExecutorService executorForTAZ = Executors.newFixedThreadPool(totalLeveragedProcessorsForTAZ);
         LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tAZTravelTimeMatrix = new LinkedHashMap<>();
         // Integer keys above refer to origin and destination TAZ IDs, and double values refer to travel times (minutes)
 
@@ -250,49 +256,63 @@ public class PublicationCaller {
 
             // Parallel-process pairwise inter-TAZ routing queries
             LinkedHashMap<Integer, Double> travelTimeMatrixRow = new LinkedHashMap<>();
-            ExecutorService executorForTAZ = Executors.newFixedThreadPool(totalLeveragedProcessorsForTAZ);
-            ArrayList<Callable<Void>> futuresForTAZ = new ArrayList<>();
+            ArrayList<Callable<Void>> tasksForTAZ = new ArrayList<>();
 
             for (TAZCentroid destinationTAZCentroid : tAZCentroids.values()) {
-                futuresForTAZ.add(() -> {
+                tasksForTAZ.add(() -> {
+                    // Calculate travel times for this particular destination TAZ
+                    Stop stopNearDestinationTAZCentroid = kDTreeForStops.findNearestStop(destinationTAZCentroid.
+                                    getLongitude(), destinationTAZCentroid.getLatitude());
+                    Node nodeNearDestinationTAZCentroid = kDTreeForNodes.findNearestNode(destinationTAZCentroid.
+                                    getLongitude(), destinationTAZCentroid.getLatitude());
+                    Node nodeNearDestinationTAZStop = kDTreeForNodes.findNearestNode(stopNearDestinationTAZCentroid.
+                                    getStopLongitude(), stopNearDestinationTAZCentroid.getStopLatitude());
+                    double timeFromDestinationStopToNetworkNode = stopNearDestinationTAZCentroid.
+                            equiRectangularDistanceTo(nodeNearDestinationTAZStop.getNodeLongitude(),
+                                    nodeNearDestinationTAZStop.getNodeLatitude());
+                    double timeFromNetworkNodeToDestination = nodeNearDestinationTAZCentroid.equiRectangularDistanceTo(
+                            destinationTAZCentroid.getLongitude(), destinationTAZCentroid.getLatitude());
+                    double timeFromDestinationTAZStopNodeToDestinationTAZCentroid = dijkstraBasedRouter.
+                            findShortestDrivingPathCostMin(nodeNearDestinationTAZStop.getNodeId(),
+                                    nodeNearDestinationTAZCentroid.getNodeId(), nodes, links) * avgDrivingSpeedMPerMin /
+                                    avgWalkingSpeedMPerMin;
+                    double travelTimeDestinationStopToDestinationTAZ = timeFromDestinationStopToNetworkNode +
+                            timeFromNetworkNodeToDestination + timeFromDestinationTAZStopNodeToDestinationTAZCentroid;
 
+                    double totalMinimumTravelTime = 480; // 8 hours is set as the time to get from anywhere to anywhere
+                    for (int i = 0; i < stopsNearOriginTAZCentroid.size(); i++) {
+                        double transitBasedCrossTAZTravelTime = rAPTOR.findShortestTransitPath(
+                                stopsNearOriginTAZCentroid.get(i).getStopId(), stopNearDestinationTAZCentroid.
+                                                getStopId(), departureTimeForTAZToTAZTravel, routeStops, stopTimes,
+                                        stops, stopRoutes, transfers).getTravelTimeMinutes();
+                        // With RAPTOR, always check for -1's, as double values are used to test for changing the output
+                        double totalCrossTAZTravelTime = travelTimesOriginTAZToOriginStops.get(i) +
+                                transitBasedCrossTAZTravelTime + travelTimeDestinationStopToDestinationTAZ;
+
+                        if ((transitBasedCrossTAZTravelTime != -1) && (totalCrossTAZTravelTime <
+                                totalMinimumTravelTime)) {
+                            totalMinimumTravelTime = totalCrossTAZTravelTime;
                         }
-                Stop stopNearDestinationTAZCentroid = kDTreeForStops.findNearestStop(destinationTAZCentroid.getLongitude(),
-                    destinationTAZCentroid.getLatitude());
-                Node nodeNearDestinationTAZCentroid = kDTreeForNodes.findNearestNode(destinationTAZCentroid.getLongitude(),
-                    destinationTAZCentroid.getLatitude());
-                Node nodeNearDestinationTAZStop = kDTreeForNodes.findNearestNode(stopNearDestinationTAZCentroid.
-                    getStopLongitude(), stopNearDestinationTAZCentroid.getStopLatitude());
-                double timeFromDestinationStopToNetworkNode = stopNearDestinationTAZCentroid.equiRectangularDistanceTo(
-                    nodeNearDestinationTAZStop.getNodeLongitude(), nodeNearDestinationTAZStop.getNodeLatitude());
-                double timeFromNetworkNodeToDestination = nodeNearDestinationTAZCentroid.equiRectangularDistanceTo(
-                    destinationTAZCentroid.getLongitude(), destinationTAZCentroid.getLatitude());
-                double timeFromDestinationTAZStopNodeToDestinationTAZCentroid = dijkstraBasedRouter.
-                    findShortestDrivingPathCostMin(nodeNearDestinationTAZStop.getNodeId(),
-                            nodeNearDestinationTAZCentroid.getNodeId(), nodes, links) * avgDrivingSpeedMPerMin /
-                    avgWalkingSpeedMPerMin;
-                double travelTimeDestinationStopToDestinationTAZ = timeFromDestinationStopToNetworkNode +
-                        timeFromNetworkNodeToDestination + timeFromDestinationTAZStopNodeToDestinationTAZCentroid;
-
-                double totalMinimumTravelTime = 480; // 8 hours is set as the time to get from anywhere to anywhere
-                for (int i = 0; i < stopsNearOriginTAZCentroid.size(); i++) {
-                    double transitBasedCrossTAZTravelTime = rAPTOR.findShortestTransitPath(stopsNearOriginTAZCentroid.
-                            get(i).getStopId(), stopNearDestinationTAZCentroid.getStopId(),
-                            departureTimeForTAZToTAZTravel, routeStops, stopTimes, stops, stopRoutes, transfers).
-                            getTravelTimeMinutes();
-                    // With RAPTOR, always check for -1's, as double values are used to test for changing the output
-                    double totalCrossTAZTravelTime = travelTimesOriginTAZToOriginStops.get(i) +
-                            transitBasedCrossTAZTravelTime + travelTimeDestinationStopToDestinationTAZ;
-
-                    if ((transitBasedCrossTAZTravelTime != -1) && (totalCrossTAZTravelTime < totalMinimumTravelTime)) {
-                        totalMinimumTravelTime = totalCrossTAZTravelTime;
                     }
-                }
 
-                travelTimeMatrixRow.put(destinationTAZCentroid.getId(), totalMinimumTravelTime);
+                    travelTimeMatrixRow.put(destinationTAZCentroid.getId(), totalMinimumTravelTime);
+                    return null;
+                });
             }
 
+            // Submit tasks for all destination TAZs
+            try {
+                List<Future<Void>> futuresForTAZ = executorForTAZ.invokeAll(tasksForTAZ);
+                for (Future<Void> futureForTAZ : futuresForTAZ) {
+                    futureForTAZ.get(); // Wait for task completion
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // Add the computed row to the final travel time matrix
             tAZTravelTimeMatrix.put(originTAZCentroid.getId(), travelTimeMatrixRow);
+            executorForTAZ.shutdown();
         }
 
         /**
@@ -377,7 +397,7 @@ public class PublicationCaller {
                         destinationNode, destinationStopNearestNode, originPointDepartureTime, avgWalkingSpeedMPerMin,
                         avgODMWaitTimeMin, travelTimeDestinationStopToDestination, destinationStopId, rAPTOR,
                         dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
-                        querySpecificMultiModalQueryResponsesPub);
+                        querySpecificMultiModalQueryResponsesPub, tAZTravelTimeMatrix, kDTreeForTAZCentroids);
 
                 return querySpecificMultiModalQueryResponsesPub;
             });
@@ -506,7 +526,10 @@ public class PublicationCaller {
                                              LinkedHashMap<Integer, StopRoute> stopRoutes,
                                              LinkedHashMap<Integer, Transfer> transfers,
                                              ArrayList<MultiModalQueryResponsesPub>
-                                                     querySpecificMultiModalQueryResponsesPub) {
+                                                     querySpecificMultiModalQueryResponsesPub,
+                                             LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
+                                                     tAZTravelTimeMatrix,
+                                             KDTreeForTAZCentroids kDTreeForTAZCentroids) {
         long journeyFindingStartTime = System.nanoTime();
         double leastTotalTravelTime = Double.MAX_VALUE;
         int solutionStopIndex;
@@ -567,9 +590,15 @@ public class PublicationCaller {
                         getTravelTimeMinutes() + travelTimeDestinationStopToDestinationPoint;
                 double relativeDiffMinTravelTime = (totalJourneyTime - leastTotalTravelTime) / leastTotalTravelTime;
 
+                TAZCentroid tAZNearOrigin = kDTreeForTAZCentroids.findNearestTAZCentroid(originStop.getStopLongitude(),
+                        originStop.getStopLatitude());
+                TAZCentroid tAZNearDestination = kDTreeForTAZCentroids.findNearestTAZCentroid(destinationStop.
+                        getStopLongitude(), destinationStop.getStopLatitude());
+
                 MultiModalQueryResponsesPub multiModalQueryResponsesPub = new MultiModalQueryResponsesPub(
                         originPointLongitude, originPointLatitude, destinationPointLongitude, destinationPointLatitude,
-                        originPointDepartureTime, 1, 1, 1,
+                        originPointDepartureTime, tAZNearOrigin.getId(), tAZNearDestination.getId(),
+                        tAZTravelTimeMatrix.get(tAZNearOrigin.getId()).get(tAZNearDestination.getId()),
                         1, 1, originNode.getNodeId(),
                         originNode.getNodeLongitude(), originNode.getNodeLatitude(), destinationNode.getNodeId(),
                         destinationNode.getNodeLongitude(), destinationNode.getNodeLatitude(), destinationStopId,

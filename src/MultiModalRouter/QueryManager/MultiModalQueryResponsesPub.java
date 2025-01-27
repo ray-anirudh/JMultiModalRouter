@@ -38,30 +38,30 @@ public class MultiModalQueryResponsesPub {
     private long destinationStopNearestNodeId;
     private double destinationStopNearestNodeLongitude;
     private double destinationStopNearestNodeLatitude;
-    private int countOriginStopsConsideredSolution; // todo gather from router
+    private int countOriginStopsConsideredSolution;
 
-    // Journey-related attributes to be used as covariates
-    private double travelTimeOriginToOriginStop; // todo gather from router
-    private double travelTimeOriginStopToDestinationStop; // todo gather from router
+    // Journey-related attributes to be used as co-variates
+    private double travelTimeOriginToOriginStop;
+    private double travelTimeOriginStopToDestinationStop;
     private double travelTimeDestinationStopToDestination;
-    private int numberTransfersInTransit; // todo gather from router
-    private long timeElapsedInJourneyComputationNanoSeconds; // todo gather from router
+    private int numberTransfersInTransit;
+    private long timeElapsedInJourneyComputationNanoSeconds;
 
     // Stop-related attributes to be used as regressors
-    private int originStopId; // todo gather from router
-    private String originStopName; // todo gather from router
-    private int originStopType; // todo gather from router
-    private int originStopDailyServiceCount; // todo gather from router
-    private double originStopAverageTransferCost; // todo gather from router
-    private double originStopLongitude; // todo gather from router
-    private double originStopLatitude; // todo gather from router
-    private long originStopNearestNodeId; // todo gather from router
-    private double originStopNearestNodeLongitude; // todo gather from router
-    private double originStopNearestNodeLatitude; // todo gather from router
+    private int originStopId;
+    private String originStopName;
+    private int originStopType;
+    private int originStopDailyServiceCount;
+    private double originStopAverageTransferCost;
+    private double originStopLongitude;
+    private double originStopLatitude;
+    private long originStopNearestNodeId;
+    private double originStopNearestNodeLongitude;
+    private double originStopNearestNodeLatitude;
 
     // Journey-related attributes to be used as target variables
-    private double totalJourneyTime; // todo gather from router
-    private double relativeDifferenceToBestJourneyTime; // todo gather from router
+    private double totalJourneyTime;
+    private double relativeDifferenceToBestJourneyTime;
 
     public MultiModalQueryResponsesPub(double originPointLongitude, double originPointLatitude,
                                        double destinationPointLongitude, double destinationPointLatitude,

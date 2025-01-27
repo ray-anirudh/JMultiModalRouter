@@ -26,7 +26,7 @@ public class KDTreeForTAZCentroids {
         KDTreeTAZCentroid tAZCentroid = new KDTreeTAZCentroid(tAZCentroids[medianIndex]);
 
         tAZCentroid.setLeft(buildKDTreeForTAZCentroids(Arrays.copyOfRange(tAZCentroids, 0, medianIndex),
-                depth + 1);
+                depth + 1));
         tAZCentroid.setRight(buildKDTreeForTAZCentroids(Arrays.copyOfRange(tAZCentroids, medianIndex + 1,
                 tAZCentroids.length), depth + 1));
 
@@ -80,7 +80,7 @@ public class KDTreeForTAZCentroids {
 
     public TAZCentroid findNearestTAZCentroid(double sourceLongitude, double sourceLatitude) {
         if (this.kDTreeRootTAZCentroid == null) {
-            throw new IllegalStateException("TAZ centroid-based KD-Tree is empty.")
+            throw new IllegalStateException("TAZ centroid-based KD-Tree is empty.");
         }
 
         KDTreeTAZCentroid bestKDTreeTAZCentroid = nearestNeighbourSearchForTAZCentroids(sourceLongitude, sourceLatitude,
