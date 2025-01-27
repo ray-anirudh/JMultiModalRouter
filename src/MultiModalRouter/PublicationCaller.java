@@ -57,8 +57,8 @@ public class PublicationCaller {
     public static void main(String[] args) {
         // Set the caller's parameters
         setCallerParameters(callerParametersReader, callerParametersFilePath);
-        long beginQueryId = callerParametersReader.getBeginQueryId();
-        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries();
+        long beginQueryId = callerParametersReader.getBeginQueryId();   // todo manage this to make 1
+        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage this to make 400_000
         double minimumDrivingDistance = callerParametersReader.getMinimumDrivingDistance();
         double maximumDrivingDistance = callerParametersReader.getMaximumDrivingDistance();
         double avgWalkingSpeedMPerMin = callerParametersReader.getAvgWalkingSpeedMPMin();
@@ -336,11 +336,6 @@ public class PublicationCaller {
                 double destinationPointLongitude = multiModalQuery.getDestinationLongitude();
                 double destinationPointLatitude = multiModalQuery.getDestinationLatitude();
                 int originPointDepartureTime = multiModalQuery.getDepartureTime();
-                int originPointTazId = 0;   // TODO See later
-                int destinationPointTazId = 0;   // TODO See later
-                double travelTimeOriginTazToDestinationTazPeak = 0;   // TODO See later
-                double travelTimeOriginTazToDestinationTazOffPeak = 0;   // TODO See later
-                double travelTimeOriginTazToDestinationTazNight = 0;   // TODO See later
 
                 // Determine nodes nearest to the origin and destination points
                 Node originNode = kDTreeForNodes.findNearestNode(originPointLongitude, originPointLatitude);
@@ -426,10 +421,10 @@ public class PublicationCaller {
 
         // Write out responses to the multi-modal queries in batches (based on query ID)
         for (long i : multiModalQueriesResponsesPub.keySet()) {
-            if (i % 25 == 1) {  // todo manage
+            if (i % 25 == 1) {  // todo manage and make 10,000
                 String multiModalQueriesResponsesPubFilePath = "F:/Anirudh/Results/LearningData/" +
                         "multiModalQueriesResponsesPub" + i + ".csv";
-                int queryVolumeToWrite = 25;    // todo manage
+                int queryVolumeToWrite = 25;    // todo manage and make 10,000
                 writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
                         multiModalQueriesResponsesPub);
             }
