@@ -320,8 +320,10 @@ public class PublicationCaller {
                         }
                     }
 
+                    /* Debugging statements:
                     System.out.println(destinationTAZCentroid.getId() + ", " + totalMinimumTravelTime);
                     System.out.println(System.nanoTime());
+                    */
                     travelTimeMatrixRow.put(destinationTAZCentroid.getId(), totalMinimumTravelTime);
                     return null;
                 });
