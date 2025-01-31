@@ -59,6 +59,10 @@ public class PublicationCaller {
         setCallerParameters(callerParametersReader, callerParametersFilePath);
         long beginQueryId = callerParametersReader.getBeginQueryId();   // todo manage this to make 1
         long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage this to make 400_000
+        double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude();
+        double maximumDestinationLatitude = callerParametersReader.getMaximumDestinationLatitude();
+        double minimumDestinationLongitude = callerParametersReader.getMinimumDestinationLongitude();
+        double maximumDestinationLongitude = callerParametersReader.getMaximumDestinationLongitude();
         double minimumDrivingDistance = callerParametersReader.getMinimumDrivingDistance();
         double maximumDrivingDistance = callerParametersReader.getMaximumDrivingDistance();
         double avgWalkingSpeedMPerMin = callerParametersReader.getAvgWalkingSpeedMPMin();
@@ -72,7 +76,7 @@ public class PublicationCaller {
         String raptorFolderPath = callerParametersReader.getRaptorFolderPath();
         String gtfsParametersFilePath = callerParametersReader.getGtfsParametersFilePath();
         String multiModalQueriesFilePath = callerParametersReader.getMultiModalQueriesFilePath();
-        String tAZCentroidsFilePath = callerParametersReader.getTAZCentroidsFilePath(); // todo Feed the filepath into the parameters file
+        String tAZCentroidsFilePath = callerParametersReader.getTAZCentroidsFilePath();
         double departureTimeForTAZToTAZTravel = callerParametersReader.getDepartureTimeForTAZToTAZTravel();
         /* Debugging statements:
         System.out.println(beginQueryId + ", " + numberMultiModalQueries + ", " + minimumDrivingDistance + ", " +
@@ -210,17 +214,38 @@ public class PublicationCaller {
          */
         TAZCentroidsReader tAZCentroidsReader = new TAZCentroidsReader();
         tAZCentroidsReader.readTAZCentroids(tAZCentroidsFilePath);
-        LinkedHashMap<Integer, TAZCentroid> tAZCentroids = tAZCentroidsReader.getTAZCentroids();
+        LinkedHashMap<Integer, TAZCentroid> tAZCentroidsMaster = tAZCentroidsReader.getTAZCentroids();
+        LinkedHashMap<Integer, TAZCentroid> originTAZCentroids = new LinkedHashMap<>();
+        LinkedHashMap<Integer, TAZCentroid> destinationTAZCentroids = new LinkedHashMap<>();
 
-        TAZCentroid[] tAZCentroidsArray = tAZCentroids.values().toArray(new TAZCentroid[0]);
-        KDTreeForTAZCentroids kDTreeForTAZCentroids = new KDTreeForTAZCentroids();
-        kDTreeForTAZCentroids.buildTAZCentroidBasedKDTree(tAZCentroidsArray);
+        for (Integer tAZCentroidId : tAZCentroidsMaster.keySet()) {
+            TAZCentroid tAZCentroid = tAZCentroidsMaster.get(tAZCentroidId);
+            if ((tAZCentroid.getLatitude() < maximumDestinationLatitude) &&
+                    (tAZCentroid.getLatitude() > minimumDestinationLatitude) &&
+                    (tAZCentroid.getLongitude() < maximumDestinationLongitude) &&
+                    (tAZCentroid.getLongitude() > minimumDestinationLongitude)) {
+                destinationTAZCentroids.put(tAZCentroidId, tAZCentroid);
+            } else {
+                originTAZCentroids.put(tAZCentroidId, tAZCentroid);
+            }
+        }
+
+        System.out.println("Origin TAZ count: " + originTAZCentroids.size());
+        System.out.println("Destination TAZ count: " + destinationTAZCentroids.size());
+
+        TAZCentroid[] originTAZCentroidsArray = originTAZCentroids.values().toArray(new TAZCentroid[0]);
+        KDTreeForTAZCentroids kDTreeForOriginTAZCentroids = new KDTreeForTAZCentroids();
+        kDTreeForOriginTAZCentroids.buildTAZCentroidBasedKDTree(originTAZCentroidsArray);
+
+        TAZCentroid[] destinationTAZCentroidsArray = destinationTAZCentroids.values().toArray(new TAZCentroid[0]);
+        KDTreeForTAZCentroids kDTreeForDestinationTAZCentroids = new KDTreeForTAZCentroids();
+        kDTreeForDestinationTAZCentroids.buildTAZCentroidBasedKDTree(destinationTAZCentroidsArray);
 
         ExecutorService executorForTAZ = Executors.newFixedThreadPool(totalLeveragedProcessorsForTAZ);
         LinkedHashMap<Integer, LinkedHashMap<Integer, Double>> tAZTravelTimeMatrix = new LinkedHashMap<>();
         // Integer keys above refer to origin and destination TAZ IDs, and double values refer to travel times (minutes)
 
-        for (TAZCentroid originTAZCentroid : tAZCentroids.values()) {
+        for (TAZCentroid originTAZCentroid : originTAZCentroids.values()) {
             Node nodeNearOriginTAZCentroid = kDTreeForNodes.findNearestNode(originTAZCentroid.getLongitude(),
                     originTAZCentroid.getLatitude());
             ArrayList<Stop> stopsNearOriginTAZCentroid = kDTreeForStops.findStopsWithinDoughnut(originTAZCentroid.
@@ -258,7 +283,7 @@ public class PublicationCaller {
             LinkedHashMap<Integer, Double> travelTimeMatrixRow = new LinkedHashMap<>();
             ArrayList<Callable<Void>> tasksForTAZ = new ArrayList<>();
 
-            for (TAZCentroid destinationTAZCentroid : tAZCentroids.values()) {
+            for (TAZCentroid destinationTAZCentroid : destinationTAZCentroids.values()) {
                 tasksForTAZ.add(() -> {
                     // Calculate travel times for this particular destination TAZ
                     Stop stopNearDestinationTAZCentroid = kDTreeForStops.findNearestStop(destinationTAZCentroid.
@@ -295,6 +320,8 @@ public class PublicationCaller {
                         }
                     }
 
+                    System.out.println(destinationTAZCentroid.getId() + ", " + totalMinimumTravelTime);
+                    System.out.println(System.nanoTime());
                     travelTimeMatrixRow.put(destinationTAZCentroid.getId(), totalMinimumTravelTime);
                     return null;
                 });
@@ -392,7 +419,8 @@ public class PublicationCaller {
                         destinationNode, destinationStopNearestNode, originPointDepartureTime, avgWalkingSpeedMPerMin,
                         avgODMWaitTimeMin, travelTimeDestinationStopToDestination, destinationStopId, rAPTOR,
                         dijkstraBasedRouter, nodes, links, routeStops, stopTimes, stops, stopRoutes, transfers,
-                        querySpecificMultiModalQueryResponsesPub, tAZTravelTimeMatrix, kDTreeForTAZCentroids);
+                        querySpecificMultiModalQueryResponsesPub, tAZTravelTimeMatrix, kDTreeForOriginTAZCentroids,
+                        kDTreeForDestinationTAZCentroids);
 
                 return querySpecificMultiModalQueryResponsesPub;
             });
@@ -524,7 +552,8 @@ public class PublicationCaller {
                                                      querySpecificMultiModalQueryResponsesPub,
                                              LinkedHashMap<Integer, LinkedHashMap<Integer, Double>>
                                                      tAZTravelTimeMatrix,
-                                             KDTreeForTAZCentroids kDTreeForTAZCentroids) {
+                                             KDTreeForTAZCentroids kDTreeForOriginTAZCentroids,
+                                             KDTreeForTAZCentroids kDTreeForDestinationTAZCentroids) {
         long journeyFindingStartTime = System.nanoTime();
         double leastTotalTravelTime = Double.MAX_VALUE;
         int solutionStopIndex;
@@ -585,10 +614,10 @@ public class PublicationCaller {
                         getTravelTimeMinutes() + travelTimeDestinationStopToDestinationPoint;
                 double relativeDiffMinTravelTime = (totalJourneyTime - leastTotalTravelTime) / leastTotalTravelTime;
 
-                TAZCentroid tAZNearOrigin = kDTreeForTAZCentroids.findNearestTAZCentroid(originStop.getStopLongitude(),
-                        originStop.getStopLatitude());
-                TAZCentroid tAZNearDestination = kDTreeForTAZCentroids.findNearestTAZCentroid(destinationStop.
-                        getStopLongitude(), destinationStop.getStopLatitude());
+                TAZCentroid tAZNearOrigin = kDTreeForOriginTAZCentroids.findNearestTAZCentroid(
+                        originStop.getStopLongitude(), originStop.getStopLatitude());
+                TAZCentroid tAZNearDestination = kDTreeForDestinationTAZCentroids.findNearestTAZCentroid(
+                        destinationStop.getStopLongitude(), destinationStop.getStopLatitude());
 
                 MultiModalQueryResponsesPub multiModalQueryResponsesPub = new MultiModalQueryResponsesPub(
                         originPointLongitude, originPointLatitude, destinationPointLongitude, destinationPointLatitude,

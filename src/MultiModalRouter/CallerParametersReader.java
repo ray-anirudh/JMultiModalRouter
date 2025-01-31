@@ -8,6 +8,14 @@ import java.io.IOException;
 public class CallerParametersReader {
     private long beginQueryId;
     private long numberMultiModalQueries;
+    private double minimumDestinationLatitude;
+    private double maximumDestinationLatitude;
+    private double minimumDestinationLongitude;
+    private double maximumDestinationLongitude;
+    private double minimumOriginLatitude;
+    private double maximumOriginLatitude;
+    private double minimumOriginLongitude;
+    private double maximumOriginLongitude;
     private double minimumDrivingDistance;
     private double maximumDrivingDistance;
     private double avgWalkingSpeedMPMin;
@@ -32,6 +40,24 @@ public class CallerParametersReader {
             // Read and store order of the starting query, and number of queries to be processed
             this.beginQueryId = Long.parseLong(callerParametersFileReader.readLine().split("[=]")[1]);
             this.numberMultiModalQueries = Long.parseLong(callerParametersFileReader.readLine().split("[=]")[1]);
+
+            // Read and store the delimiting values for origin and destination coordinates; currently only used for TAZs
+            this.minimumDestinationLatitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.maximumDestinationLatitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.minimumDestinationLongitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.maximumDestinationLongitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.minimumOriginLatitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.maximumOriginLatitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.minimumOriginLongitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
+            this.maximumOriginLongitude = Double.parseDouble(callerParametersFileReader.readLine().split(
+                    "[=]")[1]);
 
             // Read and store the doughnut-shaped search space's specifications
             this.minimumDrivingDistance = Double.parseDouble(callerParametersFileReader.readLine().split("[=]")
@@ -70,67 +96,75 @@ public class CallerParametersReader {
     public long getBeginQueryId() {
         return this.beginQueryId;
     }
-
     public long getNumberMultiModalQueries() {
         return this.numberMultiModalQueries;
     }
-
+    public double getMinimumDestinationLatitude() {
+        return this.minimumDestinationLatitude;
+    }
+    public double getMaximumDestinationLatitude() {
+        return maximumDestinationLatitude;
+    }
+    public double getMinimumDestinationLongitude() {
+        return minimumDestinationLongitude;
+    }
+    public double getMaximumDestinationLongitude() {
+        return maximumDestinationLongitude;
+    }
+    public double getMinimumOriginLatitude() {
+        return minimumOriginLatitude;
+    }
+    public double getMaximumOriginLatitude() {
+        return maximumOriginLatitude;
+    }
+    public double getMinimumOriginLongitude() {
+        return minimumOriginLongitude;
+    }
+    public double getMaximumOriginLongitude() {
+        return maximumOriginLongitude;
+    }
     public double getAvgWalkingSpeedMPMin() {
         return this.avgWalkingSpeedMPMin;
     }
-
     public double getAvgDrivingSpeedMPMin() {
         return this.avgDrivingSpeedMPMin;
     }
-
     public double getMinimumDrivingDistance() {
         return this.minimumDrivingDistance;
     }
-
     public double getMaximumDrivingDistance() {
         return this.maximumDrivingDistance;
     }
-
     public double getAvgODMWaitTimeMin() {
         return this.avgODMWaitTimeMin;
     }
-
     public double getDepartureTimeForTAZToTAZTravel() {
         return this.departureTimeForTAZToTAZTravel;
     }
-
     public int getStopTypeToIgnore() {
         return this.stopTypeToIgnore;
     }
-
     public int getCutoffDailyServiceCountOfStop() {
         return this.cutoffDailyServiceCountOfStop;
     }
-
     public String getOsmOplExtractFilePath() {
         return this.osmOplExtractFilePath;
     }
-
     public String getDijkstraFolderPath() {
         return this.dijkstraFolderPath;
     }
-
     public String getGtfsFolderPath() {
         return this.gtfsFolderPath;
     }
-
     public String getRaptorFolderPath() {
         return this.raptorFolderPath;
     }
-
     public String getGtfsParametersFilePath() {
         return this.gtfsParametersFilePath;
     }
-
     public String getMultiModalQueriesFilePath() {
         return this.multiModalQueriesFilePath;
     }
-
     public String getTAZCentroidsFilePath() {
         return this.tAZCentroidsFilePath;
     }

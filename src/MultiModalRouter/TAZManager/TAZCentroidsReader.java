@@ -12,23 +12,18 @@ public class TAZCentroidsReader {
             String newline;
 
             // Read the header array
-            String[] tAZHeaderArray = tAZCentroidReader.readLine().split("[,.;]|^");
-            int tAZXCoordinateIndex = findIndexInArray(tAZHeaderArray, "xCoordinate25832");
-            int tAZYCoordinateIndex = findIndexInArray(tAZHeaderArray, "yCoordinate25832");
+            String[] tAZHeaderArray = tAZCentroidReader.readLine().split("[,;]|^");
             int tAZLongitudeIndex = findIndexInArray(tAZHeaderArray, "Longitude");
             int tAZLatitudeIndex = findIndexInArray(tAZHeaderArray, "Latitude");
 
             // Read data body
             int id = 0;
             while ((newline = tAZCentroidReader.readLine()) != null) {
-                String[] tAZCentroidDataRecord = newline.split("[,.;]|^");
-                double xCoordinate25832 = Double.parseDouble(tAZCentroidDataRecord[tAZXCoordinateIndex]);
-                double yCoordinate25832 = Double.parseDouble(tAZCentroidDataRecord[tAZYCoordinateIndex]);
+                String[] tAZCentroidDataRecord = newline.split("[,;]|^");
                 double Longitude = Double.parseDouble(tAZCentroidDataRecord[tAZLongitudeIndex]);
                 double Latitude = Double.parseDouble(tAZCentroidDataRecord[tAZLatitudeIndex]);
 
-                TAZCentroid tAZCentroid = new TAZCentroid(++id, xCoordinate25832, yCoordinate25832, Longitude,
-                        Latitude);
+                TAZCentroid tAZCentroid = new TAZCentroid(++id, 0, 0, Longitude, Latitude);
                 this.tAZCentroids.put(id, tAZCentroid);
             }
             tAZCentroidReader.close();
