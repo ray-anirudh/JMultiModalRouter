@@ -57,8 +57,8 @@ public class PublicationCaller {
     public static void main(String[] args) {
         // Set the caller's parameters
         setCallerParameters(callerParametersReader, callerParametersFilePath);
-        long beginQueryId = callerParametersReader.getBeginQueryId();   // todo manage this to make 1
-        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage this to make 400_000
+        long beginQueryId = callerParametersReader.getBeginQueryId();
+        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage
         double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude();
         double maximumDestinationLatitude = callerParametersReader.getMaximumDestinationLatitude();
         double minimumDestinationLongitude = callerParametersReader.getMinimumDestinationLongitude();
@@ -203,7 +203,7 @@ public class PublicationCaller {
 
         // Set up an ExecutorService instance for parallel processing of queries, and a list to hold Future objects
         int totalAvailableProcessors = Runtime.getRuntime().availableProcessors();
-        double processingCapacityUtilizationFactor = 0.7;
+        double processingCapacityUtilizationFactor = 1;   // todo manage
         int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
 
         ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
@@ -341,8 +341,8 @@ public class PublicationCaller {
 
             // Add the computed row to the final travel time matrix
             tAZTravelTimeMatrix.put(originTAZCentroid.getId(), travelTimeMatrixRow);
-            executorForTAZ.shutdown();
         }
+        executorForTAZ.shutdown();
 
         /**
          * Execute queries on the JMultiModalRouter architecture
@@ -451,10 +451,10 @@ public class PublicationCaller {
 
         // Write out responses to the multi-modal queries in batches (based on query ID)
         for (long i : multiModalQueriesResponsesPub.keySet()) {
-            if (i % 25 == 1) {  // todo manage and make 10,000
+            if (i % 10_000 == 1) {
                 String multiModalQueriesResponsesPubFilePath = "F:/Anirudh/Results/LearningData/" +
                         "multiModalQueriesResponsesPub" + i + ".csv";
-                int queryVolumeToWrite = 25;    // todo manage and make 10,000
+                int queryVolumeToWrite = 10_000;
                 writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
                         multiModalQueriesResponsesPub);
             }
