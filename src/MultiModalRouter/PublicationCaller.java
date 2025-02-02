@@ -58,8 +58,8 @@ public class PublicationCaller {
         // Set the caller's parameters
         setCallerParameters(callerParametersReader, callerParametersFilePath);
         long beginQueryId = callerParametersReader.getBeginQueryId();
-        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage
-        double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude();
+        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage in params file
+        double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude(); // todo manage in params file
         double maximumDestinationLatitude = callerParametersReader.getMaximumDestinationLatitude();
         double minimumDestinationLongitude = callerParametersReader.getMinimumDestinationLongitude();
         double maximumDestinationLongitude = callerParametersReader.getMaximumDestinationLongitude();
@@ -203,7 +203,7 @@ public class PublicationCaller {
 
         // Set up an ExecutorService instance for parallel processing of queries, and a list to hold Future objects
         int totalAvailableProcessors = Runtime.getRuntime().availableProcessors();
-        double processingCapacityUtilizationFactor = 1;   // todo manage
+        double processingCapacityUtilizationFactor = 0.9;   // todo manage
         int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
 
         ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
@@ -430,7 +430,7 @@ public class PublicationCaller {
         }
 
         // Process the results and add to the response map before shutting down the executor
-        for (int i = 0; i < futures.size(); i++) {
+        for (int i = 20001; i < futures.size(); i++) {  // todo manage to reflect accurate query ID against input queires
             try {
                 ArrayList<MultiModalQueryResponsesPub> responsePubList = futures.get(i).get();
                 if (responsePubList != null) {

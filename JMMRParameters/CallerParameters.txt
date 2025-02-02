@@ -1,5 +1,5 @@
-ID of First Query to be Processed=1
-Number of Multi-modal Queries to be Processed=20000
+ID of First Query to be Processed=20001
+Number of Multi-modal Queries to be Processed=50000
 Minimum Latitude Value for Destination=48.0617
 Maximum Latitude Value for Destination=48.2481
 Minimum Longitude Value for Destination=11.4436
