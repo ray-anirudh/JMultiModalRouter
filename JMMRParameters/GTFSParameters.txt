@@ -6,4 +6,4 @@ Study Area Longitude Maximum=12.043762
 Maximum Transfer Distance (in m)=400
 Average Walking Speed (in m per min)=85.20
 Average Driving Speed (in m per min)=483.33
-OpenStreetMap Object-Per-Line Extract File Path=F:/Anirudh/Data/OSMDataMunich/Downloaded/planet_10.835_47.824_12.172_48.438.osm.opl/BBBikeOSMExtract.opl
+OpenStreetMap Object-Per-Line Extract File Path=D:/Documents - Education + Work/Education - TUM/Year 2/Fourth Semester/MasterThesis/Data/OSMDataMunich/Downloaded/planet_10.835_47.824_12.172_48.438.osm.opl/BBBikeOSMExtract.opl

@@ -58,8 +58,8 @@ public class PublicationCaller {
         // Set the caller's parameters
         setCallerParameters(callerParametersReader, callerParametersFilePath);
         long beginQueryId = callerParametersReader.getBeginQueryId();
-        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries(); // todo manage in params file
-        double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude(); // todo manage in params file
+        long numberMultiModalQueries = callerParametersReader.getNumberMultiModalQueries();
+        double minimumDestinationLatitude = callerParametersReader.getMinimumDestinationLatitude();
         double maximumDestinationLatitude = callerParametersReader.getMaximumDestinationLatitude();
         double minimumDestinationLongitude = callerParametersReader.getMinimumDestinationLongitude();
         double maximumDestinationLongitude = callerParametersReader.getMaximumDestinationLongitude();
@@ -203,7 +203,7 @@ public class PublicationCaller {
 
         // Set up an ExecutorService instance for parallel processing of queries, and a list to hold Future objects
         int totalAvailableProcessors = Runtime.getRuntime().availableProcessors();
-        double processingCapacityUtilizationFactor = 0.9;   // todo manage
+        double processingCapacityUtilizationFactor = 0.9;
         int totalLeveragedProcessors = (int) (totalAvailableProcessors * processingCapacityUtilizationFactor);
 
         ExecutorService executor = Executors.newFixedThreadPool(totalLeveragedProcessors);
@@ -430,11 +430,11 @@ public class PublicationCaller {
         }
 
         // Process the results and add to the response map before shutting down the executor
-        for (int i = 20001; i < futures.size(); i++) {  // todo manage to reflect accurate query ID against input queires
+        for (int i = 0; i < futures.size(); i++) {
             try {
                 ArrayList<MultiModalQueryResponsesPub> responsePubList = futures.get(i).get();
                 if (responsePubList != null) {
-                    multiModalQueriesResponsesPub.put((long) i, responsePubList);
+                    multiModalQueriesResponsesPub.put((long) i + beginQueryId, responsePubList);
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -452,9 +452,10 @@ public class PublicationCaller {
         // Write out responses to the multi-modal queries in batches (based on query ID)
         for (long i : multiModalQueriesResponsesPub.keySet()) {
             if (i % 10_000 == 1) {
-                String multiModalQueriesResponsesPubFilePath = "F:/Anirudh/Results/LearningData/" +
+                String multiModalQueriesResponsesPubFilePath = "D:/Documents - Education + Work/Education -" +
+                        "TUM/Year 2/Fourth Semester/MasterThesis/Results/LearningData/" +
                         "multiModalQueriesResponsesPub" + i + ".csv";
-                int queryVolumeToWrite = 10_000;
+                int queryVolumeToWrite = 10;
                 writeMultiModalQueriesResponses(i, queryVolumeToWrite, multiModalQueriesResponsesPubFilePath,
                         multiModalQueriesResponsesPub);
             }
